@@ -1,6 +1,7 @@
 
 require_relative 'matching.rb'
 require_relative 'roman.rb'
+require_relative 'fuzzy_matcher.rb'
 
 module BBLib
 

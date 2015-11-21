@@ -32,7 +32,7 @@ module BBLib
         temp.sub! c, ''
       end
     end
-    matches / [a.length, b.length].max.to_f
+    (matches / [a.length, b.length].max.to_f )* 100.0
   end
 
   def self.phrase_similarity a, b, case_sensitive = false
@@ -45,18 +45,18 @@ module BBLib
         temp.delete_at temp.find_index w
       end
     end
-    matches.to_f / [a.split(' ').size, b.split(' ').size].max.to_f
+    (matches.to_f / [a.split(' ').size, b.split(' ').size].max.to_f) * 100.0
   end
 
   def self.numeric_similarity a, b, case_sensitive = false
     if !case_sensitive then a, b = a.downcase, b.downcase end
     a, b = a.scan(/\d+/), b.scan(/\d+/)
-    return 1.0 if a.empty? && b.empty?
+    return 100.0 if a.empty? && b.empty?
     matches = []
     for i in 0..[a.size, b.size].max-1
       matches << 1.0 / ([a[i].to_f, b[i].to_f].max - [a[i].to_f, b[i].to_f].min + 1.0)
     end
-    matches.inject{ |sum, m| sum + m } / matches.size.to_f
+    (matches.inject{ |sum, m| sum + m } / matches.size.to_f) * 100.0
   end
 
   def self.qwerty_similarity a, b
@@ -89,47 +89,23 @@ class String
     BBLib.levenshtein_distance self, str, case_sensitive
   end
 
-  def levenshtein_distance! str, case_sensitive = false
-    replace BBLib.levenshtein_distance(self, str, case_sensitive)
-  end
-
   def levenshtein_similarity str, case_sensitive = false
     BBLib.levenshtein_similarity self, str, case_sensitive
-  end
-
-  def levenshtein_similarity! str, case_sensitive = false
-    replace BBLib.levenshtein_similarity(self, str, case_sensitive)
   end
 
   def composition_similarity str, case_sensitive = false
     BBLib.composition_similarity self, str, case_sensitive
   end
 
-  def composition_similarity! str, case_sensitive = false
-    replace BBLib.composition_similarity(self, str, case_sensitive)
-  end
-
   def phrase_similarity str, case_sensitive = false
     BBLib.phrase_similarity self, str, case_sensitive
-  end
-
-  def phrase_similarity! str, case_sensitive = false
-    replace BBLib.phrase_similarity(self, str, case_sensitive)
   end
 
   def numeric_similarity str, case_sensitive = false
     BBLib.numeric_similarity self, str, case_sensitive
   end
 
-  def numeric_similarity str, case_sensitive = false
-    replace BBLib.numeric_similarity(self, str, case_sensitive)
-  end
-
   def qwerty_similarity str
     BBLib.qwerty_similarity self, str
-  end
-
-  def qwerty_similarity! str
-    replace BBLib.qwerty_similarity(self, str)
   end
 end
