@@ -3,9 +3,12 @@
 module BBLib
 
   def self.scan_dir path, filter: nil, recursive: false
+    puts path
     if filter.is_a? String then filters = [filters] end
     if !filter.nil? && filter.is_a?(Array)
       filter = filter.map{ |f| path.to_s + (recursive ? '/**/' : '/') + f.to_s }
+    elsif !filter.nil? && filter.is_a?(String)
+      filter = path.to_s + (recursive ? '/**/' : '/') + filter
     elsif filter.nil?
       filter = path.to_s + (recursive ? '/**/*' : '/*')
     end
@@ -38,7 +41,7 @@ end
 
 class String
   def to_file path, mkpath = true
-    BBFile.string_to_file path, self, mkpath
+    BBLib.string_to_file path, self, mkpath
   end
 
   def file_name with_extension = true
