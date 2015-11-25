@@ -53,6 +53,12 @@ module BBLib
 end
 
 class String
+  def msplit delims, keep_empty = false
+    return [self] unless !delims.nil? && !delims.empty?
+    spl = self.split(/[#{delims.join(',')}]/)
+    keep_empty ? spl : spl.reject{ |l| l.empty? }
+  end
+
   def move_articles position, capitalize = true
     BBLib.move_articles self, position, capitalize
   end
