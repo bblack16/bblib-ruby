@@ -12,7 +12,6 @@ module BBLib
     elsif filter.nil?
       filter = path.to_s + (recursive ? '/**/*' : '/*')
     end
-    puts filter
     Dir.glob(filter)
   end
 

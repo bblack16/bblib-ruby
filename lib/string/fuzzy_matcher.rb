@@ -16,10 +16,10 @@ module BBLib
       # return 100 unless @a != @b
       score = 0
       total_weight = @levenshtein_weight + @composition_weight + @numeric_weight + @phrase_weight
-      puts "Leven:   #{@a.levenshtein_similarity(@b)}"
-      puts "Comp:    #{@a.composition_similarity(@b)}"
-      puts "Numeric: #{@a.numeric_similarity(@b)}"
-      puts "Phrase:  #{@a.phrase_similarity(@b)}"
+      # puts "Leven:   #{@a.levenshtein_similarity(@b)}"
+      # puts "Comp:    #{@a.composition_similarity(@b)}"
+      # puts "Numeric: #{@a.numeric_similarity(@b)}"
+      # puts "Phrase:  #{@a.phrase_similarity(@b)}"
       if @levenshtein_weight > 0 then score+= @levenshtein_weight * @a.levenshtein_similarity(@b) end
       if @composition_weight > 0 then score+= @composition_weight * @a.composition_similarity(@b) end
       if @numeric_weight > 0 then score+= @numeric_weight * @a.numeric_similarity(@b) end
@@ -44,7 +44,7 @@ module BBLib
       ]
 
       def prep_strings a, b
-        @a, @b = a.dup.strip, b.dup.strip
+        @a, @b = a.to_s.dup.strip, b.to_s.dup.strip
         if !@case_sensitive
           @a.downcase!
           @b.downcase!
