@@ -6,8 +6,7 @@ module BBLib
     secs = 0.0
     TIME_EXPS.each do |k, v|
       v[:exp].each do |e|
-        numbers = str.scan(/^.\d+(?=#{e} )/i) + str.scan(/^.\d+(?=#{e}\z)/i) + str.scan(/\d+.\d+(?=#{e} )/i) + str.scan(/\d+.\d+(?=#{e}\z)/i)
-        # puts numbers
+        numbers = BBLib.parse_duration_expression str.downcase, e
         numbers.each do |n|
           secs+= n.to_i * v[:mult]
         end
@@ -19,15 +18,33 @@ module BBLib
   private
 
     TIME_EXPS = {
-      mili: { mult: 0.001, exp: ['ms', 'mil', 'mili', 'milisecond', 'milsec', 'msec', 'msecond']},
-      sec: { mult: 1, exp: ['s', 'sec', 'second']},
-      min: { mult: 60, exp: ['m', 'mn', 'min', 'minute']},
-      hour: { mult: 3600, exp: ['h', 'hr', 'hour']},
-      day: { mult: 86400, exp: ['d', 'day']},
-      week: { mult: 604800, exp: ['w', 'wk', 'week']},
-      month: { mult: 2592000, exp: ['mo', 'mon', 'month', 'mnth', 'mth']},
-      year: { mult: 31536000, exp: ['y', 'yr', 'year']}
+      mili: { mult: 0.001, exp: ['ms', 'mil', 'mils', 'mili', 'milis', 'milisecond', 'miliseconds', 'milsec', 'milsecs', 'msec', 'msecs', 'msecond', 'mseconds']},
+      sec: { mult: 1, exp: ['s', 'sec', 'secs', 'second', 'seconds']},
+      min: { mult: 60, exp: ['m', 'mn', 'mns', 'min', 'mins', 'minute', 'minutes']},
+      hour: { mult: 3600, exp: ['h', 'hr', 'hrs', 'hour', 'hours']},
+      day: { mult: 86400, exp: ['d', 'day' 'days']},
+      week: { mult: 604800, exp: ['w', 'wk', 'wks', 'week', 'weeks']},
+      month: { mult: 2592000, exp: ['mo', 'mon', 'mons', 'month', 'months', 'mnth', 'mnths', 'mth', 'mths']},
+      year: { mult: 31536000, exp: ['y', 'yr', 'yrs', 'year', 'years']}
     }
+
+    def self.parse_duration_expression str, exp
+      numbers = []
+      numbers+= str.scan(/\A\d+(?=\s?#{exp}[\s,\d])/i)
+      numbers+= str.scan(/\s\d+(?=\s?#{exp}[\s,\d])/i)
+      numbers+= str.scan(/[[:alpha]]\d+(?=\s?#{exp}[\s,\d])/i)
+      numbers+= str.scan(/\A\d+\.\d+(?=\s?#{exp}[\s,\d])/i)
+      numbers+= str.scan(/[[:alpha]]\d+\.\d+(?=\s?#{exp}[\s,\d])/i)
+      numbers+= str.scan(/\s\d+\.\d+(?=\s?#{exp}[\s,\d])/i)
+
+      numbers+= str.scan(/\A\d+(?=\s?#{exp}\z)/i)
+      numbers+= str.scan(/\s\d+(?=\s?#{exp}\z)/i)
+      numbers+= str.scan(/[[:alpha]]\d+(?=\s?#{exp}\z)/i)
+      numbers+= str.scan(/\A\d+\.\d+(?=\s?#{exp}\z)/i)
+      numbers+= str.scan(/[[:alpha]]\d+\.\d+(?=\s?#{exp}\z)/i)
+      numbers+= str.scan(/\s\d+\.\d+(?=\s?#{exp}\z)/i)
+      return numbers
+    end
 
 end
 

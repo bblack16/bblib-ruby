@@ -3,7 +3,6 @@
 module BBLib
 
   def self.scan_dir path, filter: nil, recursive: false
-    puts path
     if filter.is_a? String then filters = [filters] end
     if !filter.nil? && filter.is_a?(Array)
       filter = filter.map{ |f| path.to_s + (recursive ? '/**/' : '/') + f.to_s }
@@ -35,7 +34,7 @@ module BBLib
     bytes = 0.0
     FILE_SIZES.each do |k, v|
       v[:exp].each do |e|
-        numbers = str.scan(/^.\d+#{e} /i) + str.scan(/^.\d+#{e}\z/i) + str.scan(/^.\d+ #{e} /i) + str.scan(/^.\d+ #{e}\z/i) + str.scan(/\d+.\d+#{e} /i) + str.scan(/\d+.\d+#{e}\z/i) + str.scan(/\d+.\d+ #{e} /i) + str.scan(/\d+.\d+ #{e}\z/i)
+        numbers = BBLib.parse_duration_expression str, e
         numbers.each{ |n| bytes+= n.to_f * v[:mult] }
       end
     end
