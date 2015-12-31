@@ -1,7 +1,8 @@
 require_relative "bblib/version"
-require_relative "string/bbstring.rb"
-require_relative "file/bbfile.rb"
-require_relative "time/bbtime.rb"
+require_relative "string/bbstring"
+require_relative "file/bbfile"
+require_relative "time/bbtime"
+require_relative "hash/bbhash"
 require 'fileutils'
 
 module BBLib
