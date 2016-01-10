@@ -32,6 +32,31 @@ BBLib is currently broken up into the following categories:
 * String
 * Time
 
+### File
+**File Scanners**
+
+```ruby
+BBLib.scan_dir 'C:/path/to/files'
+
+#=> 'C:/path/to/files/readme.md'
+#=> 'C:/path/to/files/license.txt'
+```
+
+### Hash
+
+
+### Math
+
+
+### Net
+Currently empty...
+
+### String
+
+
+### Time
+
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
