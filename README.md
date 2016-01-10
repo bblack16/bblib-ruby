@@ -34,13 +34,44 @@ BBLib is currently broken up into the following categories:
 
 ### File
 **File Scanners**
-
+Various simple file scan methods are available. All of these are toggleable-recursive and can be passed filters using an wildcarding supported by the Ruby Dir.glob() method.
 ```ruby
+# Scan for any files or folders in a path
 BBLib.scan_dir 'C:/path/to/files'
 
 #=> 'C:/path/to/files/readme.md'
 #=> 'C:/path/to/files/license.txt'
+#=> 'C:/path/to/files/folder/'
 ```
+
+If you need only files or dirs but not both, the following two convenience methods are also available:
+```ruby
+# Scan for files ONLY
+BBLib.scan_files 'C:/path/to/files'
+
+#=> 'C:/path/to/files/readme.md'
+#=> 'C:/path/to/files/license.txt'
+
+# Scan for folders  ONLY
+BBLib.scan_dirs 'C:/path/to/files'
+
+#=> 'C:/path/to/files/folder/'
+```
+
+All of the scan methods also allow for the following named arguments:
+* **recursive**: Default is false. Set to true to recursively scan directories
+* **filter**: Default is nil. Can take either a String or Array of Strings. These strings will be used as filters so that only matching files or dirs are returned (Ex: '*.jpg', which would return all jpg files.)
+
+```ruby
+# Scan for any 'txt' or 'jpg' files recursively in a dir
+BBLib.scan_dir 'C:/path/to/files', recursive: true, filter: ['*.jpg', '*.txt']
+
+#=> 'C:/path/to/files/license.txt'
+#=> 'C:/path/to/files/folder/profile.jpg'
+#=> 'C:/path/to/files/folder/another_folder/text.txt'
+```
+
+In addition, both _scan_files_ and _scan_dirs_ also support a **mode** named argument. By default, this argument is set to :path. In _scan_files_ if :file is passed to :mode, a ruby File object will be returned rather than a String representation of the path. Similarily, if :dir is passed to _scan_dirs_ a ruby Dir object is returned.
 
 ### Hash
 
