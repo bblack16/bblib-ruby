@@ -33,8 +33,10 @@ BBLib is currently broken up into the following categories:
 * Time
 
 ### File
-**File Scanners**
+#### File Scanners
+
 Various simple file scan methods are available. All of these are toggleable-recursive and can be passed filters using an wildcarding supported by the Ruby Dir.glob() method.
+
 ```ruby
 # Scan for any files or folders in a path
 BBLib.scan_dir 'C:/path/to/files'
@@ -73,8 +75,114 @@ BBLib.scan_dir 'C:/path/to/files', recursive: true, filter: ['*.jpg', '*.txt']
 
 In addition, both _scan_files_ and _scan_dirs_ also support a **mode** named argument. By default, this argument is set to :path. In _scan_files_ if :file is passed to :mode, a ruby File object will be returned rather than a String representation of the path. Similarily, if :dir is passed to _scan_dirs_ a ruby Dir object is returned.
 
+#### File Size Parsing
+
+A file size parser is available that analyzes known patterns in a string to construct a numeric file size. This is very useful for parsing the output from outside applications or from web scrapers.
+
+```ruby
+# Turn a string into a file size (in bytes)
+BBLib.parse_file_size "1MB 100KB"
+
+#=> 1150976.0
+```
+
+By default the output is in bytes, however, this can be modified using the named argument **output**.
+
+```ruby
+# Turn a string into a file size (in bytes)
+BBLib.parse_file_size "1MB 100KB", output: :megabyte
+
+#=> 1.09765625
+
+# The method can also be called directly on a string
+
+"1.5 Mb".parse_file_size output: :kilobyte
+
+#=> 1536.0
+```
+
+All of the following are options for output:
+* :byte
+* :kilobyte
+* :megabyte
+* :gigabyte
+* :terabtye
+* :petabtye
+* :exabtye
+* :zettabtye
+* :yottabtye
+
+Additionally, ANY matching pattern in the string is added to the total, so a string such as "1MB 1megabyte" would yield the equivalent of "2MB". File sizes can also be intermingled with any other text, so "The file is 2 megabytes in size." would successfully parse the file size as 2 megabytes.
+
+#### Other Methods
+
+**string_to_file**
+
+This method is a convenient way to write a string to disk as file. It simply takes a path and a string. By default if the path does not exist it will attempt to create it. This can be controlled using the mkpath argument.
+
+```ruby
+# Write a string to disk
+string = "This is my wonderful string."
+BBLib.string_to_file '/home/user/my_file', string
+
+# OR to avoid the creation of the path if it doesn't exist:
+
+BBLib.string_to_file '/home/user/my_file', string, false
+
+# OR call the method directly on the string
+
+string.to_file '/home/user/another_file', true
+```
+
 ### Hash
 
+#### Deep Merge
+
+A simple implementation of a deep merge algorithm that merges two hashes including nested hashes within them. It can also merge arrays (default) within the hashes and merge values into arrays (not default) rather than overwriting the values with the right side hash.
+
+```ruby
+h1 = ({value: 1231, array: [1, 2], hash: {a: 1, b_hash: {c: 2, d:3}}})
+h2 = ({value: 5, array: [6, 7], hash: {a: 1, z: nil, b_hash: {c: 9, d:10, y:10}}})
+
+# Default behavior merges arrays and overwrites non-array/hash values
+h1.deep_merge h2
+
+#=> {:value=>5, :array=>[1, 2, 6, 7], :hash=>{:a=>1, :b_hash=>{:c=>9, :d=>10, :y=>10}, :z=>nil}}
+
+# Don't overwrite colliding values, instead, place them into an array together
+h1.deep_merge h2, overwrite_vals: false
+
+#=> {:value=>[1231, 5], :array=>[1, 2, 6, 7], :hash=>{:a=>[1, 1], :b_hash=>{:c=>[2, 9], :d=>[3, 10], :y=>10}, :z=>nil}}
+
+# Don't merge arrays, instead, overwrite them.
+h1.deep_merge h2, merge_arrays: false
+
+#=> {:value=>5, :array=>[6, 7], :hash=>{:a=>1, :b_hash=>{:c=>9, :d=>10, :y=>10}, :z=>nil}}
+```
+
+A **!** version of _deep_merge_ is also available to modify the hash in place rather than returning a new hash.
+
+#### Keys To Sym
+
+Convert all keys within a hash (including nested keys) to symbols. This is useful after parsing json if you prefer to work with symbols rather than strings. __An inplace (**!**) version of the method is also available.__
+
+```ruby
+h = {"author" => "Tom Clancy", "books" => ["Rainbow Six", "The Hunt for Red October"]}
+h.keys_to_sym
+
+#=> {:author=>"Tom Clancy", :books=>["Rainbow Six", "The Hunt for Red October"]}
+```
+
+#### Reverse
+
+Similar to reverse for Array. Calling this will reverse the current order of the Hash's keys. An inplace version is also available.
+
+```ruby
+h = {a:1, b:2, c:3, d:4}
+h.reverse
+
+#=> {:d=>4, :c=>3, :b=>2, :a=>1}
+```
 
 ### Math
 

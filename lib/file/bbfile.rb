@@ -73,6 +73,6 @@ class String
   end
 
   def parse_file_size output: :byte
-    BBLib.parse_file_size self, output:output
+    BBLib.parse_file_size(self, output:output)
   end
 end
