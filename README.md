@@ -25,12 +25,12 @@ Or install it yourself as:
 ## Usage
 
 BBLib is currently broken up into the following categories:
-..* File
-..* Hash
-..* Math
-..* Net
-..* String
-..* Time
+* File
+* Hash
+* Math
+* Net
+* String
+* Time
 
 ## Development
 
