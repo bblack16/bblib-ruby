@@ -2,54 +2,83 @@
 
 module BBLib
 
-  def self.parse_duration str, to = :sec
+  # Parses known time based patterns out of a string to construct a numeric duration.
+  def self.parse_duration str, output: :sec
     secs = 0.0
     TIME_EXPS.each do |k, v|
       v[:exp].each do |e|
-        numbers = BBLib.parse_duration_expression str.downcase, e
+        numbers = str.downcase.scan(/(?=\w|\D|\A)\d?\.?\d+[[:space:]]*#{e}(?=\W|\d|\z)/i)
         numbers.each do |n|
           secs+= n.to_i * v[:mult]
         end
       end
     end
-    return secs / TIME_EXPS[to][:mult].to_f
+    secs / (TIME_EXPS[output][:mult].to_f rescue 1)
   end
 
-  private
-
-    TIME_EXPS = {
-      mili: { mult: 0.001, exp: ['ms', 'mil', 'mils', 'mili', 'milis', 'milisecond', 'miliseconds', 'milsec', 'milsecs', 'msec', 'msecs', 'msecond', 'mseconds']},
-      sec: { mult: 1, exp: ['s', 'sec', 'secs', 'second', 'seconds']},
-      min: { mult: 60, exp: ['m', 'mn', 'mns', 'min', 'mins', 'minute', 'minutes']},
-      hour: { mult: 3600, exp: ['h', 'hr', 'hrs', 'hour', 'hours']},
-      day: { mult: 86400, exp: ['d', 'day' 'days']},
-      week: { mult: 604800, exp: ['w', 'wk', 'wks', 'week', 'weeks']},
-      month: { mult: 2592000, exp: ['mo', 'mon', 'mons', 'month', 'months', 'mnth', 'mnths', 'mth', 'mths']},
-      year: { mult: 31536000, exp: ['y', 'yr', 'yrs', 'year', 'years']}
-    }
-
-    def self.parse_duration_expression str, exp
-      numbers = []
-      numbers+= str.scan(/\A\d+(?=\s?#{exp}[\s,\d])/i)
-      numbers+= str.scan(/\s\d+(?=\s?#{exp}[\s,\d])/i)
-      numbers+= str.scan(/[[:alpha]]\d+(?=\s?#{exp}[\s,\d])/i)
-      numbers+= str.scan(/\A\d+\.\d+(?=\s?#{exp}[\s,\d])/i)
-      numbers+= str.scan(/[[:alpha]]\d+\.\d+(?=\s?#{exp}[\s,\d])/i)
-      numbers+= str.scan(/\s\d+\.\d+(?=\s?#{exp}[\s,\d])/i)
-
-      numbers+= str.scan(/\A\d+(?=\s?#{exp}\z)/i)
-      numbers+= str.scan(/\s\d+(?=\s?#{exp}\z)/i)
-      numbers+= str.scan(/[[:alpha]]\d+(?=\s?#{exp}\z)/i)
-      numbers+= str.scan(/\A\d+\.\d+(?=\s?#{exp}\z)/i)
-      numbers+= str.scan(/[[:alpha]]\d+\.\d+(?=\s?#{exp}\z)/i)
-      numbers+= str.scan(/\s\d+\.\d+(?=\s?#{exp}\z)/i)
-      return numbers
+  # Turns a numeric input into a time string.
+  def self.to_duration num, input: :sec, stop: :mili, style: :medium
+    return nil unless Numeric === num || num > 0
+    if ![:full, :medium, :short].include?(style) then style = :medium end
+    expression = []
+    n, done = num * TIME_EXPS[input.to_sym][:mult], false
+    TIME_EXPS.reverse.each do |k, v|
+      next unless !done
+      div = n / v[:mult]
+      if div > 1
+        expression << "#{div.floor} #{v[:styles][style]}#{div.floor > 1 && style != :short ? "s" : nil}"
+        n-= div.floor * v[:mult]
+      end
+      if k == stop then done = true end
     end
+    expression.join ' '
+  end
+
+  TIME_EXPS = {
+    mili: {
+      mult: 0.001,
+      styles: {full: 'milisecond', medium: 'mili', short: 'ms'},
+      exp: ['ms', 'mil', 'mils', 'mili', 'milis', 'milisecond', 'miliseconds', 'milsec', 'milsecs', 'msec', 'msecs', 'msecond', 'mseconds']},
+    sec: {
+      mult: 1,
+      styles: {full: 'second', medium: 'sec', short: 's'},
+      exp: ['s', 'sec', 'secs', 'second', 'seconds']},
+    min: {
+      mult: 60,
+      styles: {full: 'minute', medium: 'min', short: 'm'},
+      exp: ['m', 'mn', 'mns', 'min', 'mins', 'minute', 'minutes']},
+    hour: {
+      mult: 3600,
+      styles: {full: 'hour', medium: 'hr', short: 'h'},
+      exp: ['h', 'hr', 'hrs', 'hour', 'hours']},
+    day: {
+      mult: 86400,
+      styles: {full: 'day', medium: 'day', short: 'd'},
+      exp: ['d', 'day' 'days']},
+    week: {
+      mult: 604800,
+      styles: {full: 'week', medium: 'wk', short: 'w'},
+      exp: ['w', 'wk', 'wks', 'week', 'weeks']},
+    month: {
+      mult: 2592000,
+      styles: {full: 'month', medium: 'mo', short: 'mo'},
+      exp: ['mo', 'mon', 'mons', 'month', 'months', 'mnth', 'mnths', 'mth', 'mths']},
+    year: {
+      mult: 31536000,
+      styles: {full: 'year', medium: 'yr', short: 'y'},
+      exp: ['y', 'yr', 'yrs', 'year', 'years']}
+  }
 
 end
 
 class String
   def parse_duration to = :sec
     BBLib.parse_duration self, to
+  end
+end
+
+class Numeric
+  def to_duration input: :sec, stop: :mili, style: :medium
+    BBLib.to_duration self, input: input, stop: stop, style: style
   end
 end

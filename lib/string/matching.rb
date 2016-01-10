@@ -4,6 +4,7 @@
 
 module BBLib
 
+  # A simple rendition of the levenshtein distance algorithm
   def self.levenshtein_distance a, b, case_sensitive = false
     if !case_sensitive then a, b = a.downcase, b.downcase end
     costs = (0..b.length).to_a
@@ -16,12 +17,14 @@ module BBLib
     costs[b.length]
   end
 
+  # Calculates a percentage based match using the levenshtein distance algorithm
   def self.levenshtein_similarity a, b, case_sensitive = false
     distance = BBLib.levenshtein_distance a, b, case_sensitive
     max = [a.length, b.length].max.to_f
     return ((max - distance.to_f) / max) * 100.0
   end
 
+  # Calculates a percentage based match of two strings based on their character composition.
   def self.composition_similarity a, b, case_sensitive = false
     if !case_sensitive then a, b = a.downcase, b.downcase end
     if a.length <= b.length then t = a; a = b; b = t; end
@@ -35,6 +38,7 @@ module BBLib
     (matches / [a.length, b.length].max.to_f )* 100.0
   end
 
+  # Calculates a percentage based match between two strings based on the similarity of word matches.
   def self.phrase_similarity a, b, case_sensitive = false
     if !case_sensitive then a, b = a.downcase, b.downcase end
     temp = b.split ' '
@@ -48,9 +52,11 @@ module BBLib
     (matches.to_f / [a.split(' ').size, b.split(' ').size].max.to_f) * 100.0
   end
 
+  # Extracts all numbers from two strings and compares them and generates a percentage of match.
+  # Percentage calculations here need to be weighted better...TODO
   def self.numeric_similarity a, b, case_sensitive = false
     if !case_sensitive then a, b = a.downcase, b.downcase end
-    a, b = a.scan(/\d+/), b.scan(/\d+/)
+    a, b = a.extract_numbers, b.extract_numbers
     return 100.0 if a.empty? && b.empty?
     matches = []
     for i in 0..[a.size, b.size].max-1
@@ -59,6 +65,8 @@ module BBLib
     (matches.inject{ |sum, m| sum + m } / matches.size.to_f) * 100.0
   end
 
+  # A simple character distance calculator that uses qwerty key positions to determine how similar two strings are.
+  # May be useful for typo detection.
   def self.qwerty_similarity a, b
     a, b = a.downcase.strip, b.downcase.strip
     if a.length <= b.length then t = a; a = b; b = t; end

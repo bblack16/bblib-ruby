@@ -6,7 +6,7 @@ require 'bblib/version'
 Gem::Specification.new do |spec|
   spec.name          = "bblib"
   spec.version       = BBLib::VERSION
-  spec.authors       = ["Brandon"]
+  spec.authors       = ["Brandon Black"]
   spec.email         = ["d2sm10@hotmail.com"]
 
   spec.summary       = %q{A library containing many reusable, basic functions.}

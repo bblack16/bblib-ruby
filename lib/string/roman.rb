@@ -1,19 +1,15 @@
 
 module BBLib
+
   # Converts any integer up to 1000 to a roman numeral string_a
-  # Params:
-  # +num+:: The number to convert.
   def self.to_roman num
-     roman = [{1000 => 'M'}, {900 => 'CM'}, {500 => 'D'},
-              {400 => 'CD'}, {100 => 'C'}, {90 => 'XC'},
-              {50 => 'L'}, {40 => 'XL'}, {10 => 'X'},
-              {9 => 'IX'}, {5 => 'V'}, {4 => 'IV'},
-              {3 => 'III'}, {2 => 'II'}, {1 => 'I'}]
+     roman = {1000 => 'M', 900 => 'CM', 500 => 'D', 400 => 'CD', 100 => 'C', 90 => 'XC', 50 => 'L',
+              40 => 'XL', 10 => 'X', 9 => 'IX', 5 => 'V', 4 => 'IV', 3 => 'III', 2 => 'II', 1 => 'I'}
     numeral = ""
-    roman.each do |r|
-      if num >= r.keys.first.to_i
-        num-=r.keys.first.to_i
-        numeral+=r.values.last.to_s
+    roman.each do |n, r|
+      if num >= n
+        num-= n
+        numeral+= r
       end
     end
     numeral
@@ -46,7 +42,6 @@ module BBLib
     end
     sp.join ' '
   end
-
 
 end
 

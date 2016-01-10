@@ -9,25 +9,32 @@ module BBLib
   # General Functions
   ##############################################
 
+  # Quickly remove any symbols from a string leaving onl alpha-numeric characters and white space.
   def self.drop_symbols str
-    str.gsub(/[^\w\s]/, '')
+    str.gsub(/[^\w\s\d]|_/, '')
   end
 
-  def self.extract_numbers str
-    str.scan(/\d+/)
+  # Extract all integers from a string. Use extract_floats if numbers may contain decimal places.
+  def self.extract_integers str, convert: true
+    str.scan(/\d+/).map{ |d| convert ? d.to_i : d }
   end
 
-  def multi_split str, delims, keep_empty = false
-    spl = str.split(/[#{delims.join(',')}]/)
-    keep_empty ? spl : spl.reject{ |l| l.empty? }
+  # Extracts all integers or decimals from a string into an array.
+  def self.extract_floats str, convert: true
+    str.scan(/\d+\.?\d+|\d+/).map{ |f| convert ? f.to_f : f }
   end
 
+  # Alias for extract_floats
+  def self.extract_numbers str, convert: true
+    BBLib.extract_floats str, convert:convert
+  end
+
+  # Used to move the position of the articles 'the', 'a' and 'an' in strings for normalization.
   def self.move_articles str, position = :front, capitalize = true
-    return str unless position == :front || position == :back || position == :none
+    return str unless [:front, :back, :none].include? position
     articles = ["the", "a", "an"]
     articles.each do |a|
-      starts = str.downcase.start_with?(a + ' ')
-      ends = str.downcase.end_with?(' ' + a)
+      starts, ends = str.downcase.start_with?(a + ' '), str.downcase.end_with?(' ' + a)
       if starts && position != :front
         if position == :none
           str = str[(a.length + 1)..str.length]
@@ -53,9 +60,9 @@ module BBLib
 end
 
 class String
-  def msplit delims, keep_empty = false
+  # Multi-split. Similar to split, but can be passed an array of delimiters to split on.
+  def msplit delims, keep_empty: false
     return [self] unless !delims.nil? && !delims.empty?
-    # spl = self.split(/[#{delims.join(',')}]/)
     ar = [self]
     delims.each do |d|
       ar.map!{ |a| a.split d }
@@ -78,5 +85,13 @@ class String
 
   def drop_symbols!
     replace BBLib.drop_symbols(self)
+  end
+
+  def extract_integers convert: true
+    BBLib.extract_integers self, convert:convert
+  end
+
+  def extract_numbers convert: true
+    BBLib.extract_numbers self, convert:convert
   end
 end

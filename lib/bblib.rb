@@ -3,6 +3,7 @@ require_relative "string/bbstring"
 require_relative "file/bbfile"
 require_relative "time/bbtime"
 require_relative "hash/bbhash"
+require_relative "math/bbmath"
 require 'fileutils'
 
 module BBLib
