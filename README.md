@@ -32,6 +32,8 @@ BBLib is currently broken up into the following categories:
 * String
 * Time
 
+
+
 ### File
 #### File Scanners
 
@@ -134,11 +136,15 @@ BBLib.string_to_file '/home/user/my_file', string, false
 string.to_file '/home/user/another_file', true
 ```
 
+
+
 ### Hash
 
 #### Deep Merge
 
 A simple implementation of a deep merge algorithm that merges two hashes including nested hashes within them. It can also merge arrays (default) within the hashes and merge values into arrays (not default) rather than overwriting the values with the right side hash.
+
+Part of the code is based on information found @ http://stackoverflow.com/questions/9381553/ruby-merge-nested-hash
 
 ```ruby
 h1 = ({value: 1231, array: [1, 2], hash: {a: 1, b_hash: {c: 2, d:3}}})
@@ -164,7 +170,7 @@ A **!** version of _deep_merge_ is also available to modify the hash in place ra
 
 #### Keys To Sym
 
-Convert all keys within a hash (including nested keys) to symbols. This is useful after parsing json if you prefer to work with symbols rather than strings. __An inplace (**!**) version of the method is also available.__
+Convert all keys within a hash (including nested keys) to symbols. This is useful after parsing json if you prefer to work with symbols rather than strings. An inplace (**!**) version of the method is also available.
 
 ```ruby
 h = {"author" => "Tom Clancy", "books" => ["Rainbow Six", "The Hunt for Red October"]}
@@ -175,7 +181,9 @@ h.keys_to_sym
 
 #### Reverse
 
-Similar to reverse for Array. Calling this will reverse the current order of the Hash's keys. An inplace version is also available.
+Similar to reverse for Array. Calling this will reverse the current order of the Hash's keys. An in place version is also available.
+
+The code behind this is based on a method found @ http://stackoverflow.com/questions/800122/best-way-to-convert-strings-to-symbols-in-hash
 
 ```ruby
 h = {a:1, b:2, c:3, d:4}
@@ -184,17 +192,252 @@ h.reverse
 #=> {:d=>4, :c=>3, :b=>2, :a=>1}
 ```
 
+
+
 ### Math
+
+#### Keep Between
+
+Used to ensure a numeric value is kept within a set of bounds. The first argument is the number, the second is the minimum of the bounds and the second is the maximum. To specify no min or max simply pass nil as either of the bounds.
+
+```ruby
+number = 17
+BBLib.keep_between number, 0, 10
+
+#=> 10
+
+number = 0.145
+BBLib.keep_between number, 0.5, 1
+
+#=> 0.5
+
+number = -250
+BBLib.keep_betwee number, nil, 100
+
+#=> -250
+```
+
 
 
 ### Net
 Currently empty...
 
+
+
 ### String
+
+#### FuzzyMatcher
+
+FuzzyMatcher (BBLib::FuzzyMatcher) is a class for making fuzzy comparisons with strings. It implements a weighted algorithm system which uses the algorithms listed below to generate a percentage based match between two strings. There are various settings that can be toggled in addition. These settings are:
+
+* **Case Sensitive**: Toggles whether or not strings should be compared in a case sensitive manor.
+* **Remove Symbols**: Toggle to remove all symbols from the strings before comparing them.
+* **Move Articles**: Toggling this normalizes the position on preceding or trailing articles (the, an, a).
+* **Convert Roman**: When toggled to true, all roman numerals found in the strings are converted to integers.
+
+Current algorithms are:
+* Levenshtein
+* Composition
+* Phrase
+* Numeric
+
+```ruby
+# Create a FuzzyMatcher and set it to be case insensitive
+fm = BBLib::FuzzyMatcher.new case_sensitive: false
+
+# Set the weight of two of the algorithms. A weight of zero effectively turns off that algorithm.
+fm.set_weight :levenshtein, 10
+fm.set_weight :composition, 5
+
+# Get similarity as a %
+fm.similarity 'Ruby', 'Rails'
+
+#=> 20.0
+
+# Set the threshold match percent
+fm.threshold = 50
+# Returns true if the match percent is greater than or equal to the threshold
+fm.match? 'Ruby', 'Rails'
+
+#=> false
+
+# Get the similarity of a string with an Array of strings. A hash is returned
+# with the key being the string compared and the value being its match %
+fm.similarities 'Ruby', ['Ruby', 'Rails', 'Java', 'C++']
+
+#=> {"Ruby"=>100.0, "Rails"=>20.0, "Java"=>0.0, "C++"=>0.0}
+
+# Compare a string to an Array of strings but return only the match with the highest comparison result
+fm.best_match 'Ruby', ['Ruby', 'Rails', 'Java', 'C++']
+
+#=> 'Ruby'
+```
+
+
+#### String Comparisons
+
+**ALGORITHIMS**
+
+Implementations of the following algorithms are currently available. All algorithms are for calculating similarity between strings. Most are useful for fuzzy matching. All algorithms are available statically in the BBLib module but are also available as extensions to the String class. Most of these algorithms are case sensitive by default.
+
+1. Levenshtein Distance
+
+A fairly simple rendition of the Levenshtein distance algorithm in Ruby. There are two functions available: **levenshtein_distance** and **levenshtein_similarity**. The former, calculates the number of additions, removals or substitutions needed to turn one string into another. The latter, uses the distance to calculate a percentage based match of two strings.
+
+```ruby
+# Get the Levenshtein distance of two strings
+'Ruby is great'.levenshtein_distance 'Rails is great'
+#  OR
+BBLib.levenshtein_distance 'Ruby is great', 'Rails is great'
+
+#=> 4
+
+# Or calculate the similarity as a percent
+'Ruby is great'.levenshtein_similarity 'Rails is great'
+
+#=> 71.42857142857143
+```
+
+2. String Composition
+
+Compares the character composition of two strings. The order of characters is not relevant, however, the number of occurrences is factored in.
+
+```ruby
+'Ruby is great'.composition_similarity 'Rails is great'
+
+#=> 71.42857142857143
+```
+
+3. Phrase Similarity
+
+Checks to see how many words in a string match another. Words must match exactly, including case. The results is the percentage of words that have an exact pair. The number of occurrences is also a factor.
+
+```ruby
+'Learn Ruby, it is great'.phrase_similarity 'Learn Rails; it is awesome'
+
+#=> 60.0
+
+'ruby, ruby, ruby'.phrase_similarity 'ruby ruby'
+
+#=> 66.66666666666666
+```
+
+4. Numeric Similarity (In Progress)
+
+This algorithm is currently undergoing refactoring...
+
+5. QWERTY Similarity
+
+A basic method that compares two strings by measuring the physical difference from one char to another on a QWERTY keyboard (alpha-numeric only). May be useful for detecting typos in words, but becomes less useful depending on the length of the string. This method is still in development and not yet in a final state. Currently a total distance is returned. Eventually, a percentage based match will replace this.
+
+```ruby
+'q'.qwerty_distance 's'
+
+#=> 2
+
+'qwerty'.qwerty_distance 'qsertp'
+
+#=> 5
+```
+
+#### Other
+
+**msplit** _aka multi split_
+
+_msplit_ is similar to the String method split, except it can take an array of string delimiters rather than a single delim. The string is split be each delimiter in order and an Array is returned.
+
+```ruby
+"This_is.a&&&&test".msplit ['_', '.', '&']
+
+#=> ['This', 'is', 'a', 'test']
+```
+
+By default any empty items from the return Array are removed. This behavior can be changed using the _:keep_empty_ named param.
+
+```ruby
+"This_is.a&&&&test".msplit ['_', '.', '&'], keep_empty: true
+
+#=> ['This', 'is', 'a', '', '', '', 'test']
+```
+
+_msplit is only available directly from an instantiated String object._
+
+**move_articles**
+
+This method is used to normalize strings that contain titles. It parses a string and checks to see if _the_, _an_ or _a_ are in the title, either preceding or trailing. If they are found they are moved to the front, back or removed depending on the argument passed to _position_.
+
+The method is available via the BBLib module or any instance of String.
+
+```ruby
+
+title = "The Simpsons"
+title.move_articles :back
+
+#=> "Simpons, The"
+
+title.move_articles :none
+
+#=> "Simpsons"
+
+title = "Day to Remember, A"
+title.move_articles :front
+
+#=> "A Day to Remember"
+```
+
+**drop_symbols**
+
+A simple method to remove all non-alpha, non-numeric and non-whitespace characters from a string. Extended to the String class.
+
+**extract_integers**
+
+Returns an array of all integers found within a string. The named param _:convert_ can be set to true to convert the extract numbers into Fixnums. If left false, strings are returned instead.
+
+**extract_floats**
+
+Performs the same action as _extract_integers_ except it can also pull floats from a string. The _:convert_ param is also available, but converts the strings into floats.
+
+**extract_numbers**
+
+See above. Is an alias for _extract_floats_.
+
 
 
 ### Time
 
+#### Duration parser
+
+**Parsing a duration from String**
+
+Similar to the file size parser under the files section, but instead can parse duration from know time patterns in a string. By default the result is returned in seconds, but this can be changed using the named param _:output_. The method is also extended to the String class directly.
+
+```ruby
+
+"1hr 10 minutes 11s".parse_duration
+
+#=> 4211.0
+
+"1hr 10 minutes 11s".parse_duration output: :hour
+
+#=> 1.1697222222222223
+```
+Output options are:
+* :mili
+* :sec
+* :min
+* :hour
+* :day
+* :week
+* :month
+* :year
+
+**Create a duration String from Numeric**
+
+There is also a method to turn a Numeric object into a string representation of a duration. This method is extended to the Numeric class. An input may be specified to tell the method what the input number represents. The options for this are the same as the output options listed above. A stop can be added as any of the same options. This will prevent the string from containing anything below the specified time type. For instance, specifying _stop: :sec_ will prevent milliseconds from being included if there are any. There are also three options that can be passed to the _:style_ argument to change the output (options are _:full_, _:medium_ and _:short:).
+
+```ruby
+# TODO
+```
 
 ## Development
 
