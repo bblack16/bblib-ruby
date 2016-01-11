@@ -5,8 +5,7 @@
 module BBLib
 
   # A simple rendition of the levenshtein distance algorithm
-  def self.levenshtein_distance a, b, case_sensitive = false
-    if !case_sensitive then a, b = a.downcase, b.downcase end
+  def self.levenshtein_distance a, b
     costs = (0..b.length).to_a
     (1..a.length).each do |i|
       costs[0], nw = i, i - 1
@@ -18,15 +17,14 @@ module BBLib
   end
 
   # Calculates a percentage based match using the levenshtein distance algorithm
-  def self.levenshtein_similarity a, b, case_sensitive = false
-    distance = BBLib.levenshtein_distance a, b, case_sensitive
+  def self.levenshtein_similarity a, b
+    distance = BBLib.levenshtein_distance a, b
     max = [a.length, b.length].max.to_f
     return ((max - distance.to_f) / max) * 100.0
   end
 
   # Calculates a percentage based match of two strings based on their character composition.
-  def self.composition_similarity a, b, case_sensitive = false
-    if !case_sensitive then a, b = a.downcase, b.downcase end
+  def self.composition_similarity a, b
     if a.length <= b.length then t = a; a = b; b = t; end
     matches, temp = 0, b
     a.chars.each do |c|
@@ -39,11 +37,10 @@ module BBLib
   end
 
   # Calculates a percentage based match between two strings based on the similarity of word matches.
-  def self.phrase_similarity a, b, case_sensitive = false
-    if !case_sensitive then a, b = a.downcase, b.downcase end
-    temp = b.split ' '
+  def self.phrase_similarity a, b
+    temp = b.drop_symbols.split ' '
     matches = 0
-    a.split(' ').each do |w|
+    a.drop_symbols.split(' ').each do |w|
       if temp.include? w
         matches+=1
         temp.delete_at temp.find_index w
@@ -54,8 +51,7 @@ module BBLib
 
   # Extracts all numbers from two strings and compares them and generates a percentage of match.
   # Percentage calculations here need to be weighted better...TODO
-  def self.numeric_similarity a, b, case_sensitive = false
-    if !case_sensitive then a, b = a.downcase, b.downcase end
+  def self.numeric_similarity a, b
     a, b = a.extract_numbers, b.extract_numbers
     return 100.0 if a.empty? && b.empty?
     matches = []
@@ -67,7 +63,7 @@ module BBLib
 
   # A simple character distance calculator that uses qwerty key positions to determine how similar two strings are.
   # May be useful for typo detection.
-  def self.qwerty_similarity a, b
+  def self.qwerty_distance a, b
     a, b = a.downcase.strip, b.downcase.strip
     if a.length <= b.length then t = a; a = b; b = t; end
     qwerty = {
@@ -93,27 +89,27 @@ module BBLib
 end
 
 class String
-  def levenshtein_distance str, case_sensitive = false
-    BBLib.levenshtein_distance self, str, case_sensitive
+  def levenshtein_distance str
+    BBLib.levenshtein_distance self, str
   end
 
-  def levenshtein_similarity str, case_sensitive = false
-    BBLib.levenshtein_similarity self, str, case_sensitive
+  def levenshtein_similarity str
+    BBLib.levenshtein_similarity self, str
   end
 
-  def composition_similarity str, case_sensitive = false
-    BBLib.composition_similarity self, str, case_sensitive
+  def composition_similarity str
+    BBLib.composition_similarity self, str
   end
 
-  def phrase_similarity str, case_sensitive = false
-    BBLib.phrase_similarity self, str, case_sensitive
+  def phrase_similarity str
+    BBLib.phrase_similarity self, str
   end
 
-  def numeric_similarity str, case_sensitive = false
-    BBLib.numeric_similarity self, str, case_sensitive
+  def numeric_similarity str
+    BBLib.numeric_similarity self, str
   end
 
-  def qwerty_similarity str
-    BBLib.qwerty_similarity self, str
+  def qwerty_distance str
+    BBLib.qwerty_distance self, str
   end
 end

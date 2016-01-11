@@ -58,8 +58,8 @@ module BBLib
         levenshtein: {weight: 10, signature: :levenshtein_similarity},
         composition: {weight: 5, signature: :composition_similarity},
         numeric: {weight: 0, signature: :numeric_similarity},
-        phrase: {weight: 0, signature: :phrase_similarity},
-        qwerty: {weight: 0, signature: :qwerty_similarity}
+        phrase: {weight: 0, signature: :phrase_similarity}
+        # FUTURE qwerty: {weight: 0, signature: :qwerty_similarity}
       }
 
       def prep_strings a, b

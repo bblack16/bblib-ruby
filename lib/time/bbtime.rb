@@ -17,7 +17,7 @@ module BBLib
   end
 
   # Turns a numeric input into a time string.
-  def self.to_duration num, input: :sec, stop: :mili, style: :medium
+  def self.to_duration num, input: :sec, stop: :milli, style: :medium
     return nil unless Numeric === num || num > 0
     if ![:full, :medium, :short].include?(style) then style = :medium end
     expression = []
@@ -35,10 +35,10 @@ module BBLib
   end
 
   TIME_EXPS = {
-    mili: {
+    milli: {
       mult: 0.001,
-      styles: {full: 'milisecond', medium: 'mili', short: 'ms'},
-      exp: ['ms', 'mil', 'mils', 'mili', 'milis', 'milisecond', 'miliseconds', 'milsec', 'milsecs', 'msec', 'msecs', 'msecond', 'mseconds']},
+      styles: {full: 'millisecond', medium: 'milli', short: 'ms'},
+      exp: ['ms', 'mil', 'mils', 'milli', 'millis', 'millisecond', 'milliseconds', 'milsec', 'milsecs', 'msec', 'msecs', 'msecond', 'mseconds']},
     sec: {
       mult: 1,
       styles: {full: 'second', medium: 'sec', short: 's'},
@@ -72,13 +72,13 @@ module BBLib
 end
 
 class String
-  def parse_duration to = :sec
-    BBLib.parse_duration self, to
+  def parse_duration output: :sec
+    BBLib.parse_duration self, output:output
   end
 end
 
 class Numeric
-  def to_duration input: :sec, stop: :mili, style: :medium
+  def to_duration input: :sec, stop: :milli, style: :medium
     BBLib.to_duration self, input: input, stop: stop, style: style
   end
 end
