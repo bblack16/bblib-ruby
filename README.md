@@ -458,10 +458,23 @@ Output options are:
 
 **Create a duration String from Numeric**
 
-There is also a method to turn a Numeric object into a string representation of a duration. This method is extended to the Numeric class. An input may be specified to tell the method what the input number represents. The options for this are the same as the output options listed above. A stop can be added as any of the same options. This will prevent the string from containing anything below the specified time type. For instance, specifying _stop: :sec_ will prevent milliseconds from being included if there are any. There are also three options that can be passed to the _:style_ argument to change the output (options are _:full_, _:medium_ and _:short:).
+There is also a method to turn a Numeric object into a string representation of a duration. This method is extended to the Numeric class. An input may be specified to tell the method what the input number represents. The options for this are the same as the output options listed above. A stop can be added using any of those same options. This will prevent the string from containing anything below the specified time type. For instance, specifying _stop: :sec_ will prevent milliseconds from being included if there are any. There are also three options that can be passed to the _:style_ argument to change the output (options are _:full_, _:medium_ and _:short:).
 
 ```ruby
-# TODO
+9645.to_duration
+#=> '2 hrs 40 mins 45 secs'
+
+101.to_duration input: :hour
+#=> '4 days 5 hrs'
+
+20.56.to_duration input: :hour, style: :full
+#=> '20 hours 33 minutes 36 seconds'
+
+20.56123.to_duration input: :hour, style: :medium, stop: :min
+#=> '20 hrs 33 mins'
+
+123124.to_duration( style: :short)
+#=> '34h 12m 4s'
 ```
 
 ## Development
