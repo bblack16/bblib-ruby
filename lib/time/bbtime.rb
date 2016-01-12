@@ -26,7 +26,7 @@ module BBLib
       next unless !done
       div = n / v[:mult]
       if div > 1
-        expression << "#{div.floor} #{v[:styles][style]}#{div.floor > 1 && style != :short ? "s" : nil}"
+        expression << "#{div.floor}#{v[:styles][style]}#{div.floor > 1 && style != :short ? "s" : nil}"
         n-= div.floor * v[:mult]
       end
       if k == stop then done = true end
@@ -37,35 +37,35 @@ module BBLib
   TIME_EXPS = {
     milli: {
       mult: 0.001,
-      styles: {full: 'millisecond', medium: 'milli', short: 'ms'},
+      styles: {full: ' millisecond', medium: ' milli', short: 'ms'},
       exp: ['ms', 'mil', 'mils', 'milli', 'millis', 'millisecond', 'milliseconds', 'milsec', 'milsecs', 'msec', 'msecs', 'msecond', 'mseconds']},
     sec: {
       mult: 1,
-      styles: {full: 'second', medium: 'sec', short: 's'},
+      styles: {full: ' second', medium: ' sec', short: 's'},
       exp: ['s', 'sec', 'secs', 'second', 'seconds']},
     min: {
       mult: 60,
-      styles: {full: 'minute', medium: 'min', short: 'm'},
+      styles: {full: ' minute', medium: ' min', short: 'm'},
       exp: ['m', 'mn', 'mns', 'min', 'mins', 'minute', 'minutes']},
     hour: {
       mult: 3600,
-      styles: {full: 'hour', medium: 'hr', short: 'h'},
+      styles: {full: ' hour', medium: ' hr', short: 'h'},
       exp: ['h', 'hr', 'hrs', 'hour', 'hours']},
     day: {
       mult: 86400,
-      styles: {full: 'day', medium: 'day', short: 'd'},
+      styles: {full: ' day', medium: ' day', short: 'd'},
       exp: ['d', 'day' 'days']},
     week: {
       mult: 604800,
-      styles: {full: 'week', medium: 'wk', short: 'w'},
+      styles: {full: ' week', medium: ' wk', short: 'w'},
       exp: ['w', 'wk', 'wks', 'week', 'weeks']},
     month: {
       mult: 2592000,
-      styles: {full: 'month', medium: 'mo', short: 'mo'},
+      styles: {full: ' month', medium: ' mo', short: 'mo'},
       exp: ['mo', 'mon', 'mons', 'month', 'months', 'mnth', 'mnths', 'mth', 'mths']},
     year: {
       mult: 31536000,
-      styles: {full: 'year', medium: 'yr', short: 'y'},
+      styles: {full: ' year', medium: ' yr', short: 'y'},
       exp: ['y', 'yr', 'yrs', 'year', 'years']}
   }
 
