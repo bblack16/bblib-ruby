@@ -3,11 +3,12 @@ module BBLib
 
   # Converts any integer up to 1000 to a roman numeral string_a
   def self.to_roman num
+    return num.to_s if num > 1000
      roman = {1000 => 'M', 900 => 'CM', 500 => 'D', 400 => 'CD', 100 => 'C', 90 => 'XC', 50 => 'L',
               40 => 'XL', 10 => 'X', 9 => 'IX', 5 => 'V', 4 => 'IV', 3 => 'III', 2 => 'II', 1 => 'I'}
     numeral = ""
     roman.each do |n, r|
-      if num >= n
+      while num >= n
         num-= n
         numeral+= r
       end
@@ -18,8 +19,8 @@ module BBLib
   def self.string_to_roman str
     sp = str.split ' '
     sp.map! do |s|
-      if s.to_i.to_s == s
-        BBLib.to_roman s.to_i
+      if s.drop_symbols.to_i.to_s == s.drop_symbols && !(s =~ /\d+\.\d+/)
+        s.sub!(s.scan(/\d+/).first.to_s, BBLib.to_roman(s.to_i))
       else
         s
       end
@@ -34,8 +35,8 @@ module BBLib
       num = BBLib.to_roman n
       if !sp.select{ |i| i[/#{num}/i]}.empty?
         for i in 0..(sp.length-1)
-          if sp[i].upcase == num
-            sp[i] = n.to_s
+          if sp[i].drop_symbols.upcase == num
+            sp[i].sub!(num ,n.to_s)
           end
         end
       end
@@ -45,7 +46,7 @@ module BBLib
 
 end
 
-class Numeric
+class Fixnum
   def to_roman
     BBLib.to_roman self.to_i
   end
