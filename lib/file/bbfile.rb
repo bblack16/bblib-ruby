@@ -36,7 +36,7 @@ module BBLib
     bytes = 0.0
     FILE_SIZES.each do |k, v|
       v[:exp].each do |e|
-        numbers = str.scan(/(?=\w|\D|\A)\d?\.?\d+[[:space:]]*#{e}(?=\W|\d|\z)/i)
+        numbers = str.scan(/(?=\w|\D|\A)\d?\.?\d+[[:space:]]*#{e}s?(?=\W|\d|\z)/i)
         numbers.each{ |n| bytes+= n.to_f * v[:mult] }
       end
     end
@@ -45,14 +45,14 @@ module BBLib
 
 FILE_SIZES = {
     byte: { mult: 1, exp: ['b', 'byt', 'byte'] },
-    kilobyte: { mult: 1024, exp: ['kb', 'kilo', 'k', 'kbyte', 'kilobtye'] },
-    megabyte: { mult: 1048576, exp: ['mb', 'mega', 'm', 'mib', 'mbyte', 'megabtye'] },
-    gigabyte: { mult: 1073741824, exp: ['gb', 'giga', 'g', 'gbyte', 'gigabtye'] },
-    terabtye: { mult: 1099511627776, exp: ['tb', 'tera', 't', 'tbyte', 'terabtye'] },
-    petabtye: { mult: 1125899906842624, exp: ['pb', 'peta', 'p', 'pbyte', 'petabtye'] },
-    exabtye: { mult: 1152921504606846976, exp: ['eb', 'exa', 'e', 'ebyte', 'exabtye'] },
-    zettabtye: { mult: 1180591620717411303424, exp: ['zb', 'zetta', 'z', 'zbyte', 'zettabtye'] },
-    yottabtye: { mult: 1208925819614629174706176, exp: ['yb', 'yotta', 'y', 'ybyte', 'yottabtye'] }
+    kilobyte: { mult: 1024, exp: ['kb', 'kilo', 'k', 'kbyte', 'kilobyte'] },
+    megabyte: { mult: 1048576, exp: ['mb', 'mega', 'm', 'mib', 'mbyte', 'megabyte'] },
+    gigabyte: { mult: 1073741824, exp: ['gb', 'giga', 'g', 'gbyte', 'gigabyte'] },
+    terabyte: { mult: 1099511627776, exp: ['tb', 'tera', 't', 'tbyte', 'terabyte'] },
+    petabyte: { mult: 1125899906842624, exp: ['pb', 'peta', 'p', 'pbyte', 'petabyte'] },
+    exabyte: { mult: 1152921504606846976, exp: ['eb', 'exa', 'e', 'ebyte', 'exabyte'] },
+    zettabyte: { mult: 1180591620717411303424, exp: ['zb', 'zetta', 'z', 'zbyte', 'zettabyte'] },
+    yottabyte: { mult: 1208925819614629174706176, exp: ['yb', 'yotta', 'y', 'ybyte', 'yottabyte'] }
   }
 
 end
