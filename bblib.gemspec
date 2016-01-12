@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["d2sm10@hotmail.com"]
 
   spec.summary       = %q{A library containing many reusable, basic functions.}
-  spec.description   = %q{See summary for now...}
+  spec.description   = %q{A library containing many reusable, basic functions.}
   spec.homepage      = "https://github.com/bblack16/bblib-ruby"
   spec.license       = "MIT"
 
