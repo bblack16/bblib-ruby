@@ -37,7 +37,7 @@ BBLib is currently broken up into the following categories:
 ### File
 #### File Scanners
 
-Various simple file scan methods are available. All of these are toggleable-recursive and can be passed filters using an wildcarding supported by the Ruby Dir.glob() method.
+Various simple file scan methods are available. All of these are toggleable-recursive and can be passed filters using any wildcarding supported by the Ruby Dir.glob() method.
 
 ```ruby
 # Scan for any files or folders in a path
@@ -84,7 +84,6 @@ A file size parser is available that analyzes known patterns in a string to cons
 ```ruby
 # Turn a string into a file size (in bytes)
 BBLib.parse_file_size "1MB 100KB"
-
 #=> 1150976.0
 ```
 
@@ -93,13 +92,10 @@ By default the output is in bytes, however, this can be modified using the named
 ```ruby
 # Turn a string into a file size (in bytes)
 BBLib.parse_file_size "1MB 100KB", output: :megabyte
-
 #=> 1.09765625
 
 # The method can also be called directly on a string
-
 "1.5 Mb".parse_file_size output: :kilobyte
-
 #=> 1536.0
 ```
 
@@ -152,17 +148,14 @@ h2 = ({value: 5, array: [6, 7], hash: {a: 1, z: nil, b_hash: {c: 9, d:10, y:10}}
 
 # Default behavior merges arrays and overwrites non-array/hash values
 h1.deep_merge h2
-
 #=> {:value=>5, :array=>[1, 2, 6, 7], :hash=>{:a=>1, :b_hash=>{:c=>9, :d=>10, :y=>10}, :z=>nil}}
 
 # Don't overwrite colliding values, instead, place them into an array together
 h1.deep_merge h2, overwrite_vals: false
-
 #=> {:value=>[1231, 5], :array=>[1, 2, 6, 7], :hash=>{:a=>[1, 1], :b_hash=>{:c=>[2, 9], :d=>[3, 10], :y=>10}, :z=>nil}}
 
 # Don't merge arrays, instead, overwrite them.
 h1.deep_merge h2, merge_arrays: false
-
 #=> {:value=>5, :array=>[6, 7], :hash=>{:a=>1, :b_hash=>{:c=>9, :d=>10, :y=>10}, :z=>nil}}
 ```
 
@@ -175,7 +168,6 @@ Convert all keys within a hash (including nested keys) to symbols. This is usefu
 ```ruby
 h = {"author" => "Tom Clancy", "books" => ["Rainbow Six", "The Hunt for Red October"]}
 h.keys_to_sym
-
 #=> {:author=>"Tom Clancy", :books=>["Rainbow Six", "The Hunt for Red October"]}
 ```
 
@@ -188,7 +180,6 @@ The code behind this is based on a method found @ http://stackoverflow.com/quest
 ```ruby
 h = {a:1, b:2, c:3, d:4}
 h.reverse
-
 #=> {:d=>4, :c=>3, :b=>2, :a=>1}
 ```
 
@@ -203,17 +194,14 @@ Used to ensure a numeric value is kept within a set of bounds. The first argumen
 ```ruby
 number = 17
 BBLib.keep_between number, 0, 10
-
 #=> 10
 
 number = 0.145
 BBLib.keep_between number, 0.5, 1
-
 #=> 0.5
 
 number = -250
 BBLib.keep_betwee number, nil, 100
-
 #=> -250
 ```
 
@@ -251,25 +239,21 @@ fm.set_weight :composition, 5
 
 # Get similarity as a %
 fm.similarity 'Ruby', 'Rails'
-
 #=> 20.0
 
 # Set the threshold match percent
 fm.threshold = 50
 # Returns true if the match percent is greater than or equal to the threshold
 fm.match? 'Ruby', 'Rails'
-
 #=> false
 
 # Get the similarity of a string with an Array of strings. A hash is returned
 # with the key being the string compared and the value being its match %
 fm.similarities 'Ruby', ['Ruby', 'Rails', 'Java', 'C++']
-
 #=> {"Ruby"=>100.0, "Rails"=>20.0, "Java"=>0.0, "C++"=>0.0}
 
 # Compare a string to an Array of strings but return only the match with the highest comparison result
 fm.best_match 'Ruby', ['Ruby', 'Rails', 'Java', 'C++']
-
 #=> 'Ruby'
 ```
 
@@ -280,7 +264,7 @@ fm.best_match 'Ruby', ['Ruby', 'Rails', 'Java', 'C++']
 
 Implementations of the following algorithms are currently available. All algorithms are for calculating similarity between strings. Most are useful for fuzzy matching. All algorithms are available statically in the BBLib module but are also available as extensions to the String class. Most of these algorithms are case sensitive by default.
 
-1. Levenshtein Distance
+1 - Levenshtein Distance
 
 A fairly simple rendition of the Levenshtein distance algorithm in Ruby. There are two functions available: **levenshtein_distance** and **levenshtein_similarity**. The former, calculates the number of additions, removals or substitutions needed to turn one string into another. The latter, uses the distance to calculate a percentage based match of two strings.
 
@@ -289,56 +273,99 @@ A fairly simple rendition of the Levenshtein distance algorithm in Ruby. There a
 'Ruby is great'.levenshtein_distance 'Rails is great'
 #  OR
 BBLib.levenshtein_distance 'Ruby is great', 'Rails is great'
-
 #=> 4
 
 # Or calculate the similarity as a percent
 'Ruby is great'.levenshtein_similarity 'Rails is great'
-
 #=> 71.42857142857143
 ```
 
-2. String Composition
+2 - String Composition
 
 Compares the character composition of two strings. The order of characters is not relevant, however, the number of occurrences is factored in.
 
 ```ruby
 'Ruby is great'.composition_similarity 'Rails is great'
-
 #=> 71.42857142857143
 ```
 
-3. Phrase Similarity
+3 - Phrase Similarity
 
 Checks to see how many words in a string match another. Words must match exactly, including case. The results is the percentage of words that have an exact pair. The number of occurrences is also a factor.
 
 ```ruby
 'Learn Ruby, it is great'.phrase_similarity 'Learn Rails; it is awesome'
-
 #=> 60.0
 
 'ruby, ruby, ruby'.phrase_similarity 'ruby ruby'
-
 #=> 66.66666666666666
 ```
 
-4. Numeric Similarity (In Progress)
+4 - Numeric Similarity (In Progress)
 
 This algorithm is currently undergoing refactoring...
 
-5. QWERTY Similarity
+5 - QWERTY Similarity
 
 A basic method that compares two strings by measuring the physical difference from one char to another on a QWERTY keyboard (alpha-numeric only). May be useful for detecting typos in words, but becomes less useful depending on the length of the string. This method is still in development and not yet in a final state. Currently a total distance is returned. Eventually, a percentage based match will replace this.
 
 ```ruby
 'q'.qwerty_distance 's'
-
 #=> 2
 
 'qwerty'.qwerty_distance 'qsertp'
-
 #=> 5
 ```
+
+#### Roman Numeral
+
+**to_roman**
+
+Converts an integer into a roman numeral. Supports numbers up to 1000 ('M'). Anything greater will simply return a string version of the integer. Can be called directly on any Fixnum object as well as from the BBLib module.
+
+```ruby
+BBLib.to_roman 20
+#=> 'XX'
+
+15.to_roman
+#=> 'XV'
+```
+
+**string_to_roman**
+
+Converts any integers found in a string into their roman numeral equivalent. Numbers will only be converted if they are surrounded by white space or by symbols. If the integer is embedded within alpha characters or contains a decimal, it is left untouched.
+
+The method is also extended to the String class to be called directly.
+
+```ruby
+BBLib.string_to_roman "Toy Story 3"
+#= "Toy Story III"
+
+"Die Hard 2: Die Harder".to_roman
+#=> "Die Hard II: Die Harder"
+
+"Left4Dead".to_roman
+#=> "Left4Dead"
+
+"Ruby 2.2".to_roman
+#=> "Ruby 2.2"
+```
+
+**from_roman**
+
+The opposite of _string_to_roman_. Parses a string for roman numerals and converts them into integers. Also extended to the String class to call directly. Works similarly to _to_roman_ in that numerals are converted only if surrounded by white space or symbols.
+
+```ruby
+BBLib.from_roman "Toy Story III"
+#=> 'Toy Story 3'
+
+"Super Mario Land II: Six Golden Coins".from_roman
+#=> 'Super Mario Land 2: Six Golden Coins'
+
+"Donkey Kong CountryIII".from_roman
+#=> 'Donkey Kong CountryIII'
+```
+
 
 #### Other
 
@@ -369,7 +396,6 @@ This method is used to normalize strings that contain titles. It parses a string
 The method is available via the BBLib module or any instance of String.
 
 ```ruby
-
 title = "The Simpsons"
 title.move_articles :back
 
@@ -412,7 +438,6 @@ See above. Is an alias for _extract_floats_.
 Similar to the file size parser under the files section, but instead can parse duration from know time patterns in a string. By default the result is returned in seconds, but this can be changed using the named param _:output_. The method is also extended to the String class directly.
 
 ```ruby
-
 "1hr 10 minutes 11s".parse_duration
 
 #=> 4211.0
