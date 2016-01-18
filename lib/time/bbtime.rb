@@ -1,4 +1,4 @@
-
+require_relative 'task_timer'
 
 module BBLib
 
