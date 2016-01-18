@@ -9,6 +9,10 @@ module BBLib
   # General Functions
   ##############################################
 
+  def self.title_case str
+    # TODO
+  end
+
   # Quickly remove any symbols from a string leaving onl alpha-numeric characters and white space.
   def self.drop_symbols str
     str.gsub(/[^\w\s\d]|_/, '')
@@ -64,7 +68,7 @@ class String
   def msplit delims, keep_empty: false
     return [self] unless !delims.nil? && !delims.empty?
     ar = [self]
-    delims.each do |d|
+    [delims].flatten.each do |d|
       ar.map!{ |a| a.split d }
       ar.flatten!
     end
@@ -93,5 +97,24 @@ class String
 
   def extract_numbers convert: true
     BBLib.extract_numbers self, convert:convert
+  end
+
+  def to_clean_sym
+    self.strip.downcase.gsub('_', ' ').drop_symbols.gsub(' ', '_').to_sym
+  end
+
+  # Simple method to convert a string into an array containing only itself
+  def to_a
+    return [self]
+  end
+
+  def encap_by? str
+    return self.start_with?(str) && self.end_with?(str)
+  end
+end
+
+class Symbol
+  def to_clean_sym
+    self.to_s.strip.downcase.gsub('_', ' ').drop_symbols.gsub(' ', '_').to_sym
   end
 end
