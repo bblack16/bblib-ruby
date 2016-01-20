@@ -2,20 +2,7 @@ require_relative 'hash_path'
 
 class Hash
 
-  # Returns all matching values with a specific key (or Array of keys) recursively within a Hash (included nested Arrays)
-  def dig keys, search_arrays: true
-    keys = [keys].flatten
-    matches = []
-    self.each do |k, v|
-      if keys.any?{ |a| (a.is_a?(Regexp) ? a =~ k : a == k ) } then matches << v end
-      if v.is_a? Hash
-        matches+= v.dig(keys)
-      elsif v.is_a?(Array) && search_arrays
-        v.flatten.each{ |i| if i.is_a?(Hash) then matches+= i.dig(keys) end }
-      end
-    end
-    matches
-  end
+
 
   # Merges with another hash but also merges all nested hashes and arrays/values.
   # Based on method found @ http://stackoverflow.com/questions/9381553/ruby-merge-nested-hash
@@ -59,6 +46,22 @@ class Hash
   def unshift hash, value = nil
     if !hash.is_a? Hash then hash = {hash => value} end
     replace hash.merge(self).merge(hash)
+  end
+
+end
+
+module BBLib
+
+  def self.path_nav obj, path = '', delimiter = '.', &block
+    case [obj.class]
+    when [Hash]
+      obj.each{ |k,v| path_nav v, "#{path}#{path.nil? || path.empty? ? nil : delimiter}#{k}", delimiter, &block }
+    when [Array]
+      index = 0
+      obj.each{ |o| path_nav o, "#{path}[#{index}]", delimiter, &block ; index+=1 }
+    else
+      yield path, obj
+    end
   end
 
 end
