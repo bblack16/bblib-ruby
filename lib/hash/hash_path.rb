@@ -31,69 +31,16 @@ module BBLib
     end
   end
 
-  # Will delete this after verifying the refactored version is fully functional
-  def self.hash_path_old hashes, path, recursive = false, delimiter: '.'
-    return nil if !delimiter
-    if delimiter.to_s.size > 1 then delimiter = delimiter[0] end
-    if !path.is_a?(Array)
-      if path.start_with?(delimiter) then path.sub!(delimiter, '') end
-      path = BBLib.split_hash_path path, delimiter
-    end
-    if !hashes.is_a?(Array) then hashes = [hashes] end
-    if path.nil? || path.empty? then return hashes end
-    if path.first == '' then return BBLib.hash_path_old(hashes, path[1..-1], true) end
-    current = BBLib.hash_path_analyze(path.first)
-    possible = []
-    hashes.each do |hash|
-      if recursive
-        possible << hash.dig([current[:key].to_sym, current[:key].to_s]).flatten[current[:slice]]
-      else # Not recursive
-        if current[:key].is_a?(Symbol) || current[:key].is_a?(String)
-          if current[:key].to_s == '*'
-            possible << hash.values.flatten[current[:slice]]
-          else
-            possible << [(hash[current[:key].to_sym] ||= hash[current[:key].to_s])].flatten[current[:slice]]
-          end
-        else
-          hash.keys.map{ |k| k =~ current[:key] }.each do |m|
-            if m then possible << hash[m].flatten[current[:slice]] end
-          end
-        end
-      end
-    end
-    # Analyze formulas if necessary
-    if current[:formula]
-      temp = []
-      possible.flatten.each do |p|
-        if current[:formula]
-          begin
-            if eval(current[:formula].gsub('$', p.to_s))
-              temp << p
-            end
-          rescue StandardError, SyntaxError => se
-            # Do nothing, the formula failed and we reject the value as a false
-          end
-        end
-      end
-      possible = temp
-    end
-    # Move on or return the results if no more paths exist
-    if path.size > 1 && !possible.empty?
-      BBLib.hash_path_old(possible.flatten.reject{ |r| !r.is_a?(Hash) }, path[1..-1])
-    else
-      return possible.flatten
-    end
-  end
-
   def self.hash_path_set hash, *args
     details = BBLib.hash_path_setup(hash, args)
     count = 0
-    p details
     details[:paths].each do |path, d|
       d[:hashes].each do |h|
         count+=1
-        next unless details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) )
+        exists = (details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) ))
+        next unless details[:bridge] || exists
         key = details[:symbol_sensitive] ? d[:last][:key] : (h.include?(d[:last][:key].to_sym) ? d[:last][:key].to_sym : d[:last][:key].to_s)
+        if details[:symbols] then key = key.to_sym elsif !exists then key = d[:last][:key] end
         if Fixnum === d[:last][:slice]
           h[key][d[:last][:slice]] = d[:value]
         else
@@ -102,15 +49,14 @@ module BBLib
           end
         end
       end
+      if count == 0 && details[:bridge] then hash.bridge(path, value:d[:value], symbols:details[:symbols]) end
     end
-    if count == 0 && bridge then hash.bridge(path.join(delimiter), value:value, symbols:symbols) end
     hash
   end
 
   def self.hash_path_move hash, *args
-    copy = args.dup
     BBLib.hash_path_copy hash, args
-    details = BBLib.hash_path_setup(hash, copy)
+    details = BBLib.hash_path_setup(hash, args)
     opts = Hash.new
     details.each do |k, v|
       if HASH_PATH_PARAMS.include?(k) then opts[k] = v end
@@ -119,18 +65,40 @@ module BBLib
     return hash
   end
 
+  def self.hash_path_move_to from, to, *args
+    #Needs to be done
+    'Not yet implemented'
+  end
+
   def self.hash_path_copy hash, *args
     details = BBLib.hash_path_setup(hash, args)
     details[:paths].each do |path, d|
       d[:hashes].each do |h|
-        next unless details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) )
-        value = details[:symbol_sensitive] ? h[d[:last][:key]] : (h[d[:last][:key].to_sym] ||= h[d[:last][:key].to_s])
-        if value
-          BBLib.hash_path_set hash, d[:value] => value
+        if Hash === h || Array === h
+          exist = details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) )
+          next unless exist || details[:bridge]
+          value = details[:symbol_sensitive] ? h[d[:last][:key]] : (h[d[:last][:key].to_sym] ||= h[d[:last][:key].to_s])
+          if value
+            BBLib.hash_path_set hash, d[:value] => value, symbols:details[:symbols]
+          end
+        elsif !details[:stop_on_nil]
+          BBLib.hash_path_set hash, d[:value] => nil, symbols:details[:symbols]
         end
       end
     end
     hash
+  end
+
+  def self.hash_path_copy_to from, to, *args
+    details = BBLib.hash_path_setup(from, args)
+    details[:paths].each do |path, d|
+      value = from.hash_path(path)
+      if !value.empty? || !details[:stop_on_nil]
+        if !details[:array_map].include?(d[:value]) then value = value.first end
+        to.bridge(d[:value], value: value)
+      end
+    end
+    to
   end
 
   def self.hash_path_delete hash, *args
@@ -171,7 +139,7 @@ module BBLib
     end
 
     def self.split_hash_path path, delimiter = '.'
-      if path.start_with?(delimiter) then path.sub!(delimiter, '') end
+      if path.start_with?(delimiter) then path = path.sub(delimiter, '') end
       paths, stop, open = [], 0, false
       path.chars.each do |t|
         if t == '[' then open = true end
@@ -212,6 +180,7 @@ module BBLib
       HASH_PATH_PARAMS.each do |p, h|
         info[p] = (map.include?(p) ? map.delete(p) : h[:default])
       end
+      if info[:keys_to_sym] then hash.keys_to_sym! end
       map.each do |path, value|
         info[:paths][path] = Hash.new
         info[:paths][path][:value] = value
@@ -226,7 +195,10 @@ module BBLib
       delimiter: {default:'.'},
       bridge: {default:true},
       symbols: {default:true},
-      symbol_sensitive: {default:false}
+      symbol_sensitive: {default:false},
+      stop_on_nil: {default:true},
+      array_map: {default:[]},
+      keys_to_sym: {default:true}
     }
 
 end
@@ -245,6 +217,10 @@ class Hash
 
   def hash_path_copy *args
     BBLib.hash_path_copy self, args
+  end
+
+  def hash_path_copy_to hash, *args
+    BBLib.hash_path_copy_to self, hash, args
   end
 
   def hash_path_move *args
