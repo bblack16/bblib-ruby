@@ -18,7 +18,7 @@ class Hash
   # Converts the keys of the hash as well as any nested hashes to symbols.
   # Based on method found @ http://stackoverflow.com/questions/800122/best-way-to-convert-strings-to-symbols-in-hash
   def keys_to_sym clean: false
-    self.inject({}){|memo,(k,v)| memo[clean ? k.to_s.to_clean_sym : k.to_s.to_sym] = (Hash === v ? v.keys_to_sym : v); memo}
+    self.inject({}){|memo,(k,v)| memo[clean ? k.to_s.to_clean_sym : k.to_s.to_sym] = (Hash === v ? v.keys_to_sym : (Array === v ? v.flatten.map{ |a| Hash === a ? a.keys_to_sym : a } : v) ); memo}
   end
 
   def keys_to_sym! clean: false
@@ -27,7 +27,7 @@ class Hash
 
   # Converts the keys of the hash as well as any nested hashes to strings.
   def keys_to_string
-    self.inject({}){|memo,(k,v)| memo[k.to_s] = (Hash === v ? v.keys_to_string : v); memo}
+    self.inject({}){|memo,(k,v)| memo[k.to_s] = (Hash === v ? v.keys_to_string : (Array === v ? v.flatten.map{ |a| Hash === a ? a.keys_to_string : a } : v)); memo}
   end
 
   def keys_to_string!
