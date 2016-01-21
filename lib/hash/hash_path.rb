@@ -66,8 +66,9 @@ module BBLib
   end
 
   def self.hash_path_move_to from, to, *args
-    #Needs to be done
-    'Not yet implemented'
+    BBLib.hash_path_copy_to from, to, args
+    BBLib.hash_path_delete from, args
+    return to
   end
 
   def self.hash_path_copy hash, *args
@@ -94,7 +95,7 @@ module BBLib
     details[:paths].each do |path, d|
       value = from.hash_path(path)
       if !value.empty? || !details[:stop_on_nil]
-        if !details[:array_map].include?(d[:value]) then value = value.first end
+        if !details[:arrays].include?(d[:value]) then value = value.first end
         to.bridge(d[:value], value: value)
       end
     end
@@ -139,7 +140,7 @@ module BBLib
     end
 
     def self.split_hash_path path, delimiter = '.'
-      if path.start_with?(delimiter) then path = path.sub(delimiter, '') end
+      if path.to_s.start_with?(delimiter) then path = path.to_s.sub(delimiter, '') end
       paths, stop, open = [], 0, false
       path.chars.each do |t|
         if t == '[' then open = true end
@@ -197,7 +198,7 @@ module BBLib
       symbols: {default:true},
       symbol_sensitive: {default:false},
       stop_on_nil: {default:true},
-      array_map: {default:[]},
+      arrays: {default:[]},
       keys_to_sym: {default:true}
     }
 
@@ -221,6 +222,10 @@ class Hash
 
   def hash_path_copy_to hash, *args
     BBLib.hash_path_copy_to self, hash, args
+  end
+
+  def hash_path_move_to hash, *args
+    BBLib.hash_path_move_to self, hash, args
   end
 
   def hash_path_move *args
