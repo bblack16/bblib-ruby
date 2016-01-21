@@ -10,12 +10,12 @@ module BBLib
       if recursive
         patterns = Regexp === p[:key] ? p[:key] : p[:key].to_s == '*' ? /.*/ : (symbol_sensitive ? p[:key] : [p[:key].to_sym, p[:key].to_s])
         matches << hash.dig(patterns).flatten[p[:slice]]
-        # matches << hash.dig([p[:key].to_sym, p[:key].to_s]).flatten[p[:slice]]
       else
         if Symbol === p[:key] || String === p[:key]
           if p[:key].to_s == '*'
             matches << hash.values.flatten[p[:slice]]
           else
+            next unless symbol_sensitive ? hash.include?(p[:key]) : (hash.include?(p[:key].to_sym) || hash.include?(p[:key].to_s) )
             matches << [symbol_sensitive ? hash[p[:key]] : (hash[p[:key].to_sym] ||= hash[p[:key].to_s])].flatten[p[:slice]]
           end
         elsif Regexp === p[:key]
@@ -86,17 +86,20 @@ module BBLib
   end
 
   def self.hash_path_set hash, *args
-    puts args
-    return nil unless args && args[0].class == Hash
-    map = args[0]
-    # puts map
-    delimiter = (map[:delimiter] ? map[:delimiter] : '.')
+    return nil unless args && args.flatten[0].class == Hash
+    map = args.flatten[0]
+    p map
+    delimiter = (map.include?(:delimiter) ? map.delete(:delimiter) : '.')
+    bridge = (map.include?(:bridge) ? map.delete(:bridge) : true)
+    p bridge, map
+    symbols = (map.include?(:symbols) ? map.delete(:symbols) : true)
     map.each do |path, value|
       path = BBLib.split_hash_path(path, delimiter)
       last = BBLib.hash_path_analyze path.last
-      # puts path, delimiter
-      BBLib.hash_path(hash, path[0..-2], delimiter:delimiter ).each do |h|
-        p "H - #{h}"
+      count = 0
+      BBLib.hash_path(hash, path[0..-2].join(delimiter), delimiter:delimiter ).each do |h|
+        count+=1
+        puts "H: #{h} #{hash}"
         if Fixnum === last[:slice]
           h[last[:key].to_sym][last[:slice]] = value
         else
@@ -105,6 +108,8 @@ module BBLib
           end
         end
       end
+      if count == 0 && bridge then hash.bridge(path.join(delimiter), value:value, symbols:symbols) end
+        p count
     end
     hash
   end
@@ -163,6 +168,10 @@ class Hash
 
   def hash_path path, delimiter: '.'
     BBLib.hash_path self, path, delimiter:delimiter
+  end
+
+  def hash_path_set *args
+    BBLib.hash_path_set self, args
   end
 
   # Returns all matching values with a specific key (or Array of keys) recursively within a Hash (included nested Arrays)
