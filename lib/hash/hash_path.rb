@@ -86,32 +86,73 @@ module BBLib
   end
 
   def self.hash_path_set hash, *args
-    return nil unless args && args.flatten[0].class == Hash
-    map = args.flatten[0]
-    p map
-    delimiter = (map.include?(:delimiter) ? map.delete(:delimiter) : '.')
-    bridge = (map.include?(:bridge) ? map.delete(:bridge) : true)
-    p bridge, map
-    symbols = (map.include?(:symbols) ? map.delete(:symbols) : true)
-    map.each do |path, value|
-      path = BBLib.split_hash_path(path, delimiter)
-      last = BBLib.hash_path_analyze path.last
-      count = 0
-      BBLib.hash_path(hash, path[0..-2].join(delimiter), delimiter:delimiter ).each do |h|
+    details = BBLib.hash_path_setup(hash, args)
+    count = 0
+    p details
+    details[:paths].each do |path, d|
+      d[:hashes].each do |h|
         count+=1
-        puts "H: #{h} #{hash}"
-        if Fixnum === last[:slice]
-          h[last[:key].to_sym][last[:slice]] = value
+        next unless details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) )
+        key = details[:symbol_sensitive] ? d[:last][:key] : (h.include?(d[:last][:key].to_sym) ? d[:last][:key].to_sym : d[:last][:key].to_s)
+        if Fixnum === d[:last][:slice]
+          h[key][d[:last][:slice]] = d[:value]
         else
           if h.is_a?(Hash)
-            h[path.last.to_sym] = value
+            h[key] = d[:value]
           end
         end
       end
-      if count == 0 && bridge then hash.bridge(path.join(delimiter), value:value, symbols:symbols) end
-        p count
+    end
+    if count == 0 && bridge then hash.bridge(path.join(delimiter), value:value, symbols:symbols) end
+    hash
+  end
+
+  def self.hash_path_move hash, *args
+    copy = args.dup
+    BBLib.hash_path_copy hash, args
+    details = BBLib.hash_path_setup(hash, copy)
+    opts = Hash.new
+    details.each do |k, v|
+      if HASH_PATH_PARAMS.include?(k) then opts[k] = v end
+    end
+    BBLib.hash_path_delete hash, [details[:paths].keys, opts ].flatten
+    return hash
+  end
+
+  def self.hash_path_copy hash, *args
+    details = BBLib.hash_path_setup(hash, args)
+    details[:paths].each do |path, d|
+      d[:hashes].each do |h|
+        next unless details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) )
+        value = details[:symbol_sensitive] ? h[d[:last][:key]] : (h[d[:last][:key].to_sym] ||= h[d[:last][:key].to_s])
+        if value
+          BBLib.hash_path_set hash, d[:value] => value
+        end
+      end
     end
     hash
+  end
+
+  def self.hash_path_delete hash, *args
+    args.flatten!
+    details = BBLib.hash_path_setup hash, [args.find{ |f| Hash === f }.to_h.merge(args.find_all{ |a| String === a }.zip([]).to_h)]
+    deleted = []
+    details[:paths].each do |path, d|
+      d[:hashes].each do |h|
+        next unless details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) )
+        if Fixnum === d[:last][:slice]
+          (details[:symbol_sensitive] ? h[d[:last][:key]] : (h[d[:last][:key].to_sym] ||= h[d[:last][:key].to_s] )).delete_at d[:last][:slice]
+        else
+          if details[:symbol_sensitive]
+            deleted << h.delete(d[:last][:key])
+          else
+            deleted << h.delete(d[:last][:key].to_sym)
+            deleted << h.delete(d[:last][:key].to_s)
+          end
+        end
+      end
+    end
+    return deleted.flatten
   end
 
   private
@@ -160,6 +201,34 @@ module BBLib
       temp
     end
 
+    public
+
+    def self.hash_path_setup hash, *args
+      args.flatten!
+      return nil unless args && args[0].class == Hash
+      info = Hash.new
+      info[:paths] = Hash.new
+      map = args[0].dup
+      HASH_PATH_PARAMS.each do |p, h|
+        info[p] = (map.include?(p) ? map.delete(p) : h[:default])
+      end
+      map.each do |path, value|
+        info[:paths][path] = Hash.new
+        info[:paths][path][:value] = value
+        info[:paths][path][:paths] = BBLib.split_hash_path(path, info[:delimiter])
+        info[:paths][path][:last] = BBLib.hash_path_analyze info[:paths][path][:paths].last
+        info[:paths][path][:hashes] = BBLib.hash_path(hash, info[:paths][path][:paths][0..-2].join(info[:delimiter]), delimiter:info[:delimiter], symbol_sensitive:info[:symbol_sensitive] )
+      end
+      return info
+    end
+
+    HASH_PATH_PARAMS = {
+      delimiter: {default:'.'},
+      bridge: {default:true},
+      symbols: {default:true},
+      symbol_sensitive: {default:false}
+    }
+
 end
 
 
@@ -172,6 +241,18 @@ class Hash
 
   def hash_path_set *args
     BBLib.hash_path_set self, args
+  end
+
+  def hash_path_copy *args
+    BBLib.hash_path_copy self, args
+  end
+
+  def hash_path_move *args
+    BBLib.hash_path_move self, args
+  end
+
+  def hash_path_delete *args
+    BBLib.hash_path_delete self, args
   end
 
   # Returns all matching values with a specific key (or Array of keys) recursively within a Hash (included nested Arrays)
