@@ -1,6 +1,38 @@
 module BBLib
 
-  def self.hash_path hashes, path, recursive = false, delimiter: '.'
+  def self.hash_path hashes, path, recursive: false, delimiter: '.', symbol_sensitive: false
+    if String === path then path = BBLib.split_and_analyze(path, delimiter) end
+    if !hashes.is_a? Array then hashes = [hashes] end
+    return hashes if path.nil? || path.empty?
+    if path[0][:key] == '' then return BBLib.hash_path(hashes, path[1..-1], recursive: true, symbol_sensitive:symbol_sensitive) end
+    matches, p = Array.new, path.first
+    hashes.each do |hash|
+      if recursive
+        patterns = Regexp === p[:key] ? p[:key] : p[:key].to_s == '*' ? /.*/ : (symbol_sensitive ? p[:key] : [p[:key].to_sym, p[:key].to_s])
+        matches << hash.dig(patterns).flatten[p[:slice]]
+        # matches << hash.dig([p[:key].to_sym, p[:key].to_s]).flatten[p[:slice]]
+      else
+        if Symbol === p[:key] || String === p[:key]
+          if p[:key].to_s == '*'
+            matches << hash.values.flatten[p[:slice]]
+          else
+            matches << [symbol_sensitive ? hash[p[:key]] : (hash[p[:key].to_sym] ||= hash[p[:key].to_s])].flatten[p[:slice]]
+          end
+        elsif Regexp === p[:key]
+          hash.keys.find_all{ |k| k =~ p[:key] }.each{ |m| matches << hash[m] }
+        end
+      end
+    end
+    matches = BBLib.analyze_hash_path_formula p[:formula], matches
+    if path.size > 1 && !matches.empty?
+      BBLib.hash_path(matches.flatten.reject{ |r| !r.is_a?(Hash) }, path[1..-1], symbol_sensitive:symbol_sensitive)
+    else
+      return matches.flatten
+    end
+  end
+
+  # Will delete this after verifying the refactored version is fully functional
+  def self.hash_path_old hashes, path, recursive = false, delimiter: '.'
     return nil if !delimiter
     if delimiter.to_s.size > 1 then delimiter = delimiter[0] end
     if !path.is_a?(Array)
@@ -9,7 +41,7 @@ module BBLib
     end
     if !hashes.is_a?(Array) then hashes = [hashes] end
     if path.nil? || path.empty? then return hashes end
-    if path.first == '' then return BBLib.hash_path(hashes, path[1..-1], true) end
+    if path.first == '' then return BBLib.hash_path_old(hashes, path[1..-1], true) end
     current = BBLib.hash_path_analyze(path.first)
     possible = []
     hashes.each do |hash|
@@ -47,7 +79,7 @@ module BBLib
     end
     # Move on or return the results if no more paths exist
     if path.size > 1 && !possible.empty?
-      BBLib.hash_path(possible.flatten.reject{ |r| !r.is_a?(Hash) }, path[1..-1])
+      BBLib.hash_path_old(possible.flatten.reject{ |r| !r.is_a?(Hash) }, path[1..-1])
     else
       return possible.flatten
     end
@@ -57,14 +89,20 @@ module BBLib
     puts args
     return nil unless args && args[0].class == Hash
     map = args[0]
-    puts map
+    # puts map
     delimiter = (map[:delimiter] ? map[:delimiter] : '.')
     map.each do |path, value|
       path = BBLib.split_hash_path(path, delimiter)
-      puts path, delimiter
+      last = BBLib.hash_path_analyze path.last
+      # puts path, delimiter
       BBLib.hash_path(hash, path[0..-2], delimiter:delimiter ).each do |h|
-        if h.is_a?(Hash)
-          h[path.last.to_sym] = value
+        p "H - #{h}"
+        if Fixnum === last[:slice]
+          h[last[:key].to_sym][last[:slice]] = value
+        else
+          if h.is_a?(Hash)
+            h[path.last.to_sym] = value
+          end
         end
       end
     end
@@ -87,6 +125,7 @@ module BBLib
     end
 
     def self.split_hash_path path, delimiter = '.'
+      if path.start_with?(delimiter) then path.sub!(delimiter, '') end
       paths, stop, open = [], 0, false
       path.chars.each do |t|
         if t == '[' then open = true end
@@ -99,6 +138,21 @@ module BBLib
 
     def self.split_and_analyze path, delimiter = '.'
       split_hash_path(path, delimiter).collect{ |p| hash_path_analyze(p) }
+    end
+
+    def self.analyze_hash_path_formula formula, hashes
+      return hashes unless formula
+      temp = []
+      hashes.flatten.each do |p|
+        begin
+          if eval(formula.gsub('$', p.to_s))
+            temp << p
+          end
+        rescue StandardError, SyntaxError => se
+          # Do nothing, the formula failed and we reject the value as a false
+        end
+      end
+      temp
     end
 
 end
@@ -151,38 +205,30 @@ class Hash
     paths.each do |p|
       count+=1
       last = paths.size == count
-      # puts p
       if p[:slice].is_a?(Fixnum)
-        # puts "#{current}, #{4}"
         index = p[:slice]
         if current[p[:key]].nil? then current[p[:key]] = [] end
         current = current[p[:key]]
         if last then current.insert index, value end
       else
         if current.is_a?(Hash)
-          # puts "#{current}", 5
           if last
             current[p[:key]] = value
-            # puts 1
           else
             current[p[:key]] = current[p[:key]] ||= Hash.new
-            # p current[p[:key]]
           end
           current = current[p[:key]]
         else
-          # puts 6, "#{current}"
           if last
             if current[index]
               if current[index].is_a? Hash
                 current[index].merge({p[:key] => value})
-                # puts 'MERGE'
               else
                 current[index] = ({p[:key] => value})
               end
             else
               current.insert index, {p[:key] => value}
             end
-            # puts 2
           else
             temp = { p[:key] => {} }
             if current[index].is_a? Hash
@@ -190,15 +236,12 @@ class Hash
             else
               current[index] = temp
             end
-            # current.insert index, temp
           end
-          # puts current.class
           if !last then current = temp[p[:key]] end
         end
         index = -1
       end
     end
-    # end
     return self
   end
 
