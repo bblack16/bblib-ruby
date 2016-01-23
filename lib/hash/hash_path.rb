@@ -54,6 +54,10 @@ module BBLib
     hash
   end
 
+  def self.hash_path_exists? hash, path, delimiter: '.', symbol_sensitive: false
+    return !BBLib.hash_path(hash, path, delimiter:delimiter, symbol_sensitive:symbol_sensitive).empty?
+  end
+
   def self.hash_path_move hash, *args
     BBLib.hash_path_copy hash, args
     details = BBLib.hash_path_setup(hash, args)
@@ -115,13 +119,25 @@ module BBLib
           if details[:symbol_sensitive]
             deleted << h.delete(d[:last][:key])
           else
-            deleted << h.delete(d[:last][:key].to_sym)
-            deleted << h.delete(d[:last][:key].to_s)
+            if h.include?(d[:last][:key].to_sym) then deleted << h.delete(d[:last][:key].to_sym) end
+            if h.include?(d[:last][:key].to_s) then deleted << h.delete(d[:last][:key].to_s) end
           end
         end
       end
     end
     return deleted.flatten
+  end
+
+  def self.path_nav obj, path = '', delimiter = '.', &block
+    case [obj.class]
+    when [Hash]
+      obj.each{ |k,v| path_nav v, "#{path}#{path.nil? || path.empty? ? nil : delimiter}#{k}", delimiter, &block }
+    when [Array]
+      index = 0
+      obj.each{ |o| path_nav o, "#{path}#{path.end_with?(']') ? delimiter : nil}[#{index}]", delimiter, &block ; index+=1 }
+    else
+      yield path, obj
+    end
   end
 
   private
@@ -133,9 +149,9 @@ module BBLib
       elsif key.start_with? ':'
         key = key[1..-1].to_sym
       end
-      slice = eval(path.scan(/(?<=\[).*(?=\])/).first.to_s)
+      slice = eval(path.scan(/(?<=\[).*?(?=\])/).first.to_s)
       if slice.nil? then slice = (0..-1) end
-      formula = path.scan(/(?<=\().*(?=\))/).first
+      formula = path.scan(/(?<=\().*?(?=\))/).first
       {key:key, slice:slice, formula:formula}
     end
 
@@ -169,8 +185,6 @@ module BBLib
       end
       temp
     end
-
-    public
 
     def self.hash_path_setup hash, *args
       args.flatten!
@@ -236,7 +250,11 @@ class Hash
     BBLib.hash_path_delete self, args
   end
 
-  # Returns all matching values with a specific key (or Array of keys) recursively within a Hash (included nested Arrays)
+  def hash_path_exists? path, delimiter: '.', symbol_sensitive: false
+    BBLib.hash_path_exists? self, path, delimiter:delimiter, symbol_sensitive:symbol_sensitive
+  end
+
+  # Returns all matching values with a specific key (or Array of keys) recursively within a Hash (including nested Arrays)
   def dig keys, search_arrays: true
     keys = [keys].flatten
     matches = []
@@ -267,10 +285,26 @@ class Hash
     return eh
   end
 
-  # Builds out a shell of a hash using a delimited path.
+  # Builds out a shell of a hash path using a delimited path. Use value to set a value.
   def bridge path, delimiter: '.', value: nil, symbols: false
+    # Ensure the path is a delimiter string. This supports arrays being passed in
     path = (path.is_a?(Array) ? path.join(delimiter) : path.to_s)
+    #Generate the paths and set the current variable
     current, paths = self, BBLib.split_and_analyze(path, delimiter)
+    # Check to see if there is only one path. If there is return either an Array of Hash
+    if paths.size == 1
+      # If the first value is a slice the value is inserted into an empty array
+      if Fixnum === paths.first[:slice]
+        if paths.first[:key].empty?
+          return [].insert paths.first[:slice], value
+        else
+          return {paths.first[:key] => ([].insert paths.first[:slice], value )}
+        end
+      end
+      # If the value does not have a slice, a hash with a single key-value pair is returned
+      return {paths.first[:key] => value}
+    end
+    # If symbols is true, then all keys are turned into symbols
     if symbols then paths.each{ |p| p[:key] = p[:key].to_s.to_sym } end
     index, count = -1, 0
     paths.each do |p|
@@ -278,9 +312,16 @@ class Hash
       last = paths.size == count
       if p[:slice].is_a?(Fixnum)
         index = p[:slice]
-        if current[p[:key]].nil? then current[p[:key]] = [] end
-        current = current[p[:key]]
-        if last then current.insert index, value end
+        if paths[count-2] && Fixnum === paths[count-2][:slice]
+          current[paths[count-2][:slice]] = current[paths[count-2][:slice]] ||= Array.new
+          current = current[paths[count-2][:slice]]
+        else
+          if current[p[:key]].nil?
+            current[p[:key]] = []
+          end
+            current = current[p[:key]]
+        end
+        if last then current[index] = value end
       else
         if current.is_a?(Hash)
           if last
