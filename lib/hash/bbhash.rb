@@ -18,7 +18,8 @@ class Hash
   # Converts the keys of the hash as well as any nested hashes to symbols.
   # Based on method found @ http://stackoverflow.com/questions/800122/best-way-to-convert-strings-to-symbols-in-hash
   def keys_to_sym clean: false
-    self.inject({}){|memo,(k,v)| memo[clean ? k.to_s.to_clean_sym : k.to_s.to_sym] = (Hash === v ? v.keys_to_sym : (Array === v ? v.flatten.map{ |a| Hash === a ? a.keys_to_sym : a } : v) ); memo}
+    self.inject({}){|memo,(k,v)| memo[clean ? k.to_s.to_clean_sym : k.to_s.to_sym] = (Hash === v || Array === v ? v.keys_to_sym(clean:clean) : v); memo}
+    # self.inject({}){|memo,(k,v)| memo[clean ? k.to_s.to_clean_sym : k.to_s.to_sym] = (Hash === v ? v.keys_to_sym : (Array === v ? v.flatten.map{ |a| Hash === a ? a.keys_to_sym : a } : v) ); memo}
   end
 
   def keys_to_sym! clean: false
@@ -26,12 +27,13 @@ class Hash
   end
 
   # Converts the keys of the hash as well as any nested hashes to strings.
-  def keys_to_string
-    self.inject({}){|memo,(k,v)| memo[k.to_s] = (Hash === v ? v.keys_to_string : (Array === v ? v.flatten.map{ |a| Hash === a ? a.keys_to_string : a } : v)); memo}
+  def keys_to_s
+    self.inject({}){|memo,(k,v)| memo[k.to_s] = (Hash === v || Array === v ? v.keys_to_s : v); memo}
+    # self.inject({}){|memo,(k,v)| memo[k.to_s] = (Hash === v ? v.keys_to_s : (Array === v ? v.flatten.map{ |a| Hash === a ? a.keys_to_s : a } : v)); memo}
   end
 
-  def keys_to_string!
-    replace(self.keys_to_string)
+  def keys_to_s!
+    replace(self.keys_to_s)
   end
 
   # Reverses the order of keys in the Hash
@@ -50,18 +52,14 @@ class Hash
 
 end
 
-module BBLib
+class Array
 
-  def self.path_nav obj, path = '', delimiter = '.', &block
-    case [obj.class]
-    when [Hash]
-      obj.each{ |k,v| path_nav v, "#{path}#{path.nil? || path.empty? ? nil : delimiter}#{k}", delimiter, &block }
-    when [Array]
-      index = 0
-      obj.each{ |o| path_nav o, "#{path}[#{index}]", delimiter, &block ; index+=1 }
-    else
-      yield path, obj
-    end
+  def keys_to_sym clean: false
+    self.map{ |v| Hash === v || Array === v ? v.keys_to_sym(clean:clean) : v }
+  end
+
+  def keys_to_s clean: false
+    self.map{ |v| Hash === v || Array === v ? v.keys_to_s : v }
   end
 
 end
