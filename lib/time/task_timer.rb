@@ -39,6 +39,12 @@ module BBLib
       end
     end
 
+    def clear task
+      return nil unless @tasks.keys.include?(task)
+      stop task
+      @tasks[task][:history].clear
+    end
+
     def start task = :default
       if !@tasks.keys.include?(task) then @tasks[task] = {history: [], current: nil} end
       if @tasks[task][:current] then stop task end
