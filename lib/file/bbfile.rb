@@ -23,11 +23,12 @@ module BBLib
   end
 
   # Shorthand method to write a string to dist. By default the path is created if it doesn't exist.
-  def self.string_to_file path, str, mkpath = true
+  # Set mode to w to truncate file or leave at a to append.
+  def self.string_to_file path, str, mkpath = true, mode: 'a'
     if !Dir.exists?(path) && mkpath
       FileUtils.mkpath File.dirname(path)
     end
-    File.write(path, str.to_s)
+    File.write(path, str.to_s, mode:mode)
   end
 
   # A file size parser for strings. Extracts any known patterns for file sizes.
@@ -64,8 +65,8 @@ class File
 end
 
 class String
-  def to_file path, mkpath = true
-    BBLib.string_to_file path, self, mkpath
+  def to_file path, mkpath = true, mode: 'a'
+    BBLib.string_to_file path, self, mkpath, mode:mode
   end
 
   def file_name with_extension = true
