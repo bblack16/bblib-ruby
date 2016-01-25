@@ -22,12 +22,14 @@ module BBLib
       [message].flatten.each do |m|
         @queue.push m
       end
+      true
     end
 
     def unshift message
       [message].flatten.each do |m|
         @queue.unshift m
       end
+      true
     end
 
     def pause= p
