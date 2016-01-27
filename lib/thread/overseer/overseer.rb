@@ -117,6 +117,18 @@ module BBLib
       return @queue.empty? && @ready.empty? && @running.empty?
     end
 
+    def clear
+      @done.clear
+    end
+
+    def flush
+      @done.clear
+      @queue.clear
+      @ready.clear
+      @running.each{ |r| r[:thread].kill }
+      @running.clear
+    end
+
     private
 
       def next_id
