@@ -17,7 +17,7 @@ module BBLib
       if start then self.start end
     end
 
-    def queue block, args = [], name:nil, priority:3, start_at: nil, max_life:nil, count:true, dependencies:nil
+    def queue block, args = [], repeat:false, name:nil, priority:3, start_at: nil, max_life:nil, count:true, dependencies:nil
       if @stashed.include?(block) then block = @stashed[block] end
       raise "Self referencing dependencies are not allowed. #{dependencies} == #{@last_id+1} || #{name}" if !dependencies.nil? && (dependencies.is_a?(Array) && dependencies.include?(@last_id+1) || dependencies == @last_id+1 || dependencies == name)
       raise "Invalid type exception. Got #{block.class} but expected Proc" unless Proc === block
@@ -33,6 +33,8 @@ module BBLib
         started:nil,
         max_life:max_life,
         name:name,
+        repeat:repeat,
+        run_count:0,
         priority:BBLib::keep_between(priority.to_i, 0, 6),
         start_at: (start_at.is_a?(Numeric) ? Time.now + start_at : (Time === start_at ? start_at : nil)),
         initial_priority:BBLib::keep_between(priority.to_i, 0, 6) })
@@ -164,9 +166,15 @@ module BBLib
             if !item.nil?
               item[:started] = Time.now.to_f
               item[:state] = :running
+              item[:run_count] = item[:run_count] + 1
+              args = {mq:@message_queue, tinfo:item.reject{ |k, v| [:args, :thread, :proc, :dependency_info].include? k }, dinfo:item[:dependency_info]}
+              params = item[:proc].parameters.map{ |o, t| t }
+              args.keys.each do |k|
+                if !params.include?(k) then args.delete(k) end
+              end
               item[:thread] = Thread.new{
                 begin
-                  item[:proc].call(item[:args], {mq:@message_queue, tinfo:item.reject{ |k, v| [:args, :thread, :proc, :dependency_info].include? k }, dinfo:item[:dependency_info]})
+                  item[:proc].call(item[:args], args)
                 rescue StandardError => e
                   e
                 end
@@ -241,10 +249,16 @@ module BBLib
               # Move any dead threads to the done queue to clear up space for new threads to run
               if !r[:thread].alive?
                 r.delete :mq
-                r[:finished] = Time.now.to_f
-                r[:state] = r[:thread].value.is_a?(Exception) ? :error : :finished unless r[:state] == :killed
                 if !r[:count] then @max_extension-=1 end
-                @done.push @running.delete_at(index)
+                if r[:repeat] == true || r[:repeat].to_i > r[:run_count]
+                  r[:state] = :ready
+                  r[:priority] = r[:initial_priority]
+                  @ready.push @running.delete_at(index)
+                else
+                  r[:finished] = Time.now.to_f
+                  r[:state] = r[:thread].value.is_a?(Exception) ? :error : :finished unless r[:state] == :killed
+                  @done.push @running.delete_at(index)
+                end
               end
               index+=1
             end
