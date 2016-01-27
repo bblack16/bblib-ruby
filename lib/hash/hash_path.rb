@@ -4,19 +4,27 @@ module BBLib
     if String === path then path = BBLib.split_and_analyze(path, delimiter) end
     if !hashes.is_a? Array then hashes = [hashes] end
     return hashes if path.nil? || path.empty?
+    # puts path[0]
     if path[0][:key] == '' then return BBLib.hash_path(hashes, path[1..-1], recursive: true, symbol_sensitive:symbol_sensitive) end
+    # puts "STILL GOING #{recursive} #{hashes}"
     matches, p = Array.new, path.first
     hashes.each do |hash|
       if recursive
         patterns = Regexp === p[:key] ? p[:key] : p[:key].to_s == '*' ? /.*/ : (symbol_sensitive ? p[:key] : [p[:key].to_sym, p[:key].to_s])
-        matches << hash.dig(patterns).flatten[p[:slice]]
+        matches.push hash.dig(patterns).flatten(1)[p[:slice]]
       else
-        if Symbol === p[:key] || String === p[:key]
+        if p[:key].nil?
+          # puts "HURRAY"
+          if hash.is_a?(Array) then matches << hash[p[:slice]] end
+        elsif Symbol === p[:key] || String === p[:key]
+          # puts "noo...."
           if p[:key].to_s == '*'
-            matches << hash.values.flatten[p[:slice]]
+            matches.push hash.values.flatten(1)[p[:slice]]
           else
             next unless symbol_sensitive ? hash.include?(p[:key]) : (hash.include?(p[:key].to_sym) || hash.include?(p[:key].to_s) )
-            matches << [symbol_sensitive ? hash[p[:key]] : (hash[p[:key].to_sym] ||= hash[p[:key].to_s])].flatten[p[:slice]]
+            mat = (symbol_sensitive ? hash[p[:key]] : (hash[p[:key].to_sym] ||= hash[p[:key].to_s]))
+            matches.push mat.is_a?(Array) ? mat[p[:slice]] : mat
+            # puts "M #{matches}"
           end
         elsif Regexp === p[:key]
           hash.keys.find_all{ |k| k =~ p[:key] }.each{ |m| matches << hash[m] }
@@ -25,9 +33,11 @@ module BBLib
     end
     matches = BBLib.analyze_hash_path_formula p[:formula], matches
     if path.size > 1 && !matches.empty?
-      BBLib.hash_path(matches.flatten.reject{ |r| !r.is_a?(Hash) }, path[1..-1], symbol_sensitive:symbol_sensitive)
+      # p "MAT #{matches}"
+      # matches.map!{ |m| m.is_a?(Array) ? [m] : m }
+      BBLib.hash_path(matches.reject{ |r| !(r.is_a?(Hash) || r.is_a?(Array)) }, path[1..-1], symbol_sensitive:symbol_sensitive)
     else
-      return matches.flatten
+      return matches.flatten(1)
     end
   end
 
@@ -96,11 +106,12 @@ module BBLib
 
   def self.hash_path_copy_to from, to, *args
     details = BBLib.hash_path_setup(from, args)
+    p details
     details[:paths].each do |path, d|
       value = from.hash_path(path)
       if !value.empty? || !details[:stop_on_nil]
         if !details[:arrays].include?(d[:value]) then value = value.first end
-        to.bridge(d[:value], value: value)
+        to = to.bridge(d[:value], value: value, symbols:details[:symbols])
       end
     end
     to
@@ -128,6 +139,14 @@ module BBLib
     return deleted.flatten
   end
 
+  def self.hash_path_keys hash
+    hash.squish.keys
+  end
+
+  def self.hash_path_key_for hash, value
+    hash.squish.find_all{ |k,v| v == value }.to_h.keys
+  end
+
   def self.path_nav obj, path = '', delimiter = '.', &block
     case [obj.class]
     when [Hash]
@@ -152,6 +171,7 @@ module BBLib
       slice = eval(path.scan(/(?<=\[).*?(?=\])/).first.to_s)
       if slice.nil? then slice = (0..-1) end
       formula = path.scan(/(?<=\().*?(?=\))/).first
+      if key.empty? && slice != (0..-1) then key = nil end
       {key:key, slice:slice, formula:formula}
     end
 
@@ -250,6 +270,10 @@ class Hash
     BBLib.hash_path_delete self, args
   end
 
+  def hash_path_keys
+    BBLib.hash_path_keys self
+  end
+
   def hash_path_exists? path, delimiter: '.', symbol_sensitive: false
     BBLib.hash_path_exists? self, path, delimiter:delimiter, symbol_sensitive:symbol_sensitive
   end
@@ -291,21 +315,19 @@ class Hash
     path = (path.is_a?(Array) ? path.join(delimiter) : path.to_s)
     #Generate the paths and set the current variable
     current, paths = self, BBLib.split_and_analyze(path, delimiter)
+    # If symbols is true, then all keys are turned into symbols
+    if symbols then paths.each{ |p| p[:key] = p[:key].to_s.to_sym } end
     # Check to see if there is only one path. If there is return either an Array of Hash
     if paths.size == 1
       # If the first value is a slice the value is inserted into an empty array
       if Fixnum === paths.first[:slice]
-        if paths.first[:key].empty?
-          return [].insert paths.first[:slice], value
-        else
-          return {paths.first[:key] => ([].insert paths.first[:slice], value )}
-        end
+        current[paths.first[:key]] = ([].insert paths.first[:slice], value )
+        return self
       end
       # If the value does not have a slice, a hash with a single key-value pair is returned
-      return {paths.first[:key] => value}
+      current[paths.first[:key]] = value
+      return self
     end
-    # If symbols is true, then all keys are turned into symbols
-    if symbols then paths.each{ |p| p[:key] = p[:key].to_s.to_sym } end
     index, count = -1, 0
     paths.each do |p|
       count+=1
