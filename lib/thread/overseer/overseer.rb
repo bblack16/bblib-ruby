@@ -117,10 +117,6 @@ module BBLib
       return @queue.empty? && @ready.empty? && @running.empty?
     end
 
-    THREAD_TYPES = [
-      :standard, :loop
-    ]
-
     private
 
       def next_id
