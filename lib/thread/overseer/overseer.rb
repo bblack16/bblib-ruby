@@ -17,11 +17,25 @@ module BBLib
       if start then self.start end
     end
 
-    def queue block, args = [], name:nil, priority:3, start_at: nil, max_life:nil, count:true, depend_on:nil
+    def queue block, args = [], name:nil, priority:3, start_at: nil, max_life:nil, count:true, dependencies:nil
       if @stashed.include?(block) then block = @stashed[block] end
-      raise "Self referencing dependencies are not allowed. #{depend_on} == #{@last_id+1} || #{name}" if !depend_on.nil? && (depend_on.is_a?(Array) && depend_on.include?(@last_id+1) || depend_on == @last_id+1 || depend_on == name)
+      raise "Self referencing dependencies are not allowed. #{dependencies} == #{@last_id+1} || #{name}" if !dependencies.nil? && (dependencies.is_a?(Array) && dependencies.include?(@last_id+1) || dependencies == @last_id+1 || dependencies == name)
       raise "Invalid type exception. Got #{block.class} but expected Proc" unless Proc === block
-      @queue << ({ id:next_id, count:count, state: :queued, proc:block, depend_on:depend_on, args:args, queued:Time.now.to_f, added:nil, last_elev:Time.now.to_f, started:nil, max_life:max_life, name:name, priority:BBLib::keep_between(priority.to_i, 0, 6), start_at:start_at, initial_priority:BBLib::keep_between(priority.to_i, 0, 6) })
+      @queue << ({ id:next_id,
+        count:count,
+        state: :queued,
+        proc:block,
+        dependencies:dependencies,
+        args:args,
+        queued:Time.now.to_f,
+        added:nil,
+        last_elev:Time.now.to_f,
+        started:nil,
+        max_life:max_life,
+        name:name,
+        priority:BBLib::keep_between(priority.to_i, 0, 6),
+        start_at: (start_at.is_a?(Numeric) ? Time.now + start_at : (Time === start_at ? start_at : nil)),
+        initial_priority:BBLib::keep_between(priority.to_i, 0, 6) })
       @last_id
     end
 
@@ -177,22 +191,18 @@ module BBLib
             @queue.each do |q|
               start_ready = q[:start_at].nil? || Time.now.to_f >= q[:start_at].to_f
               # Check for dependent threads.
-              dependency_check = q[:depend_on].nil?
+              dependency_check = q[:dependencies].nil?
               if !dependency_check
-                deps = state_of(q[:depend_on])
+                deps = state_of(q[:dependencies])
                 if deps.empty?
-                  if q[:id] == 1 then puts 'missing' end
                   q[:state] = :missing_dependencies
                   @done << @queue.delete(q)
                 elsif deps.any?{ |k,v| [:missing_dependencies, :canceled, :error, :failed_dependancy].include? v }
-                  if q[:id] == 1 then puts 'failed' end
                   q[:state] = :failed_dependancy
                   @done << @queue.delete(q)
                 elsif deps.any?{ |k,v| v != :finished }
-                  if q[:id] == 1 then puts 'waiting'; p deps end
                   q[:state] = :waiting
                 else
-                  if q[:id] == 1 then puts 'GO' end
                   dependency_check = true
                   q[:dependency_info] = []
                   deps.each{ |k,v| q[:dependency_info] << retrieve(k).first[:thread].value }
