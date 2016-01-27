@@ -250,7 +250,7 @@ module BBLib
               if !r[:thread].alive?
                 r.delete :mq
                 if !r[:count] then @max_extension-=1 end
-                if r[:repeat] == true || r[:repeat].to_i > r[:run_count]
+                if r[:repeat] == true || r[:repeat].is_a?(Numeric) && r[:repeat].to_i > r[:run_count] || r[:repeat].is_a?(Time) && Time.now < r[:repeat]
                   r[:state] = :ready
                   r[:priority] = r[:initial_priority]
                   @ready.push @running.delete_at(index)
