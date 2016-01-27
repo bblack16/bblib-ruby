@@ -197,7 +197,6 @@ module BBLib
           results = []
           while !p.eof?
             line = p.readline
-            mq.push '*'*25
             mq.push line
             results.push line
           end
