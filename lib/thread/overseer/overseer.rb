@@ -3,28 +3,41 @@ module BBLib
   class Overseer
     attr_reader :max_threads, :stashed, :message_queue, :last_id, :max_extension
     attr_reader :processor, :queue_manager, :queue, :ready, :running, :done
-    attr_reader :elevation_policy, :sleep_policy, :retention
+    attr_reader :elevation_policy, :sleep_policy, :retention, :message_queues
 
     def initialize max: nil, start:false, retention:nil, proc_sleep:0, queue_sleep:0
       @last_id, @max_extension = -1, 0
       @queue, @ready, @running, @done = [], [], [], []
       self.max = max
       self.retention = retention
-      @message_queue = BBLib::MessageQueue.new
+      @message_queues = Hash.new
+      add_message_queue :default, BBLib::MessageQueue.new
       @threads, @stashed = Hash.new, Hash.new
       @elevation_policy = { 0 => nil, 1 => 60, 2 => 30, 3 => 30, 4 => 60, 5 => 120, 6 => nil }
       @sleep_policy = { process:proc_sleep, queue:queue_sleep }
       if start then self.start end
     end
 
-    def queue block, args = [], repeat:false, name:nil, priority:3, start_at: nil, max_life:nil, count:true, dependencies:nil
-      if @stashed.include?(block) then block = @stashed[block] end
-      raise "Self referencing dependencies are not allowed. #{dependencies} == #{@last_id+1} || #{name}" if !dependencies.nil? && (dependencies.is_a?(Array) && dependencies.include?(@last_id+1) || dependencies == @last_id+1 || dependencies == name)
-      raise "Invalid type exception. Got #{block.class} but expected Proc" unless Proc === block
+    TASK_TYPES = [ :proc, :lambda, :script, :cmd ]
+
+    def queue task = nil, args = [], type: :proc, message_queue: :default, repeat:false, name:nil, priority:3, start_at: nil, max_life:nil, count:true, dependencies:nil
+      return @queue unless task
+      raise "Invalid type #{type}. Options are #{TASK_TYPES}." unless TASK_TYPES.include?(type)
+      raise "Self referencing dependencies are not allowed. #{dependencies} cannot include #{@last_id+1} OR '#{name}'" if !dependencies.nil? && (dependencies.is_a?(Array) && dependencies.include?(@last_id+1) || dependencies == @last_id+1 || dependencies == name)
+      if @stashed.include?(task) then type = @stashed[task][:type]; task = @stashed[task][:task] end
+      case type
+      when :proc || :block || :lambda
+        raise "Invalid type. Got #{block.class} but expected Proc" unless Proc === task || Lambda === task
+      when :script
+        task = construct_script task
+      when :cmd
+        task = construct_cmd task
+      end
       @queue << ({ id:next_id,
         count:count,
+        type:type,
         state: :queued,
-        proc:block,
+        proc:task,
         dependencies:dependencies,
         args:args,
         queued:Time.now.to_f,
@@ -35,15 +48,20 @@ module BBLib
         name:name,
         repeat:repeat,
         run_count:0,
+        message_queue:message_queue,
         priority:BBLib::keep_between(priority.to_i, 0, 6),
         start_at: (start_at.is_a?(Numeric) ? Time.now + start_at : (Time === start_at ? start_at : nil)),
         initial_priority:BBLib::keep_between(priority.to_i, 0, 6) })
       @last_id
     end
 
-    def stash name, block
-      raise "Invalid argument type #{block.class}. Expected Proc" unless block.is_a? Proc
-      @stashed[name] = block
+    def queue_script path, args = [], repeat:false, name:nil, priority:3, start_at: nil, max_life:nil, count:true, dependencies:nil
+      construct_script path
+    end
+
+    def stash name, task, type = :proc
+      # raise "Invalid argument type #{block.class}. Expected Proc" unless task.is_a? Proc
+      @stashed[name.to_s.to_clean_sym] = {task:task, type:type}
     end
 
     def max= m
@@ -62,7 +80,7 @@ module BBLib
     # Results are only returned if they have a status code of :finished
     def value_of id
       matches = @done.find_all{ |d| d[:state] == :finished && (d[:id] == id || d[:name] == id) }
-      matches.map{ |r| [r[:id], r[:thread] ? r[:thread].value : nil]}.to_h
+      matches.map{ |r| [r[:id], (r[:thread] ? r[:thread].value : nil)]}.to_h
     end
 
     # ID can be the exact Fixnum id of a job or the arbitrary name
@@ -102,18 +120,23 @@ module BBLib
     end
 
     def start
-      @message_queue.start
+      @message_queues.each{ |n,m| m.start }
       start_queue_manager
       start_processor
       running?
     end
 
     def stop
-      @message_queue.stop
       @queue_manager.kill unless @queue_manager.nil?
       @processor.kill unless @processor.nil?
       sleep(0.3)
+      @message_queues.each{ |n,m| m.stop }
       !running?
+    end
+
+    def restart
+      start
+      stop
     end
 
     def retention= r
@@ -123,6 +146,22 @@ module BBLib
     def set_elevation_policy num, time
       return nil unless Fixnum === num && num.between?(1, 5) && (time.nil? || Fixnum === time && time > 0)
       @elevation_policy[num] = time
+    end
+
+    def set_sleep_policy type, time
+      return nil unless @sleep_policy.include?(type) && Numeric === time
+      @sleep_policy[type] = BBLib::keep_between(time, 0, nil)
+    end
+
+    def add_message_queue name, mq
+      raise "Invalid message queue: #{mq} (#{mq.class})" unless mq.is_a?(BBLib::MessageQueue)
+      @message_queues[name.to_s.to_clean_sym] = mq
+      mq.restart
+      name.to_clean_sym
+    end
+
+    def remove_message_queue name
+      @message_queues.delete(name.to_s.to_clean_sym) unless name.to_s.to_clean_sym == :default
     end
 
     def running?
@@ -147,8 +186,45 @@ module BBLib
 
     private
 
+      def construct_script path
+        raise "Path to script is invalid: #{path}" unless File.exists?(path)
+        construct_cmd "#{Gem.ruby.include?(' ') ? "\"#{Gem.ruby}\"" : Gem.ruby} #{path.include?(' ') ? "\"#{path}\"" : path}"
+      end
+
+      def construct_cmd cmd
+        proc{ |*args, mq:nil, tinfo:tinfo, dinfo:dinfo|
+          p = IO.popen("#{cmd} #{args.map{|a| a.include?(' ') ? "\"#{a}\"" : a}.join(' ')}")
+          results = []
+          while !p.eof?
+            line = p.readline
+            mq.push '*'*25
+            mq.push line
+            results.push line
+          end
+          results
+        }
+      end
+
       def next_id
         @last_id+=1
+      end
+
+      def parse_repeat item
+        rep = (item[:repeat] == true || item[:repeat].is_a?(Numeric) && item[:repeat].to_i > item[:run_count] || item[:repeat].is_a?(Time) && Time.now < item[:repeat] || item[:repeat].is_a?(String) && (item[:repeat].start_with?('after:') || item[:repeat].start_with?('every:')))
+        if rep && item[:repeat].is_a?(String)
+          if item[:repeat].start_with?('every:')
+            item[:start_at] = Time.at(item[:started] + item[:repeat].parse_duration(output: :sec))
+          else
+            item[:start_at] = Time.now + item[:repeat].parse_duration(output: :sec)
+          end
+        end
+        # if item[:start_at] && item[:start_at] < Time.now.to_f
+        #   item[:state] = :ready
+        # else
+          item[:state] = :queued
+        # end
+        item[:priority] = item[:initial_priority]
+        rep
       end
 
       def start_processor
@@ -167,7 +243,8 @@ module BBLib
               item[:started] = Time.now.to_f
               item[:state] = :running
               item[:run_count] = item[:run_count] + 1
-              args = {mq:@message_queue, tinfo:item.reject{ |k, v| [:args, :thread, :proc, :dependency_info].include? k }, dinfo:item[:dependency_info]}
+              message_queue = @message_queues[item[:message_queue]] ||= @message_queues[:default]
+              args = {mq:message_queue, tinfo:item.reject{ |k, v| [:args, :thread, :proc, :dependency_info].include? k }, dinfo:item[:dependency_info]}
               params = item[:proc].parameters.map{ |o, t| t }
               args.keys.each do |k|
                 if !params.include?(k) then args.delete(k) end
@@ -250,10 +327,8 @@ module BBLib
               if !r[:thread].alive?
                 r.delete :mq
                 if !r[:count] then @max_extension-=1 end
-                if r[:repeat] == true || r[:repeat].is_a?(Numeric) && r[:repeat].to_i > r[:run_count] || r[:repeat].is_a?(Time) && Time.now < r[:repeat]
-                  r[:state] = :ready
-                  r[:priority] = r[:initial_priority]
-                  @ready.push @running.delete_at(index)
+                if parse_repeat(r)
+                  @queue.push @running.delete_at(index)
                 else
                   r[:finished] = Time.now.to_f
                   r[:state] = r[:thread].value.is_a?(Exception) ? :error : :finished unless r[:state] == :killed
