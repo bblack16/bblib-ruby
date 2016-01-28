@@ -3,7 +3,7 @@ module BBLib
   class MessageQueue
     attr_reader :queue, :thread, :mode, :duration, :started, :pause, :log
 
-    def initialize mode: :puts, pause: 0.1, log: "#{Dir.pwd}/messages.log"
+    def initialize mode: :puts, pause: 0.5, log: "#{Dir.pwd}/messages.log"
       @queue = []
       self.mode = mode
       self.pause = pause
