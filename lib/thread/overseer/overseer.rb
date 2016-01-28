@@ -5,7 +5,7 @@ module BBLib
     attr_reader :processor, :queue_manager, :queue, :ready, :running, :done
     attr_reader :elevation_policy, :sleep_policy, :retention, :message_queues
 
-    def initialize max: nil, start:false, retention:nil, proc_sleep:0, queue_sleep:0
+    def initialize max: nil, start:false, retention:nil, proc_sleep:0.01, queue_sleep:0.01
       @last_id, @max_extension = -1, 0
       @queue, @ready, @running, @done = [], [], [], []
       self.max = max
@@ -194,12 +194,14 @@ module BBLib
       def construct_cmd cmd
         proc{ |*args, mq:nil, tinfo:tinfo, dinfo:dinfo|
           p = IO.popen("#{cmd} #{args.map{|a| a.include?(' ') ? "\"#{a}\"" : a}.join(' ')}")
+          tinfo[:pid] = p.pid
           results = []
           while !p.eof?
             line = p.readline
             mq.push line
             results.push line
           end
+          p.close
           results
         }
       end
@@ -259,7 +261,7 @@ module BBLib
               # If the item shouldn't count towards the max threads running, the extension number is incremented
               if !item[:count] then @max_extension+=1 end
             end
-            sleep(@sleep_policy[:process])
+            if item.nil? then sleep(@sleep_policy[:process]) end
           end
         }
       end
