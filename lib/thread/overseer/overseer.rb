@@ -11,7 +11,7 @@ module BBLib
       self.max = max
       self.retention = retention
       @message_queues = Hash.new
-      add_message_queue :default, BBLib::MessageQueue.new
+      add_message_queue :default, MessageQueue.new
       @threads, @stashed = Hash.new, Hash.new
       @elevation_policy = { 0 => nil, 1 => 60, 2 => 30, 3 => 30, 4 => 60, 5 => 120, 6 => nil }
       @sleep_policy = { process:proc_sleep, queue:queue_sleep }
@@ -50,7 +50,7 @@ module BBLib
         run_count:0,
         message_queue:message_queue,
         priority:BBLib::keep_between(priority.to_i, 0, 6),
-        start_at: (start_at.is_a?(Numeric) ? Time.now + start_at : (Time === start_at ? start_at : nil)),
+        start_at: (start_at.is_a?(Numeric) ? Time.now + start_at : (Time === start_at ? start_at : (MyCron.valid?(repeat) ? MyCron.next(repeat) : nil))),
         initial_priority:BBLib::keep_between(priority.to_i, 0, 6) })
       @last_id
     end
@@ -211,14 +211,14 @@ module BBLib
       end
 
       def parse_repeat item
-        rep = (item[:repeat] == true || item[:repeat].is_a?(Numeric) && item[:repeat].to_i > item[:run_count] || item[:repeat].is_a?(Time) && Time.now < item[:repeat] || item[:repeat].is_a?(String) && (item[:repeat].start_with?('after:') || item[:repeat].start_with?('every:')))
+        rep = (item[:repeat] == true || item[:repeat].is_a?(Numeric) && item[:repeat].to_i > item[:run_count] || item[:repeat].is_a?(Time) && Time.now < item[:repeat] || item[:repeat].is_a?(String) )
         if rep && item[:repeat].is_a?(String)
           if item[:repeat].start_with?('after:')
             item[:start_at] = Time.now + item[:repeat].parse_duration(output: :sec)
           elsif item[:repeat].start_with?('every:')
             item[:start_at] = Time.at(item[:started] + item[:repeat].parse_duration(output: :sec))
-          else
-            item[:start_at] = Time.now + item[:repeat].parse_duration(output: :sec)
+          elsif MyCron.valid? item[:repeat] # For cron syntax
+            item[:start_at] = MyCron.next(item[:repeat])
           end
         end
         if rep
