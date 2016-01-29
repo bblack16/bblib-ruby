@@ -106,7 +106,6 @@ module BBLib
 
   def self.hash_path_copy_to from, to, *args
     details = BBLib.hash_path_setup(from, args)
-    p details
     details[:paths].each do |path, d|
       value = from.hash_path(path)
       if !value.empty? || !details[:stop_on_nil]

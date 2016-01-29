@@ -27,7 +27,6 @@ module BBLib
       next unless !done
       if k == stop then done = true end
       div = n / v[:mult]
-      puts "#{k} = #{div} - #{v[:mult]}"
       if div >= 1
         val = (done ? div.round : div.floor)
         expression << "#{val}#{v[:styles][style]}#{val > 1 && style != :short ? "s" : nil}"
