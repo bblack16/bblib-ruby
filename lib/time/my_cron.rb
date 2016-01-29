@@ -36,6 +36,10 @@ module BBLib
       BBLib::MyCron.new(exp).prev(count:count, time:time)
     end
 
+    def self.valid? exp
+      !(numeralize(exp) =~ /\A(.*?\s){5}.*?\S\z/).nil?
+    end
+
     private
 
       def parse
@@ -47,14 +51,19 @@ module BBLib
         @parts[:weekday] = @parts[:weekday].map{ |v| v - 1 }
       end
 
-      def parse_cron_numbers exp, min, max
-        numbers = Array.new
-        exp.downcase!
+      def self.numeralize exp
+        exp = exp.to_s.downcase
         REPLACE.each do |k, v|
           v.each do |r|
             exp.gsub!(r.to_s, k.to_s)
           end
         end
+        exp
+      end
+
+      def parse_cron_numbers exp, min, max
+        numbers = Array.new
+        exp = MyCron.numeralize(exp)
         numbers.push exp.scan(/\d+/).map{ |m| m.to_i }
         exp.strip.scan(/\d+\-\d+/).each do |e|
           nums = e.scan(/\d+/).map{ |n| n.to_i }
