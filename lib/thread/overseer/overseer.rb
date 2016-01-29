@@ -213,18 +213,18 @@ module BBLib
       def parse_repeat item
         rep = (item[:repeat] == true || item[:repeat].is_a?(Numeric) && item[:repeat].to_i > item[:run_count] || item[:repeat].is_a?(Time) && Time.now < item[:repeat] || item[:repeat].is_a?(String) && (item[:repeat].start_with?('after:') || item[:repeat].start_with?('every:')))
         if rep && item[:repeat].is_a?(String)
-          if item[:repeat].start_with?('every:')
+          if item[:repeat].start_with?('after:')
+            item[:start_at] = Time.now + item[:repeat].parse_duration(output: :sec)
+          elsif item[:repeat].start_with?('every:')
             item[:start_at] = Time.at(item[:started] + item[:repeat].parse_duration(output: :sec))
           else
             item[:start_at] = Time.now + item[:repeat].parse_duration(output: :sec)
           end
         end
-        # if item[:start_at] && item[:start_at] < Time.now.to_f
-        #   item[:state] = :ready
-        # else
+        if rep
           item[:state] = :queued
-        # end
-        item[:priority] = item[:initial_priority]
+          item[:priority] = item[:initial_priority]
+        end
         rep
       end
 

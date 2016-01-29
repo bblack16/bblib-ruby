@@ -1,13 +1,7 @@
 require_relative 'task_timer'
-require_relative 'cronaxy'
+require_relative 'cron_seer'
 
 module BBLib
-
-  def next_cron cron
-    parts = cron.split(' ')
-    return nil unless parts.size == 6
-
-  end
 
   # Parses known time based patterns out of a string to construct a numeric duration.
   def self.parse_duration str, output: :sec
