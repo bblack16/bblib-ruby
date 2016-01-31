@@ -1,6 +1,6 @@
 class Object
 
-  def obj_to_hash
+  def to_hash
     return {self => nil} unless !self.instance_variables.empty?
     hash = {}
     self.instance_variables.each do |var|
