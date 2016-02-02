@@ -4,9 +4,7 @@ module BBLib
     if String === path then path = BBLib.split_and_analyze(path, delimiter) end
     if !hashes.is_a? Array then hashes = [hashes] end
     return hashes if path.nil? || path.empty?
-    # puts path[0]
     if path[0][:key] == '' then return BBLib.hash_path(hashes, path[1..-1], recursive: true, symbol_sensitive:symbol_sensitive) end
-    # puts "STILL GOING #{recursive} #{hashes}"
     matches, p = Array.new, path.first
     hashes.each do |hash|
       if recursive
@@ -14,17 +12,14 @@ module BBLib
         matches.push hash.dig(patterns).flatten(1)[p[:slice]]
       else
         if p[:key].nil?
-          # puts "HURRAY"
           if hash.is_a?(Array) then matches << hash[p[:slice]] end
         elsif Symbol === p[:key] || String === p[:key]
-          # puts "noo...."
           if p[:key].to_s == '*'
             matches.push hash.values.flatten(1)[p[:slice]]
           else
             next unless symbol_sensitive ? hash.include?(p[:key]) : (hash.include?(p[:key].to_sym) || hash.include?(p[:key].to_s) )
             mat = (symbol_sensitive ? hash[p[:key]] : (hash[p[:key].to_sym] ||= hash[p[:key].to_s]))
             matches.push mat.is_a?(Array) ? mat[p[:slice]] : mat
-            # puts "M #{matches}"
           end
         elsif Regexp === p[:key]
           hash.keys.find_all{ |k| k =~ p[:key] }.each{ |m| matches << hash[m] }
