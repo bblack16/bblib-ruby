@@ -1,10 +1,10 @@
-class Object
+module BBLib
 
-  def to_hash
-    return {self => nil} unless !self.instance_variables.empty?
+  def self.to_hash obj
+    return {obj => nil} unless !obj.instance_variables.empty?
     hash = {}
-    self.instance_variables.each do |var|
-      value = self.instance_variable_get(var)
+    obj.instance_variables.each do |var|
+      value = obj.instance_variable_get(var)
       if value.is_a? Array
         hash[var.to_s.delete("@")] = value.map{ |v| v.respond_to?(:obj_to_hash) && !v.instance_variables.empty? ? v.obj_to_hash : v }
       elsif value.is_a? Hash
