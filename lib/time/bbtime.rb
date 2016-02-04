@@ -7,7 +7,7 @@ module BBLib
     msecs = 0.0
     TIME_EXPS.each do |k, v|
       v[:exp].each do |e|
-        numbers = str.downcase.scan(/(?=\w|\D|\A)\d?\.?\d+[[:space:]]*#{e}(?=\W|\d|\z)/i)
+        numbers = str.downcase.scan(/(?=\w|\D|\A)\d*\.?\d+[[:space:]]*#{e}(?=\W|\d|\z)/i)
         numbers.each do |n|
           msecs+= n.to_f * v[:mult]
         end

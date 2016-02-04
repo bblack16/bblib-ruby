@@ -37,7 +37,7 @@ module BBLib
     bytes = 0.0
     FILE_SIZES.each do |k, v|
       v[:exp].each do |e|
-        numbers = str.scan(/(?=\w|\D|\A)\d?\.?\d+[[:space:]]*#{e}s?(?=\W|\d|\z)/i)
+        numbers = str.scan(/(?=\w|\D|\A)\d*\.?\d+[[:space:]]*#{e}s?(?=\W|\d|\z)/i)
         numbers.each{ |n| bytes+= n.to_f * v[:mult] }
       end
     end
