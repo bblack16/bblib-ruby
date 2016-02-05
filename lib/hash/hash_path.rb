@@ -18,7 +18,7 @@ module BBLib
             matches.push hash.values.flatten(1)[p[:slice]]
           else
             next unless symbol_sensitive ? hash.include?(p[:key]) : (hash.include?(p[:key].to_sym) || hash.include?(p[:key].to_s) )
-            mat = (symbol_sensitive ? hash[p[:key]] : (hash[p[:key].to_sym] ||= hash[p[:key].to_s]))
+            mat = (symbol_sensitive ? hash[p[:key]] : ( if hash.include?(p[:key].to_sym) then hash[p[:key].to_sym] else hash[p[:key].to_s] end ))
             matches.push mat.is_a?(Array) ? mat[p[:slice]] : mat
           end
         elsif Regexp === p[:key]
@@ -87,7 +87,7 @@ module BBLib
         if Hash === h || Array === h
           exist = details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) )
           next unless exist || details[:bridge]
-          value = details[:symbol_sensitive] ? h[d[:last][:key]] : (h[d[:last][:key].to_sym] ||= h[d[:last][:key].to_s])
+          value = details[:symbol_sensitive] ? h[d[:last][:key]] : (if h.include?(d[:last][:key].to_sym) then h[d[:last][:key].to_sym] else h[d[:last][:key].to_s] end )
           if value
             BBLib.hash_path_set hash, d[:value] => value, symbols:details[:symbols]
           end
@@ -119,7 +119,7 @@ module BBLib
       d[:hashes].each do |h|
         next unless details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) )
         if Fixnum === d[:last][:slice]
-          (details[:symbol_sensitive] ? h[d[:last][:key]] : (h[d[:last][:key].to_sym] ||= h[d[:last][:key].to_s] )).delete_at d[:last][:slice]
+          (details[:symbol_sensitive] ? h[d[:last][:key]] : (if h.include?(d[:last][:key].to_sym) then h[d[:last][:key].to_sym] else h[d[:last][:key].to_s] end)).delete_at d[:last][:slice]
         else
           if details[:symbol_sensitive]
             deleted << h.delete(d[:last][:key])
