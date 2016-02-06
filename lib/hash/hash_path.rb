@@ -374,3 +374,15 @@ class Hash
   end
 
 end
+
+class Array
+
+  def dig keys
+    matches = []
+    self.each do |i|
+      matches << i.dig(keys) if i.is_a?(Hash) || i.is_a?(Array)
+    end
+    matches
+  end
+
+end
