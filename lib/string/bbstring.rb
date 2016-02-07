@@ -76,11 +76,11 @@ class String
   end
 
   def move_articles position, capitalize = true
-    BBLib.move_articles self, position, capitalize
+    BBLib.move_articles self, position, capitalize:capitalize
   end
 
   def move_articles! position, capitalize = true
-    replace BBLib.move_articles(self, position, capitalize)
+    replace BBLib.move_articles(self, position, capitalize:capitalize)
   end
 
   def drop_symbols
