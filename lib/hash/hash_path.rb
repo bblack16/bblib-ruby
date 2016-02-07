@@ -1,3 +1,5 @@
+require_relative 'hash_path_proc'
+
 module BBLib
 
   def self.hash_path hashes, path, recursive: false, delimiter: '.', symbol_sensitive: false
@@ -163,6 +165,7 @@ module BBLib
         key = key[1..-1].to_sym
       end
       slice = eval(path.scan(/(?<=\[).*?(?=\])/).first.to_s)
+      if !slice.is_a?(Range) && !slice.is_a?(Fixnum) then slice = (0..-1) end
       if slice.nil? then slice = (0..-1) end
       formula = path.scan(/(?<=\().*?(?=\))/).first
       if key.empty? && slice != (0..-1) then key = nil end
