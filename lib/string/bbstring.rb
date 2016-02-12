@@ -9,9 +9,9 @@ module BBLib
   # General Functions
   ##############################################
 
-  def self.title_case str
+  # def self.title_case str
     # TODO
-  end
+  # end
 
   # Quickly remove any symbols from a string leaving onl alpha-numeric characters and white space.
   def self.drop_symbols str
@@ -20,17 +20,17 @@ module BBLib
 
   # Extract all integers from a string. Use extract_floats if numbers may contain decimal places.
   def self.extract_integers str, convert: true
-    str.scan(/\d+/).map{ |d| convert ? d.to_i : d }
+    BBLib.extract_numbers(str, convert:false).reject{ |r| r.include?('.') }.map{ |m| convert ? m.to_i : m }
   end
 
   # Extracts all integers or decimals from a string into an array.
   def self.extract_floats str, convert: true
-    str.scan(/\d+\.?\d+|\d+/).map{ |f| convert ? f.to_f : f }
+    BBLib.extract_numbers(str, convert:false).reject{ |r| !r.include?('.') }.map{ |m| convert ? m.to_f : m }
   end
 
   # Alias for extract_floats
   def self.extract_numbers str, convert: true
-    BBLib.extract_floats str, convert:convert
+    str.scan(/\d+\.?\d+|\d+/).map{ |f| convert ? (f.include?('.') ? f.to_f : f.to_i) : f }
   end
 
   # Used to move the position of the articles 'the', 'a' and 'an' in strings for normalization.
@@ -65,7 +65,7 @@ end
 
 class String
   # Multi-split. Similar to split, but can be passed an array of delimiters to split on.
-  def msplit delims, keep_empty: false
+  def msplit *delims, keep_empty: false
     return [self] unless !delims.nil? && !delims.empty?
     ar = [self]
     [delims].flatten.each do |d|
@@ -75,11 +75,11 @@ class String
     keep_empty ? ar : ar.reject{ |l| l.empty? }
   end
 
-  def move_articles position, capitalize = true
+  def move_articles position = :front, capitalize = true
     BBLib.move_articles self, position, capitalize:capitalize
   end
 
-  def move_articles! position, capitalize = true
+  def move_articles! position = :front, capitalize = true
     replace BBLib.move_articles(self, position, capitalize:capitalize)
   end
 
@@ -93,6 +93,10 @@ class String
 
   def extract_integers convert: true
     BBLib.extract_integers self, convert:convert
+  end
+
+  def extract_floats convert: true
+    BBLib.extract_floats self, convert:convert
   end
 
   def extract_numbers convert: true
