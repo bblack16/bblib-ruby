@@ -51,15 +51,3 @@ class Hash
   end
 
 end
-
-class Array
-
-  def keys_to_sym clean: false
-    self.map{ |v| Hash === v || Array === v ? v.keys_to_sym(clean:clean) : v }
-  end
-
-  def keys_to_s clean: false
-    self.map{ |v| Hash === v || Array === v ? v.keys_to_s : v }
-  end
-
-end
