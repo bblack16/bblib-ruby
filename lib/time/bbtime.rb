@@ -90,7 +90,7 @@ module BBLib
     day: {
       mult: 86400000,
       styles: {full: ' day', medium: ' day', short: 'd'},
-      exp: ['d', 'day' 'days']},
+      exp: ['d', 'day', 'days']},
     week: {
       mult: 604800000,
       styles: {full: ' week', medium: ' wk', short: 'w'},
