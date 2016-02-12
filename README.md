@@ -30,9 +30,9 @@ p myhash.hash_path_copy('b' => 'z')
 * __Deep Merge:__ A deep merge algorithm is included that can merge hashes with nested hashes or nested arrays or nested hashes with nested arrays with nested hashes and so on... It can also combine colliding values into arrays rather than overwriting using a toggle-able overwrite flag.
 * __File & Time Parsing From Strings:__ Have a string such as '1MB 15KB' and want to make it numeric? Look no further. BBLib has methods to parse files size expressions and duration expressions from strings (like '1min 10sec'). Nearly any variant of size or duration expression is supported. For instance, '1sec', '1s', '1 s', '1 second', '1secs' are all properly parsed as 1 second.
 * __Fuzzy String Matching:__ The BBLib has implementations of a few string comparison algorithms. Most noteworthy, it features a simple implementation of the Levenshtein distance algorithm. A class, FuzzyMatcher, is also included to perform weight comparisons of strings using any of the included algorithms.
-* Convert Roman Numerals within strings to Integers and Integers to Roman Numerals.
-* Normalize articles such as 'the', 'an' and 'a' within titles to be displayed in the front, back or be stripped entirely. Helpful for sorting titles or for string comparisons.
-* Turn any object and its instance variables as well as nested objects and their instance variables into a hash. Handy to have alongside hash path.
+* __Convert Roman Numerals__ within strings to Integers and Integers to Roman Numerals.
+* __Normalize articles__ such as 'the', 'an' and 'a' within titles to be displayed in the front, back or be stripped entirely. Helpful for sorting titles or for string comparisons.
+* __Object to Hash:__ Turn any object and its instance variables as well as nested objects and their instance variables into a hash. Handy to have alongside hash path.
 * __TaskTimer:__ A simple and easy to use timer class to compliment benchmarking in code by timing various tasks or groups of tasks. History is kept so that averages, sums, mins and maxes can be checked per task.
 * __Recursive File Scanners:__ A few file and directory scanners are implemented that recursively (by toggle) scan directories looking for files matching given filters.
 * Plus more...
