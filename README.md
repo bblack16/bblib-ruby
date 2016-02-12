@@ -1,10 +1,42 @@
 # BBLib
 
-BBLib (Brandon-Black-Lib) is a collection of various reusable methods and classes to extend the Ruby language. Currently the library is in an early state and is being written generally for education purposes. As such, large changes will likely occur and some functions may be incomplete or inaccurate until 1.0.
+BBLib (Brandon-Black-Lib) is a collection of various reusable methods and classes to extend the Ruby language.
 
-One of my primary goals with the core BBLib code is to keep it as lightweight as possible. This means you will not find dependencies outside of the Ruby core libraries in this code. Further modules that do have larger dependencies will be released in separate gems.
+One of my primary goals with the BBLib code is to keep it as lightweight as possible. This means you will not find dependencies outside of the Ruby core libraries.
 
-For a full breakdown of what is currently in this library, scroll down.
+For a full breakdown of what is currently in this library, scroll down. For a quick overview of key features, read the following list.
+
+* __BBLib HashPath:__ Hash path is an XPath or JSONPath like navigation library for native Ruby hashes. It uses dot ('.') delimited path strings to navigate hash AND array objects. What makes hash path stand out is that it can navigate recursively within hashes, arrays, nested hashes, nested arrays, nested hashes within nested arrays within nested arrays with...well, you get the picture. Not only does it support navigation of hashes, it also comes with many functions to easily manipulate hashes by moving paths, copying paths, deleting paths or processing paths (see below for a few examples).
+
+```ruby
+myhash = {a:1, b:2, c:{d:[3,4,{e:5},6]}, f:7}
+p myhash.hash_path('c.d..e')
+#=> [5]
+p myhash.hash_path('..d')
+#=> [3, 4, {:e=>5}, 6]
+p myhash.hash_path('c.d[1]')
+#=> [4]
+p myhash.hash_path('c.d[0..1]')
+#=> [3, 4]
+
+# Move key/values
+p myhash.hash_path_move('a' => 'c.g.h')
+#=> {:b=>2, :c=>{:d=>[3, 4, {:e=>5}, 6], :g=>{:h=>1}}, :f=>7}
+
+# Copy key/values
+p myhash.hash_path_copy('b' => 'z')
+#=> {:a=>1, :b=>2, :c=>{:d=>[3, 4, {:e=>5}, 6]}, :f=>7, :z=>2}
+```
+* __Deep Merge:__ A deep merge algorithm is included that can merged hashes with nested hashes or nested arrays or nested hashes with nested arrays with nested hashes. It can also combine colliding values into arrays rather than overwriting using a toggleable overwrite flag.
+
+* __File & Time Parsing From Strings:__ Have a string such as '1MB 15KB' and want to make it numeric? Look no futher. BBLib has methods to parse files sizes from strings and durations from strings ('1min 10sec'). Nearly any variant of size or duration is supported. For instance, '1sec' == '1s' == '1 s' == '1 second'.
+
+* __Fuzzy String Matching:__ The BBLib has implementations of a few string comparison algorithms. Most importantly, it features a simple implementation of the Levenshtein distance algorithm. A class, FuzzyMatcher, is also included to perform weight comparisons of strings using the any of the included algorithms.
+
+* Convert Roman Numerals to Integers and Integers to Roman Numerals__
+* Turn any object and its instance variables as well as nested objects and their instance variables into a hash. Handy to have next to hash path.
+* __TaskTimer:__ A simple and easy to use timer class to compliment benchmarking in code by timing various tasks or groups of tasks. History is kept so that averages, sums, mins and maxes can be checked per task.
+* __Recursive File Scanners:__ A few file and dir scanners are implemented that recursively (toggleable) scan directories looking for files matching given filters.
 
 ## Installation
 
