@@ -35,7 +35,7 @@ p myhash.hash_path_copy('b' => 'z')
 * __Object to Hash:__ Turn any object and its instance variables as well as nested objects and their instance variables into a hash. Handy to have alongside hash path.
 * __TaskTimer:__ A simple and easy to use timer class to compliment benchmarking in code by timing various tasks or groups of tasks. History is kept so that averages, sums, mins and maxes can be checked per task.
 * __Recursive File Scanners:__ A few file and directory scanners are implemented that recursively (by toggle) scan directories looking for files matching given filters.
-* Plus more...
+* __Plus more...__
 
 ## Installation
 
