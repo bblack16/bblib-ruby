@@ -2,8 +2,6 @@ require_relative 'hash_path'
 
 class Hash
 
-
-
   # Merges with another hash but also merges all nested hashes and arrays/values.
   # Based on method found @ http://stackoverflow.com/questions/9381553/ruby-merge-nested-hash
   def deep_merge with, merge_arrays: true, overwrite_vals: true
@@ -48,6 +46,15 @@ class Hash
   def unshift hash, value = nil
     if !hash.is_a? Hash then hash = {hash => value} end
     replace hash.merge(self).merge(hash)
+  end
+
+  def to_xml level: 0, key:nil
+    map do |k,v|
+      nested = v.respond_to?(:to_xml)
+      array = Array === v
+      value = nested ? v.to_xml(level:level+(array ? 0 : 1), key:k) : v
+      "\t" * level + (array ? '' : "<#{k}>\n") + (nested ? '' : "\t" * (level+1)) + "#{value}\n" + "\t" * level + (array ? '' : "</#{k}>\n")
+    end.join
   end
 
 end
