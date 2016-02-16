@@ -85,6 +85,25 @@ describe BBLib do
     expect(thash.keys_to_sym).to eq ({:a=>1, :b=>2, :c=>{:d=>[3, 4, 5, {:e=>6}], :f=>7}, :g=>8, :test=>{:path=>"here"}, :e=>5})
   end
 
+  # Hash Path Proc
+
+  th = {test: 'This is', 'two' => 'a test'}
+
+  it 'appends or prepends to hash' do
+    expect(th.hash_path_proc(:prepend, 'two', 'This is ')).to eq ({test: 'This is', 'two' => 'This is a test'})
+    expect(th.hash_path_proc(:append, 'test', ' a test')).to eq ({test: 'This is a test', 'two' => 'This is a test'})
+  end
+
+  it 'evals a hash' do
+    expect( ({a: {b: 2 } }).hash_path_proc(:eval, 'a.b', '$ * 10') ).to eq ({a: {b: 20 } })
+    expect( ({a: {'test' => 'TEST' } }).hash_path_proc(:eval, 'a.test', '"$".downcase + " passed"') ).to eq ({a: {'test' => 'test passed' } })
+  end
+
+  it 'splits a hash value' do
+    expect( ({'test' => 'this,is,a,list'}).hash_path_proc(:split, 'test', ',') ).to eq ({'test' => ['this','is','a','list']})
+    expect( ({'test' => 'this,is|another.list'}).hash_path_proc(:split, 'test', [',', '.', '|']) ).to eq ({'test' => ['this','is','another','list']})
+  end
+
   # Time
 
   it 'parses time from string' do
