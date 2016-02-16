@@ -12,15 +12,16 @@ module BBLib
     action = HASH_PATH_PROC_TYPES.keys.find{ |k| k == action || HASH_PATH_PROC_TYPES[k][:aliases].include?(action) }
     return nil unless action
     paths.to_a.each do |path|
-      value = hash.hash_path(path).first
-      if params.include?(:condition) && params[:condition]
-        begin
-          next unless eval(params[:condition].gsub('$', value.to_s))
-        rescue
-          next
+      hash.hash_path(path).each do |value|
+        if params.include?(:condition) && params[:condition]
+          begin
+            next unless eval(params[:condition].gsub('$', value.to_s))
+          rescue
+            next
+          end
         end
+        HashPath.send(action, hash, path, value, *args, **params)
       end
-      HashPath.send(action, hash, path, value, *args, **params)
     end
     return hash
   end

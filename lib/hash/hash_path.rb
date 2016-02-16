@@ -30,8 +30,6 @@ module BBLib
     end
     matches = BBLib.analyze_hash_path_formula p[:formula], matches
     if path.size > 1 && !matches.empty?
-      # p "MAT #{matches}"
-      # matches.map!{ |m| m.is_a?(Array) ? [m] : m }
       BBLib.hash_path(matches.reject{ |r| !(r.is_a?(Hash) || r.is_a?(Array)) }, path[1..-1], symbol_sensitive:symbol_sensitive)
     else
       return matches.flatten(1)
@@ -47,7 +45,7 @@ module BBLib
         exists = (details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) ))
         next unless details[:bridge] || exists
         key = details[:symbol_sensitive] ? d[:last][:key] : (h.include?(d[:last][:key].to_sym) ? d[:last][:key].to_sym : d[:last][:key].to_s)
-        if details[:symbols] then key = key.to_sym elsif !exists then key = d[:last][:key] end
+        # if details[:symbols] then key = key.to_sym elsif !exists then key = d[:last][:key] end
         if Fixnum === d[:last][:slice]
           h[key][d[:last][:slice]] = d[:value]
         else
@@ -230,7 +228,7 @@ module BBLib
       symbol_sensitive: {default:false},
       stop_on_nil: {default:true},
       arrays: {default:[]},
-      keys_to_sym: {default:true}
+      keys_to_sym: {default:false}
     }
 
 end
