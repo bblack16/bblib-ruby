@@ -41,14 +41,24 @@ module BBLib
     to_string: {aliases: [:to_s, :stringify]},
     downcase: { aliases: [:lower, :lowercase, :to_lower]},
     upcase: { aliases: [:upper, :uppercase, :to_upper]},
-    # titlecase: { aliases: [:title_case]},
     roman: { aliases: [:convert_roman, :roman_numeral, :parse_roman]},
     remove_symbols: { aliases: [:chop_symbols, :drop_symbols]},
     format_articles: { aliases: [:articles]},
     reverse: { aliases: [:invert]},
     delete: { aliases: [:del]},
     remove: { aliases: [:rem]},
-    custom: {aliases: [:send]}
+    custom: {aliases: [:send]},
+    # TODO
+    # titlecase: { aliases: [:title_case]},
+    encapsulate: {aliases: []},
+    uncapsulate: {aliases: []},
+    # extract_ints: {aliases: []},
+    # extract_floats: {aliases: []},
+    # extract_numbers: {aliases: []},
+    max_number: {aliases: [:max, :maximum, :maximum_number]},
+    min_number: {aliases: [:min, :minimum, :minimum_number]},
+    avg_number: {aliases: [:avg, :average, :average_number]},
+    sum_number: {aliases: [:sum]},
     # rename: { aliases: [:rename_key]},
     # concat: { aliases: [:join, :concat_with]},
     # reverse_concat: { aliases: [:reverse_join, :reverse_concat_with]}
@@ -157,6 +167,34 @@ module BBLib
 
     def self.custom hash, path, value, *args, **params
       hash.hash_path_set path => value.send(*args)
+    end
+
+    def self.encapsulate hash, path, value, args, **params
+      hash.hash_path_set path => "#{args}#{value}#{args}"
+    end
+
+    def self.uncapsulate hash, path, value, args, **params
+      value = value[args.size..-1] if value.start_with?(args)
+      value = value[0..-(args.size)-1] if value.end_with?(args)
+      hash.hash_path_set path => value
+    end
+
+    def self.max_number hash, path, value, *args, **params
+      hash.hash_path_set path => value.to_s.extract_numbers.max
+    end
+
+    def self.min_number hash, path, value, *args, **params
+      hash.hash_path_set path => value.to_s.extract_numbers.min
+    end
+
+    def self.avg_number hash, path, value, *args, **params
+      nums = value.to_s.extract_numbers
+      avg = nums.inject{ |s, x| s + x }.to_f / nums.size.to_f
+      hash.hash_path_set path => avg
+    end
+
+    def self.sum_number hash, path, value, *args, **params
+      hash.hash_path_set path => value.to_s.extract_numbers.inject{ |s,x| s + x }
     end
 
   end
