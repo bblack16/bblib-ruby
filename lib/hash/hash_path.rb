@@ -166,18 +166,20 @@ module BBLib
       no_slice = false
       if !slice.is_a?(Range) && !slice.is_a?(Fixnum) then slice = (0..-1); no_slice = true end
       if slice.nil? then slice = (0..-1) end
-      formula = path.scan(/(?<=\().*?(?=\))/).first
+      formula = path.scan(/(?<=\().*(?=\))/).first
       if key.empty? && (slice != (0..-1) || !no_slice) then key = nil end
       {key:key, slice:slice, formula:formula}
     end
 
     def self.split_hash_path path, delimiter = '.'
       if path.to_s.start_with?(delimiter) then path = path.to_s.sub(delimiter, '') end
-      paths, stop, open = [], 0, false
+      paths, stop, open, popen = [], 0, false, false
       path.chars.each do |t|
         if t == '[' then open = true end
         if t == ']' then open = false end
-        if t == delimiter && !open then paths << path[0..stop].reverse.sub(delimiter,'').reverse; path = path[stop+1..-1]; stop = -1 end
+        if t == '(' then popen = true end
+        if t == ')' then popen = false end
+        if t == delimiter && !open && !popen then paths << path[0..stop].reverse.sub(delimiter,'').reverse; path = path[stop+1..-1]; stop = -1 end
         stop += 1
       end
       paths << path
@@ -192,7 +194,7 @@ module BBLib
       temp = []
       hashes.flatten.each do |p|
         begin
-          if eval(formula.gsub('$', p.to_s))
+          if eval(p.is_a?(Hash) ? formula.gsub('$', "(#{p})") : formula.gsub('$', p.to_s))
             temp << p
           end
         rescue StandardError, SyntaxError => se
