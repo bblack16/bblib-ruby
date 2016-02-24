@@ -59,6 +59,7 @@ module BBLib
     min_number: {aliases: [:min, :minimum, :minimum_number]},
     avg_number: {aliases: [:avg, :average, :average_number]},
     sum_number: {aliases: [:sum]},
+    strip: {aliases: [:trim]},
     # rename: { aliases: [:rename_key]},
     # concat: { aliases: [:join, :concat_with]},
     # reverse_concat: { aliases: [:reverse_join, :reverse_concat_with]}
@@ -195,6 +196,10 @@ module BBLib
 
     def self.sum_number hash, path, value, *args, **params
       hash.hash_path_set path => value.to_s.extract_numbers.inject{ |s,x| s + x }
+    end
+
+    def self.strip hash, path, value, args, **params
+      hash.hash_path_set path => value.to_s.strip
     end
 
   end
