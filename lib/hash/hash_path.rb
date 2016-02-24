@@ -14,7 +14,7 @@ module BBLib
         matches.push hash.dig(patterns).flatten(1)[p[:slice]]
       else
         if p[:key].nil?
-          if hash.is_a?(Array) then matches << hash[p[:slice]] end
+          if hash.is_a?(Array) then hash[p[:slice]].each{ |h| matches << h } end
         elsif Symbol === p[:key] || String === p[:key]
           if p[:key].to_s == '*'
             matches.push hash.values.flatten(1)[p[:slice]]
@@ -163,10 +163,11 @@ module BBLib
         key = key[1..-1].to_sym
       end
       slice = eval(path.scan(/(?<=\[).*?(?=\])/).first.to_s)
-      if !slice.is_a?(Range) && !slice.is_a?(Fixnum) then slice = (0..-1) end
+      no_slice = false
+      if !slice.is_a?(Range) && !slice.is_a?(Fixnum) then slice = (0..-1); no_slice = true end
       if slice.nil? then slice = (0..-1) end
       formula = path.scan(/(?<=\().*?(?=\))/).first
-      if key.empty? && slice != (0..-1) then key = nil end
+      if key.empty? && (slice != (0..-1) || !no_slice) then key = nil end
       {key:key, slice:slice, formula:formula}
     end
 
