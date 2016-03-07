@@ -73,6 +73,10 @@ class String
     self[(self.include?('/') ? self.rindex('/').to_i+1 : 0)..(with_extension ? -1 : self.rindex('.').to_i-1)]
   end
 
+  def dirname
+    self.scan(/.*(?=\/)/).first
+  end
+
   def parse_file_size output: :byte
     BBLib.parse_file_size(self, output:output)
   end
