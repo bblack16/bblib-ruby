@@ -86,7 +86,7 @@ module BBLib
 
     def self.replace hash, path, value, args, params
       value = value.dup.to_s
-      args.each{ |k,v| value.gsub!(k.to_s, v.to_s) }
+      args.each{ |k,v| value.gsub!(k, v.to_s) }
       hash.hash_path_set path => value
     end
 
@@ -199,7 +199,7 @@ module BBLib
     end
 
     def self.strip hash, path, value, args, **params
-      hash.hash_path_set path => value.to_s.strip
+      hash.hash_path_set path => (value.respond_to?(:strip) ? value.strip : value)
     end
 
   end
