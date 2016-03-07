@@ -2,11 +2,12 @@
 module BBLib
 
   class FuzzyMatcher
-    attr_reader :threshold
+    attr_reader :threshold, :algorithms
     attr_accessor :case_sensitive, :remove_symbols, :move_articles, :convert_roman
 
     def initialize threshold: 75, case_sensitive: true, remove_symbols: false, move_articles: false, convert_roman: true
       self.threshold = threshold
+      setup_algorithms
       @case_sensitive, @remove_symbols, @move_articles, @convert_roman = case_sensitive, remove_symbols, move_articles, convert_roman
     end
 
@@ -14,8 +15,8 @@ module BBLib
     def similarity a, b
       return 100.0 if a == b
       prep_strings a, b
-      score, total_weight = 0, ALGORITHMS.map{|a, v| v[:weight] }.inject{ |sum, w| sum+=w }
-      ALGORITHMS.each do |algo, vals|
+      score, total_weight = 0, @algorithms.map{|a, v| v[:weight] }.inject{ |sum, w| sum+=w }
+      @algorithms.each do |algo, vals|
         next unless vals[:weight] > 0
         score+= @a.send(vals[:signature], @b) * vals[:weight]
       end
@@ -44,23 +45,25 @@ module BBLib
     end
 
     def set_weight algorithm, weight
-      return nil unless ALGORITHMS.include? algorithm
-      ALGORITHMS[algorithm] = BBLib.keep_between(weight, 0, nil)
+      return nil unless @algorithms.include? algorithm
+      @algorithms[algorithm][:weight] = BBLib.keep_between(weight, 0, nil)
     end
 
     def algorithms
-      ALGORITHMS.keys
+      @algorithms.keys
     end
 
     private
 
-      ALGORITHMS = {
-        levenshtein: {weight: 10, signature: :levenshtein_similarity},
-        composition: {weight: 5, signature: :composition_similarity},
-        numeric: {weight: 0, signature: :numeric_similarity},
-        phrase: {weight: 0, signature: :phrase_similarity}
-        # FUTURE qwerty: {weight: 0, signature: :qwerty_similarity}
-      }
+      def setup_algorithms
+        @algorithms = {
+          levenshtein: {weight: 10, signature: :levenshtein_similarity},
+          composition: {weight: 5, signature: :composition_similarity},
+          numeric: {weight: 0, signature: :numeric_similarity},
+          phrase: {weight: 0, signature: :phrase_similarity}
+          # FUTURE qwerty: {weight: 0, signature: :qwerty_similarity}
+        }
+      end
 
       def prep_strings a, b
         @a, @b = a.to_s.dup.strip, b.to_s.dup.strip
