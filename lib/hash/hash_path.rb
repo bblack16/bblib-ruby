@@ -42,9 +42,13 @@ module BBLib
     details[:paths].each do |path, d|
       d[:hashes].each do |h|
         count+=1
-        exists = (details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) ))
+        if d[:last][:key].is_a?(Regexp)
+          exists = h.keys.any?{ |k| k.to_s =~ d[:last][:key] }
+        else
+          exists = (details[:symbol_sensitive] ? h.include?(d[:last][:key]) : (h.include?(d[:last][:key].to_sym) || h.include?(d[:last][:key].to_s) ))
+        end
         next unless details[:bridge] || exists
-        key = details[:symbol_sensitive] ? d[:last][:key] : (h.include?(d[:last][:key].to_sym) ? d[:last][:key].to_sym : d[:last][:key].to_s)
+        key = details[:symbol_sensitive] || d[:last][:key].is_a?(Regexp) ? d[:last][:key] : (h.include?(d[:last][:key].to_sym) ? d[:last][:key].to_sym : d[:last][:key].to_s)
         # if details[:symbols] then key = key.to_sym elsif !exists then key = d[:last][:key] end
         if Fixnum === d[:last][:slice]
           h[key][d[:last][:slice]] = d[:value]
@@ -157,7 +161,7 @@ module BBLib
 
     def self.hash_path_analyze path
       key = path.scan(/\A.*^[^\[\(\{]*/i).first.to_s
-      if key.encap_by?('/')
+      if key.encap_by?('/') || key.start_with?('/') && key.end_with?('i')
         key = eval(key)
       elsif key.start_with? ':'
         key = key[1..-1].to_sym
@@ -167,19 +171,20 @@ module BBLib
       if !slice.is_a?(Range) && !slice.is_a?(Fixnum) then slice = (0..-1); no_slice = true end
       if slice.nil? then slice = (0..-1) end
       formula = path.scan(/(?<=\().*(?=\))/).first
-      if key.empty? && (slice != (0..-1) || !no_slice) then key = nil end
+      if key.respond_to?(:empty) && key.empty? && (slice != (0..-1) || !no_slice) then key = nil end
       {key:key, slice:slice, formula:formula}
     end
 
     def self.split_hash_path path, delimiter = '.'
       if path.to_s.start_with?(delimiter) then path = path.to_s.sub(delimiter, '') end
-      paths, stop, open, popen = [], 0, false, false
+      paths, stop, open, popen, ropen = [], 0, false, false, false
       path.chars.each do |t|
         if t == '[' then open = true end
         if t == ']' then open = false end
         if t == '(' then popen = true end
         if t == ')' then popen = false end
-        if t == delimiter && !open && !popen then paths << path[0..stop].reverse.sub(delimiter,'').reverse; path = path[stop+1..-1]; stop = -1 end
+        if t == '/' then ropen = !ropen end
+        if t == delimiter && !open && !popen && !ropen then paths << path[0..stop].reverse.sub(delimiter,'').reverse; path = path[stop+1..-1]; stop = -1 end
         stop += 1
       end
       paths << path
