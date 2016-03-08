@@ -52,9 +52,9 @@ module BBLib
     # titlecase: { aliases: [:title_case]},
     encapsulate: {aliases: []},
     uncapsulate: {aliases: []},
-    # extract_ints: {aliases: []},
-    # extract_floats: {aliases: []},
-    # extract_numbers: {aliases: []},
+    extract_integers: {aliases: [:extract_ints]},
+    extract_floats: {aliases: []},
+    extract_numbers: {aliases: []},
     max_number: {aliases: [:max, :maximum, :maximum_number]},
     min_number: {aliases: [:min, :minimum, :minimum_number]},
     avg_number: {aliases: [:avg, :average, :average_number]},
@@ -200,6 +200,18 @@ module BBLib
 
     def self.strip hash, path, value, args, **params
       hash.hash_path_set path => (value.respond_to?(:strip) ? value.strip : value)
+    end
+
+    def self.extract_integers hash, path, value, args, **params
+      hash.hash_path_set path => (value.extract_integers)
+    end
+
+    def self.extract_floats hash, path, value, args, **params
+      hash.hash_path_set path => (value.extract_floats)
+    end
+
+    def self.extract_numbers hash, path, value, args, **params
+      hash.hash_path_set path => (value.extract_numbers)
     end
 
   end
