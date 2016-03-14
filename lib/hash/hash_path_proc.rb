@@ -16,7 +16,7 @@ module BBLib
         if params.include?(:condition) && params[:condition]
           begin
             next unless eval(params[:condition].gsub('$', value.to_s))
-          rescue
+          rescue StandardError, SyntaxError => e
             next
           end
         end
@@ -36,6 +36,7 @@ module BBLib
     extract_first: {aliases: [:grab_first, :scan_first]},
     extract_last: {aliases: [:grab_last, :scan_last]},
     parse_date: { aliases: [:date, :parse_time, :time]},
+    parse_date_unix: { aliases: [:unix_time, :unix_date]},
     parse_duration: { aliases: [:duration]},
     parse_file_size: { aliases: [:file_size]},
     to_string: {aliases: [:to_s, :stringify]},
@@ -120,6 +121,23 @@ module BBLib
       hash.hash_path_set path => formatted
     end
 
+    def self.parse_date_unix hash, path, value, *args, **params
+      format = params.include?(:format) ? params[:format] : '%Y-%m-%d %H:%M:%S'
+      formatted = nil
+      args.each do |pattern|
+        next unless formatted.nil?
+        begin
+          formatted = Time.strptime(value.to_s, pattern.to_s).strftime(format)
+        rescue
+        end
+      end
+      begin
+        if formatted.nil? then formatted = Time.parse(value) end
+      rescue
+      end
+      hash.hash_path_set path => formatted.to_f
+    end
+
     def self.parse_duration hash, path, value, args, params
       hash.hash_path_set path => value.to_s.parse_duration(output: args.empty? ? :sec : args )
     end
@@ -167,7 +185,11 @@ module BBLib
     end
 
     def self.custom hash, path, value, *args, **params
-      hash.hash_path_set path => value.send(*args)
+      if params.nil? || params.empty?
+        hash.hash_path_set path => value.send(*args)
+      else
+        hash.hash_path_set path => value.send(*args, **params)
+      end
     end
 
     def self.encapsulate hash, path, value, args, **params
