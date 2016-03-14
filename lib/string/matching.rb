@@ -26,7 +26,7 @@ module BBLib
   # Calculates a percentage based match of two strings based on their character composition.
   def self.composition_similarity a, b
     if a.length <= b.length then t = a; a = b; b = t; end
-    matches, temp = 0, b
+    matches, temp = 0, b.dup
     a.chars.each do |c|
       if temp.chars.include? c
         matches+=1
@@ -53,7 +53,7 @@ module BBLib
   # Percentage calculations here need to be weighted better...TODO
   def self.numeric_similarity a, b
     a, b = a.extract_numbers, b.extract_numbers
-    return 100.0 if a.empty? && b.empty?
+    return 100.0 if a.empty? && b.empty? || a == b
     matches = []
     for i in 0..[a.size, b.size].max-1
       matches << 1.0 / ([a[i].to_f, b[i].to_f].max - [a[i].to_f, b[i].to_f].min + 1.0)
