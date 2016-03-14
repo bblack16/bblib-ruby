@@ -5,7 +5,7 @@ class Hash
   # Merges with another hash but also merges all nested hashes and arrays/values.
   # Based on method found @ http://stackoverflow.com/questions/9381553/ruby-merge-nested-hash
   def deep_merge with, merge_arrays: true, overwrite_vals: true
-      merger = proc{ |k, v1, v2| v1.is_a?(Hash) && v2.is_a?(Hash) ? v1.merge(v2, &merger) : (merge_arrays && v1.is_a?(Array) && v2.is_a?(Array) ? (v1 + v2) : (overwrite_vals ? v2 : [v1, v2].flatten)) }
+      merger = proc{ |k, v1, v2| v1.is_a?(Hash) && v2.is_a?(Hash) ? v1.merge(v2, &merger) : (merge_arrays && v1.is_a?(Array) && v2.is_a?(Array) ? (v1 + v2) : (overwrite_vals || v1 == v2 ? v2 : [v1, v2].flatten)) }
       self.merge(with, &merger)
   end
 
