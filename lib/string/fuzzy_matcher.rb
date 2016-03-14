@@ -3,7 +3,7 @@ module BBLib
 
   class FuzzyMatcher
     attr_reader :threshold, :algorithms
-    attr_accessor :case_sensitive, :remove_symbols, :move_articles, :convert_roman
+    attr_accessor :case_sensitive, :remove_symbols, :move_articles, :convert_roman, :a, :b
 
     def initialize threshold: 75, case_sensitive: true, remove_symbols: false, move_articles: false, convert_roman: true
       self.threshold = threshold
@@ -13,9 +13,9 @@ module BBLib
 
     # Calculates a percentage match between string a and string b.
     def similarity a, b
-      return 100.0 if a == b
       prep_strings a, b
-      score, total_weight = 0, @algorithms.map{|a, v| v[:weight] }.inject{ |sum, w| sum+=w }
+      return 100.0 if @a == @b
+      score, total_weight = 0, @algorithms.map{|alg, v| v[:weight] }.inject{ |sum, w| sum+=w }
       @algorithms.each do |algo, vals|
         next unless vals[:weight] > 0
         score+= @a.send(vals[:signature], @b) * vals[:weight]
