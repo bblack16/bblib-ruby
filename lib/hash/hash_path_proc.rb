@@ -6,6 +6,12 @@ class Hash
   end
 end
 
+class Array
+  def hash_path_proc action, paths, *args, **params
+    BBLib.hash_path_proc self, action, paths, *args, **params
+  end
+end
+
 module BBLib
 
   def self.hash_path_proc hash, action, paths, *args, **params

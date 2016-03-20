@@ -387,6 +387,42 @@ end
 
 class Array
 
+  def hash_path path, delimiter: '.'
+    BBLib.hash_path self, path, delimiter:delimiter
+  end
+
+  def hash_path_set *args
+    BBLib.hash_path_set self, args
+  end
+
+  def hash_path_copy *args
+    BBLib.hash_path_copy self, args
+  end
+
+  def hash_path_copy_to hash, *args
+    BBLib.hash_path_copy_to self, hash, args
+  end
+
+  def hash_path_move_to hash, *args
+    BBLib.hash_path_move_to self, hash, args
+  end
+
+  def hash_path_move *args
+    BBLib.hash_path_move self, args
+  end
+
+  def hash_path_delete *args
+    BBLib.hash_path_delete self, args
+  end
+
+  def hash_path_keys
+    BBLib.hash_path_keys self
+  end
+
+  def hash_path_exists? path, delimiter: '.', symbol_sensitive: false
+    BBLib.hash_path_exists? self, path, delimiter:delimiter, symbol_sensitive:symbol_sensitive
+  end
+
   def dig keys
     matches = []
     self.each do |i|
