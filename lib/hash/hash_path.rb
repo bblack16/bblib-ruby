@@ -160,6 +160,7 @@ module BBLib
   private
 
     def self.hash_path_analyze path
+      return {key: '', slice: (0..-1), formula: nil} if path == '' || path.nil?
       key = path.scan(/\A.*^[^\[\(\{]*/i).first.to_s
       if key.encap_by?('/') || key.start_with?('/') && key.end_with?('i')
         key = eval(key)
@@ -168,10 +169,10 @@ module BBLib
       end
       slice = eval(path.scan(/(?<=\[).*?(?=\])/).first.to_s)
       no_slice = false
-      if !slice.is_a?(Range) && !slice.is_a?(Fixnum) then slice = (0..-1); no_slice = true end
-      if slice.nil? then slice = (0..-1) end
       formula = path.scan(/(?<=\().*(?=\))/).first
-      if key.respond_to?(:empty) && key.empty? && (slice != (0..-1) || !no_slice) then key = nil end
+      if !slice.is_a?(Range) && !slice.is_a?(Fixnum) then slice = (0..-1); no_slice = true end
+      if (key.nil? || key == '') && (!slice.nil? || !no_slice) then key = nil end
+      if slice.nil? then slice = (0..-1) end
       {key:key, slice:slice, formula:formula}
     end
 
