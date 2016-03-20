@@ -7,7 +7,7 @@ module BBLib
     if !filter.nil?
       filter = [filter].flatten.map{ |f| path.to_s + (recursive ? '/**/' : '/') + f.to_s }
     else
-      filter = path.to_s + (recursive ? '/**/*' : '/*')
+      filter = (path.to_s + (recursive ? '/**/*' : '/*')).gsub('//', '/')
     end
     Dir.glob(filter)
   end
@@ -44,7 +44,16 @@ module BBLib
     return bytes / FILE_SIZES[output][:mult]
   end
 
-FILE_SIZES = {
+  # A mostly platform agnostic call to get root volumes
+  def self.root_dirs
+    begin
+      `wmic logicaldisk get name`.split("\n").map{ |m| m.strip }[1..-1].reject{ |r| r == '' }
+    rescue
+      `ls /`
+    end
+  end
+
+  FILE_SIZES = {
     byte: { mult: 1, exp: ['b', 'byt', 'byte'] },
     kilobyte: { mult: 1024, exp: ['kb', 'kilo', 'k', 'kbyte', 'kilobyte'] },
     megabyte: { mult: 1048576, exp: ['mb', 'mega', 'm', 'mib', 'mbyte', 'megabyte'] },
