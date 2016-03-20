@@ -62,8 +62,8 @@ module BBLib
     sum_number: {aliases: [:sum]},
     strip: {aliases: [:trim]},
     # rename: { aliases: [:rename_key]},
-    # concat: { aliases: [:join, :concat_with]},
-    # reverse_concat: { aliases: [:reverse_join, :reverse_concat_with]}
+    concat: { aliases: [:join, :concat_with]},
+    reverse_concat: { aliases: [:reverse_join, :reverse_concat_with]}
   }
 
   module HashPath
@@ -93,7 +93,7 @@ module BBLib
 
     def self.extract hash, path, value, *args, **params
       slice = (Array === args && args[1].nil? ? (0..-1) : args[1])
-      hash.hash_path_set path => value.scan(args.first)[slice]
+      hash.hash_path_set path => value.to_s.scan(args.first)[slice]
     end
 
     def self.extract_first hash, path, value, *args, **params
@@ -234,6 +234,14 @@ module BBLib
 
     def self.extract_numbers hash, path, value, args, **params
       hash.hash_path_set path => (value.extract_numbers)
+    end
+
+    def self.concat hash, path, value, *args, **params
+      hash.hash_path_set path => "#{value}#{params[:join]}#{hash.hash_path(args.first)[params[:range].nil? ? 0 : params[:range]]}"
+    end
+
+    def self.reverse_concat hash, path, value, *args, **params
+      hash.hash_path_set path => "#{hash.hash_path(args.first)[params[:range].nil? ? 0 : params[:range]]}#{params[:join]}#{value}"
     end
 
   end
