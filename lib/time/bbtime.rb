@@ -4,8 +4,22 @@ require_relative 'cron'
 module BBLib
 
   # Parses known time based patterns out of a string to construct a numeric duration.
-  def self.parse_duration str, output: :sec
+  def self.parse_duration str, output: :sec, min_interval: :sec
     msecs = 0.0
+
+    # Parse time expressions such as 04:05.
+    # The argument min_interval controls what time interval the final number represents
+    str.scan(/\d+\:[\d+\:]+\d+/).each do |e|
+      keys = TIME_EXPS.keys
+      position = keys.index(min_interval)
+      e.split(':').reverse.each do |sec|
+        key = keys[position]
+        msecs+= sec.to_f * TIME_EXPS[key][:mult]
+        position+=1
+      end
+    end
+
+    # Parse expressions such as '1m' or '1 min'
     TIME_EXPS.each do |k, v|
       v[:exp].each do |e|
         numbers = str.downcase.scan(/(?=\w|\D|\A)\d*\.?\d+[[:space:]]*#{e}(?=\W|\d|\z)/i)
@@ -14,6 +28,7 @@ module BBLib
         end
       end
     end
+
     msecs / (TIME_EXPS[output][:mult] rescue 1)
   end
 
@@ -109,8 +124,8 @@ module BBLib
 end
 
 class String
-  def parse_duration output: :sec
-    BBLib.parse_duration self, output:output
+  def parse_duration output: :sec, min_interval: :sec
+    BBLib.parse_duration self, output:output, min_interval:min_interval
   end
 end
 
