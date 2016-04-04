@@ -11,13 +11,13 @@ module BBLib
     hashes.each do |hash|
       if recursive
         patterns = Regexp === p[:key] ? p[:key] : p[:key].to_s == '*' ? /.*/ : (symbol_sensitive ? p[:key] : [p[:key].to_sym, p[:key].to_s])
-        matches.push hash.dig(patterns).flatten(1)[p[:slice]]
+        hash.dig(patterns)[p[:slice]].each{ |va| matches.push va }
       else
         if p[:key].nil?
           if hash.is_a?(Array) then hash[p[:slice]].each{ |h| matches << h } end
         elsif Symbol === p[:key] || String === p[:key]
           if p[:key].to_s == '*'
-            matches.push hash.values.flatten(1)[p[:slice]]
+            hash.values[p[:slice]].each{ |va| matches.push va }
           else
             next unless symbol_sensitive ? hash.include?(p[:key]) : (hash.include?(p[:key].to_sym) || hash.include?(p[:key].to_s) )
             mat = (symbol_sensitive ? hash[p[:key]] : ( if hash.include?(p[:key].to_sym) then hash[p[:key].to_sym] else hash[p[:key].to_s] end ))
@@ -32,7 +32,7 @@ module BBLib
     if path.size > 1 && !matches.empty?
       BBLib.hash_path(matches.reject{ |r| !(r.is_a?(Hash) || r.is_a?(Array)) }, path[1..-1], symbol_sensitive:symbol_sensitive)
     else
-      return matches.flatten(1)
+      return matches
     end
   end
 
