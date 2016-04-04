@@ -227,6 +227,7 @@ module BBLib
     end
 
     def self.strip hash, path, value, args, **params
+      value.map!{ |m| m.respond_to?(:strip) ? m.strip : m } if value.is_a?(Array)
       hash.hash_path_set path => (value.respond_to?(:strip) ? value.strip : value)
     end
 
