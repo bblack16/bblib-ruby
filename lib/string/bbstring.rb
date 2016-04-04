@@ -1,7 +1,8 @@
 
-require_relative 'matching.rb'
-require_relative 'roman.rb'
-require_relative 'fuzzy_matcher.rb'
+require_relative 'matching'
+require_relative 'roman'
+require_relative 'fuzzy_matcher'
+require_relative 'cases'
 
 module BBLib
 
@@ -9,11 +10,7 @@ module BBLib
   # General Functions
   ##############################################
 
-  # def self.title_case str
-    # TODO
-  # end
-
-  # Quickly remove any symbols from a string leaving onl alpha-numeric characters and white space.
+  # Quickly remove any symbols from a string leaving only alpha-numeric characters and white space.
   def self.drop_symbols str
     str.gsub(/[^\w\s\d]|_/, '')
   end
@@ -28,9 +25,9 @@ module BBLib
     BBLib.extract_numbers(str, convert:false).reject{ |r| !r.include?('.') }.map{ |m| convert ? m.to_f : m }
   end
 
-  # Alias for extract_floats
+  # Extracts any correctly formed integers or floats from a string
   def self.extract_numbers str, convert: true
-    str.scan(/\d+\.?\d+|\d+/).map{ |f| convert ? (f.include?('.') ? f.to_f : f.to_i) : f }
+    str.scan(/\d+\.\d+[^\.]|\d+[^\.]/).map{ |f| convert ? (f.include?('.') ? f.to_f : f.to_i) : f }
   end
 
   # Used to move the position of the articles 'the', 'a' and 'an' in strings for normalization.
@@ -109,12 +106,13 @@ class String
 
   # Simple method to convert a string into an array containing only itself
   def to_a
-    return [self]
+    [self]
   end
 
   def encap_by? str
-    return self.start_with?(str) && self.end_with?(str)
+    self.start_with?(str) && self.end_with?(str)
   end
+
 end
 
 class Symbol
