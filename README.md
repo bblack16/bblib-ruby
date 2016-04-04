@@ -2,7 +2,7 @@
 
 BBLib (Brandon-Black-Lib) is a collection of various reusable methods and classes to extend the Ruby language.
 
-One of my primary goals with the BBLib code is to keep it as lightweight as possible. This means you will not find dependencies outside of the Ruby core libraries.
+One of the primary goals with the BBLib is to keep it as lightweight as possible. This means you will not find dependencies outside of the Ruby core libraries.
 
 For a full breakdown of what is currently in this library, scroll down. For a quick overview of key features, read the following list.
 
@@ -55,16 +55,6 @@ Or install it yourself as:
 
 ## Usage
 
-BBLib is currently broken up into the following categories:
-* File
-* Hash
-* Math
-* Net
-* String
-* Time
-
-
-
 ### File
 #### File Scanners
 
@@ -106,7 +96,7 @@ BBLib.scan_dir 'C:/path/to/files', recursive: true, filter: ['*.jpg', '*.txt']
 #=> 'C:/path/to/files/folder/another_folder/text.txt'
 ```
 
-In addition, both _scan_files_ and _scan_dirs_ also support a **mode** named argument. By default, this argument is set to :path. In _scan_files_ if :file is passed to :mode, a ruby File object will be returned rather than a String representation of the path. Similarily, if :dir is passed to _scan_dirs_ a ruby Dir object is returned.
+In addition, both _scan_files_ and _scan_dirs_ also support a **mode** named argument. By default, this argument is set to :path. In _scan_files_ if :file is passed to :mode, a ruby File object will be returned rather than a String representation of the path. Similarly, if :dir is passed to _scan_dirs_ a ruby Dir object is returned, rather than just a string.
 
 #### File Size Parsing
 
@@ -190,17 +180,23 @@ h1.deep_merge h2, merge_arrays: false
 #=> {:value=>5, :array=>[6, 7], :hash=>{:a=>1, :b_hash=>{:c=>9, :d=>10, :y=>10}, :z=>nil}}
 ```
 
-A **!** version of _deep_merge_ is also available to modify the hash in place rather than returning a new hash.
+A ! version of _deep_merge_ is also available to modify the hash in place rather than returning a new hash.
 
 #### Keys To Sym
 
-Convert all keys within a hash (including nested keys) to symbols. This is useful after parsing json if you prefer to work with symbols rather than strings. An inplace (**!**) version of the method is also available.
+Convert all keys within a hash (including nested keys) to symbols. This is useful after parsing json if you prefer to work with symbols rather than strings. An in-place (**!**) version of the method is also available.
 
 ```ruby
 h = {"author" => "Tom Clancy", "books" => ["Rainbow Six", "The Hunt for Red October"]}
 h.keys_to_sym
 #=> {:author=>"Tom Clancy", :books=>["Rainbow Six", "The Hunt for Red October"]}
 ```
+
+_Note: This is similar to what Rails provides, except it even converts keys within nested hashes or nested arrays that contain nested hashes._
+
+#### Keys To Str
+
+The same as keys to sym, but it converts keys to strings rather than symbols.
 
 #### Reverse
 
@@ -235,11 +231,6 @@ number = -250
 BBLib.keep_betwee number, nil, 100
 #=> -250
 ```
-
-
-
-### Net
-Currently empty...
 
 
 
@@ -332,9 +323,28 @@ Checks to see how many words in a string match another. Words must match exactly
 #=> 66.66666666666666
 ```
 
-4 - Numeric Similarity (In Progress)
+4 - Numeric Similarity _(In Progress)_
 
 This algorithm is currently undergoing refactoring...
+
+This is primarily for comparing titles (such as movie or game titles). As an example, other algorithms would conclude that _'Terminator 2'_ is more similar to _'Terminator'_ than _'Terminator 2: Judgement Day'_, but the best match may really be _'Terminator 2: Judgement Day'_. To fix this, the numeric similarity would weight more towards the more appropriate title that contains the same number or numbers as itself. A string with no numbers is effectively considered to include a 1 for comparison's sake.
+
+```ruby
+a = 'Terminator 2'
+b = 'Terminator 2: Judgement Day'
+c = 'Terminator'
+
+puts a.levenshtein_similarity c
+#=> 83.33333333333334
+puts a.numeric_similarity c
+#=> 33.33333333333333
+
+puts a.levenshtein_similarity b
+#=> 44.44444444444444
+puts a.numeric_similarity b
+#=> 100.0
+```
+This algorithm is generally only useful when combined with another algorithm, which is exactly what the FuzzyMatcher class does.
 
 5 - QWERTY Similarity
 
@@ -402,23 +412,21 @@ BBLib.from_roman "Toy Story III"
 
 **msplit** _aka multi split_
 
-_msplit_ is similar to the String method split, except it can take an array of string delimiters rather than a single delim. The string is split be each delimiter in order and an Array is returned.
+_msplit_ is similar to the String method split, except it can take an array of string delimiters rather than a single delimiter. The string is split be each delimiter in order and an Array is returned. msplit may also be called on an array to split elements within it.
 
 ```ruby
-"This_is.a&&&&test".msplit ['_', '.', '&']
+"This_is.a&&&&test".msplit '_', '.', '&'
 
 #=> ['This', 'is', 'a', 'test']
 ```
 
-By default any empty items from the return Array are removed. This behavior can be changed using the _:keep_empty_ named param.
+By default any empty items from the returned Array are removed. This behavior can be changed using the _:keep_empty_ named param.
 
 ```ruby
 "This_is.a&&&&test".msplit ['_', '.', '&'], keep_empty: true
 
 #=> ['This', 'is', 'a', '', '', '', 'test']
 ```
-
-_msplit is only available directly from an instantiated String object._
 
 **move_articles**
 
@@ -429,38 +437,85 @@ The method is available via the BBLib module or any instance of String.
 ```ruby
 title = "The Simpsons"
 title.move_articles :back
-
 #=> "Simpons, The"
 
 title.move_articles :none
-
 #=> "Simpsons"
 
 title = "Day to Remember, A"
 title.move_articles :front
-
 #=> "A Day to Remember"
 ```
 
-**drop_symbols**
+**extract_integers**/**extract_floats**/**extract_numbers**
 
-A simple method to remove all non-alpha, non-numeric and non-whitespace characters from a string. Extended to the String class.
+Three methods to grab numbers from within strings. Integers only nabs numbers with no decimal places, floats gets only numbers with a decimal and numbers gets both integers and floats. The numbers must also be properly formatted, so something like the version number '2.1.1' below will not be extracted.
 
-**extract_integers**
+```ruby
+s = 'Test 10 2.5 Number 100 aaaa 10.113 Version 2.1.1'
 
-Returns an array of all integers found within a string. The named param _:convert_ can be set to true to convert the extract numbers into Fixnums. If left false, strings are returned instead.
-
-**extract_floats**
-
-Performs the same action as _extract_integers_ except it can also pull floats from a string. The _:convert_ param is also available, but converts the strings into floats.
-
-**extract_numbers**
-
-See above. Is an alias for _extract_floats_.
-
-
+p s.extract_integers
+#=> [10, 100]
+p s.extract_floats
+#=> [2.5, 10.113]
+p s.extract_numbers
+#=> [10, 2.5, 100, 10.113]
+```
 
 ### Time
+
+#### Cron
+
+BBLib includes a lightweight cron syntax parser. It can be used to display the runtimes of a cron based on a cron string. Nearly every variant of cron syntax is supported with the ability to intermix ranges, divisors and explicit numbers in the same interval placing.
+
+```ruby
+
+cron = BBLib::Cron.new('* * * * * *')
+puts cron.next
+#=> 2016-04-03 22:01:00 -0600
+
+puts cron.previous
+#=> 2016-04-03 21:59:00 -0600
+
+p cron.next(5)
+#=> [2016-04-03 22:01:00 -0600, 2016-04-03 22:02:00 -0600, 2016-04-03 22:03:00 -0600, 2016-04-03 22:04:00 -0600, 2016-04-03 22:05:00 -0600]
+
+# Set the time explicitly. The default is the current system time.
+puts cron.next(time: Time.now+30)
+#=> 2016-04-03 22:31:00 -0600
+```
+
+An instantiated Cron object is not necessary to get the next and previous times.
+
+```ruby
+puts BBLib::Cron.next('* * * * * *')
+#=> 2016-04-03 22:04:00 -0600
+
+puts BBLib::Cron.next('0-5 * * * * *')
+#=> 2016-04-03 22:04:00 -0600
+
+puts BBLib::Cron.next('0 1 1 1 1 *')
+#=> 2018-01-01 01:00:00 -0700
+
+puts BBLib::Cron.next('1 1 1-5 * * 2020')
+#=> 2020-01-01 01:01:00 -0700
+
+puts BBLib::Cron.next('*/5 * * * * *')
+#=> 2016-04-03 22:05:00 -0600
+
+puts BBLib::Cron.next('1-3,4,5,10-11 1-10 */5 * * *')
+#=> 2016-04-06 01:01:00 -0600
+```
+
+Common vixieisms are also supported:
+
+```ruby
+puts BBLib::Cron.next('@daily')
+#=> 2016-04-04 00:00:00 -0600
+
+puts BBLib::Cron.next('@weekly')
+#=> 2016-04-10 00:00:00 -0600
+```
 
 #### Duration parser
 
@@ -478,7 +533,14 @@ Similar to the file size parser under the files section, but instead can parse d
 #=> 1.1697222222222223
 ```
 Output options are:
-* :mili
+* :yocto
+* :zepto
+* :atto
+* :femto
+* :pico
+* :nano
+* :micro
+* :milli
 * :sec
 * :min
 * :hour
@@ -486,6 +548,20 @@ Output options are:
 * :week
 * :month
 * :year
+
+__WARNING:__ _time intervals below microseconds are prone to heavy rounding errors in the current implementation. They are NOT EXACT._
+
+The colon separated duration pattern (eg. '02:30') can also be matched. The last set of digits is treated as seconds with each prior number being one interval greater. The default starting interval can be changed using the __min_interval__ named param. The available options are the same as the output options. This pattern type can even be intermixed with the types shown above and will be added to the total duration.
+
+```ruby
+duration = '04:35'
+
+puts duration.parse_duration
+#=> 275.0
+
+puts duration.parse_duration min_interval: :min
+#=> 16500.0
+```
 
 **Create a duration String from Numeric**
 
