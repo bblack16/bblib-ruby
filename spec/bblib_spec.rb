@@ -30,6 +30,19 @@ describe BBLib do
     expect(['Test|test','test.test'].msplit ',', '.', '|').to eq ["Test", "test", "test", "test"]
   end
 
+  it 'converts a sentence to casings' do
+    sent = 'This is a casing-test. OK?'
+    expect(sent.title_case).to eq 'This Is a Casing-Test. Ok?'
+    expect(sent.title_case(first_only: true)).to eq 'This Is a Casing-Test. OK?'
+    expect(sent.start_case).to eq 'This Is A Casing-Test. Ok?'
+    expect(sent.start_case(first_only: true)).to eq 'This Is A Casing-Test. OK?'
+    expect(sent.snake_case).to eq 'This_is_a_casing_test_OK'
+    expect(sent.spinal_case).to eq 'This-is-a-casing-test-OK'
+    expect(sent.train_case).to eq 'This-Is-A-Casing-Test-Ok'
+    expect(sent.camel_case).to eq 'thisIsACasingTestOk'
+    expect(sent.camel_case(:upper)).to eq 'ThisIsACasingTestOk'
+  end
+
   # Number
 
   it 'keep number between min and max' do
@@ -65,6 +78,10 @@ describe BBLib do
     expect(thash.hash_path('..e')).to eq [6,5]
     expect(thash.hash_path('c.d[3].e')).to eq [6]
     expect(thash.hash_path('test.path')).to eq ['here']
+
+    nhash = {a:[1,2], b:{ a: 3}}
+    expect(nhash.hash_path('..a')).to eq [[1,2],3]
+    expect(nhash.hash_path('a')).to eq [[1,2]]
   end
 
   it 'squishes hash' do
@@ -117,6 +134,7 @@ describe BBLib do
     expect('5000123 mil'.parse_duration output: :sec).to eq 5000.123
     expect('55hrs'.parse_duration output: :sec).to eq 198000.0
     expect('1year 1month 1day 1hour 1 min 1 sec 1 mil'.parse_duration output: :sec).to eq 34218061.001
+    expect('01:30'.parse_duration).to eq 90.0
 
     expect('1min'.parse_duration output: :min).to eq 1.0
     expect('1min 1min 2min'.parse_duration output: :min).to eq 4.0
