@@ -143,13 +143,14 @@ module BBLib
       }
 
       REPLACE = {
-        1 => [:sunday, :sun, :january, :jan],
-        2 => [:monday, :mon, :february, :feb],
-        3 => [:tuesday, :tues, :tue, :march, :mar],
-        4 => [:wednesday, :wednes, :wed, :april, :apr],
-        5 => [:thursday, :thurs, :thu, :may],
-        6 => [:friday, :fri, :june, :jun],
-        7 => [:saturday, :sat, :july, :jul],
+        0 => [:sunday, :sun],
+        1 => [:monday, :mon, :january, :jan],
+        2 => [:tuesday, :tues, :february, :feb],
+        3 => [:wednesday, :wednes, :tue, :march, :mar],
+        4 => [:thursday, :thurs, :wed, :april, :apr],
+        5 => [:friday, :fri, :thu, :may],
+        6 => [:saturday, :sat, :june, :jun],
+        7 => [:july, :jul],
         8 => [:august, :aug],
         9 => [:september, :sept, :sep],
         10 => [:october, :oct],
