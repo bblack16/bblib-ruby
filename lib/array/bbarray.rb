@@ -2,14 +2,13 @@
 module BBLib
 
   # Takes two arrays (can be of different length) and interleaves them like [a[0], b[0], a[1], b[1]...]
-  def self.interleave a, b, filler: nil
-    if a.size < b.size
-      a = a.dup
-      while a.size < b.size
-        a.push filler
-      end
+  def self.interleave a, b
+    ary = Array.new
+    [a.size, b.size].max.times do |i|
+      ary.push(a[i]) if i < a.size
+      ary.push(b[i]) if i < b.size
     end
-    a.zip(b).flatten(1)
+    ary
   end
 
 end
@@ -35,7 +34,7 @@ class Array
     end.join
   end
 
-  def interleave b, filler: nil
-    BBLib.interleave self, b, filler: filler
+  def interleave b
+    BBLib.interleave self, b
   end
 end
