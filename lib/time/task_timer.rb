@@ -3,7 +3,7 @@ module BBLib
   class TaskTimer
     attr_reader :tasks, :save, :retention
 
-    def initialize task:nil, retention:100
+    def initialize task = nil, retention:100
       @tasks = {}
       self.retention = retention
       if task then start task end
@@ -74,26 +74,39 @@ module BBLib
       !@tasks[task][:current].nil?
     end
 
-    def method_missing *args
-      temp = args.first.to_s.sub('p_','').to_sym
+    def stats task, pretty: false
+      return nil unless @tasks.include?(task)
+      stats = "#{task}" + "\n" + '-'*30 + "\n"
+      TIMER_TYPES.each do |k,v|
+        next if STATS_IGNORE.include?(k)
+        stats+= k.to_s.capitalize.ljust(10) + "#{self.send(k, task, pretty:pretty)}\n"
+      end
+      stats
+    end
+
+    def method_missing *args, **named
+      temp = args.first.to_sym
+      pretty = named.delete :pretty
       type, task = TIMER_TYPES.keys.find{ |k| k == temp || TIMER_TYPES[k].include?(temp) }, args[1] ||= :default
       raise NoMethodError unless type
       t = time task, type
-      args.first.to_s.start_with?('p_') && type != :count ? t.to_duration : t
+      pretty && type != :count && t ? (t.is_a?(Array) ? t.map{|m| m.to_duration} : t.to_duration) : t
     end
 
     private
 
+      STATS_IGNORE = [:current, :all]
+
       TIMER_TYPES = {
         current: [],
-        avg: [:average, :av],
-        all: [:times],
-        max: [:maximum, :largest],
-        min: [:minimum, :smallest],
-        sum: [],
-        last: [:latest],
+        count: [:total],
         first: [:initial],
-        count: [:total]
+        last: [:latest],
+        min: [:minimum, :smallest],
+        max: [:maximum, :largest],
+        avg: [:average, :av],
+        sum: [],
+        all: [:times]
       }
 
   end
