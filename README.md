@@ -210,9 +210,23 @@ h.reverse
 #=> {:d=>4, :c=>3, :b=>2, :a=>1}
 ```
 
+### Array
 
+#### Interleave
 
-### Math
+Interleave takes two arrays and pieces them together by grabbing alternating elements from both arrays.
+
+```ruby
+a = ['This', 'a', '.']
+b = ['is', 'test']
+
+p BBLib.interleave a, b
+# OR
+p a.interleave b
+#=> ["This", "is", "a", "test", "."]
+```
+
+### Numeric
 
 #### Keep Between
 
@@ -286,7 +300,7 @@ fm.best_match 'Ruby', ['Ruby', 'Rails', 'Java', 'C++']
 
 Implementations of the following algorithms are currently available. All algorithms are for calculating similarity between strings. Most are useful for fuzzy matching. All algorithms are available statically in the BBLib module but are also available as extensions to the String class. Most of these algorithms are case sensitive by default.
 
-1 - Levenshtein Distance
+__1 - Levenshtein Distance__
 
 A fairly simple rendition of the Levenshtein distance algorithm in Ruby. There are two functions available: **levenshtein_distance** and **levenshtein_similarity**. The former, calculates the number of additions, removals or substitutions needed to turn one string into another. The latter, uses the distance to calculate a percentage based match of two strings.
 
@@ -302,7 +316,7 @@ BBLib.levenshtein_distance 'Ruby is great', 'Rails is great'
 #=> 71.42857142857143
 ```
 
-2 - String Composition
+__2 - String Composition__
 
 Compares the character composition of two strings. The order of characters is not relevant, however, the number of occurrences is factored in.
 
@@ -311,7 +325,7 @@ Compares the character composition of two strings. The order of characters is no
 #=> 71.42857142857143
 ```
 
-3 - Phrase Similarity
+__3 - Phrase Similarity__
 
 Checks to see how many words in a string match another. Words must match exactly, including case. The results is the percentage of words that have an exact pair. The number of occurrences is also a factor.
 
@@ -323,7 +337,7 @@ Checks to see how many words in a string match another. Words must match exactly
 #=> 66.66666666666666
 ```
 
-4 - Numeric Similarity _(In Progress)_
+__4 - Numeric Similarity _(In Progress)_ __
 
 This algorithm is currently undergoing refactoring...
 
@@ -346,7 +360,7 @@ puts a.numeric_similarity b
 ```
 This algorithm is generally only useful when combined with another algorithm, which is exactly what the FuzzyMatcher class does.
 
-5 - QWERTY Similarity
+__5 - QWERTY Similarity__
 
 A basic method that compares two strings by measuring the physical difference from one char to another on a QWERTY keyboard (alpha-numeric only). May be useful for detecting typos in words, but becomes less useful depending on the length of the string. This method is still in development and not yet in a final state. Currently a total distance is returned. Eventually, a percentage based match will replace this.
 
@@ -407,6 +421,51 @@ BBLib.from_roman "Toy Story III"
 #=> 'Donkey Kong CountryIII'
 ```
 
+#### Case Converters
+
+Some basic case converters are now available. The majority of these are complete but not heavily tested, so some bugs or edge cases may exist.
+
+Case supported:
+* Title Case
+* Start Case
+* Camel Case
+* Snake Case
+* Spinal Case
+* Train Case
+* Delimited Case
+
+Each case may be called directly on a string or using class methods in the BBLib module.
+
+```ruby
+sent = 'This is a casing-test. OK?'
+
+puts sent.title_case
+#=> This Is a Casing-Test. Ok?
+
+puts sent.start_case
+#=> This Is A Casing-Test. Ok?
+
+puts sent.snake_case
+#=> This_is_a_casing_test_OK
+
+puts sent.spinal_case
+#=> This-is-a-casing-test-OK
+
+puts sent.train_case
+#=> This-Is-A-Casing-Test-Ok
+
+puts sent.delimited_case '+'
+#=> This+is+a+casing+test+OK
+
+# By default when title casing or start casing, the capitalize method is used on each word.
+# This results in characters following the first to be downcased. To avoid this, the first_only param can be used.
+# This param prevents all other chars in a word from being processed.
+puts 'i like SQL'.title_case
+#=> 'I Like Sql'
+
+puts 'i like SQL'.title_case first_only: true
+#=> I Like SQL
+```
 
 #### Other
 
@@ -507,7 +566,35 @@ puts BBLib::Cron.next('1-3,4,5,10-11 1-10 */5 * * *')
 #=> 2016-04-06 01:01:00 -0600
 ```
 
-Common vixieisms are also supported:
+Named days of the week and month are also supported in various formats and can be used in ranges or comma separated lists. They can even the intermingled with numbers such as 'Jun-9'.
+
+```ruby
+puts BBLib::Cron.next('* * * * sun *')
+#=> 2016-04-10 00:00:00 -0600
+
+puts BBLib::Cron.next('* * * * sunday *')
+#=> 2016-04-10 00:00:00 -0600
+
+puts BBLib::Cron.next('* * * * sun,sat *')
+#=> 2016-04-09 00:00:00 -0600
+
+puts BBLib::Cron.next('* * * Jun-Dec * *')
+#=> 2016-06-01 00:00:00 -0600
+
+# The next Friday the 13th in December
+puts BBLib::Cron.next('* * 13 Dec Fri *')
+#=> 2019-12-13 00:00:00 -0700
+
+# The next leap year
+puts BBLib::Cron.next('* * 29 February * *')
+#=> 2020-02-29 00:00:00 -0700
+
+# The next Feb 29th that also happens to be a Monday
+puts BBLib::Cron.next('* * 29 February Monday *')
+#=> 2044-02-29 00:00:00 -0700
+```
+
+Common Vixie-isms are also supported:
 
 ```ruby
 puts BBLib::Cron.next('@daily')
@@ -516,6 +603,9 @@ puts BBLib::Cron.next('@daily')
 puts BBLib::Cron.next('@weekly')
 #=> 2016-04-10 00:00:00 -0600
 ```
+
+_Supported list of Vixie-isms: @daily, @midnight, @noon, @weekly, @monthly, @yearly, @annually_
+_Note: @reboot and @restart can be parsed but are inaccurate due to the fact that they have no way of knowing the next reboot._
 
 #### Duration parser
 
@@ -583,6 +673,61 @@ There is also a method to turn a Numeric object into a string representation of 
 123124.to_duration( style: :short)
 #=> '34h 12m 4s'
 ```
+
+#### Task Timer
+
+A very simple task timer is also included. It is not intended to replace benchmarking classes but rather to augment or be used for simplistic timing. You simply need to instantiate a timer and then call start with the name of the task. To stop the timer, call stop and pass in the same task name. Once a single time has been completed for any given task a few different metrics can be pulled on that task. These metrics may also be printed in bulk using the _stats_ method.
+
+```ruby
+# Generate a new timer object
+t = BBLib::TaskTimer.new
+
+# Call start right before initiating a task and stop immediately after.
+5.times do
+  t.start :random_sleep
+  # Perform task...
+  sleep(rand())
+  t.stop :random_sleep
+end
+
+# Print out the stats from the task
+puts t.stats :random_sleep
+#=> random_sleep
+#=> ------------------------------
+#=> Count     5
+#=> First     0.3134028911590576
+#=> Last      0.5248761177062988
+#=> Min       0.20781898498535156
+#=> Max       0.9016561508178711
+#=> Avg       0.4677897930145264
+#=> Sum       2.338948965072632
+
+# Same as above but cnverts seconds into human readable time durations.
+# The pretty argument may also be applied to individual stat calls such as avg, sum, min, max, etc...
+puts t.stats :random_sleep, pretty: true
+#=> random_sleep
+#=> ------------------------------
+#=> Count     5
+#=> First     313 mils
+#=> Last      525 mils
+#=> Min       208 mils
+#=> Max       902 mils
+#=> Avg       468 mils
+#=> Sum       2 secs 339 mils
+
+# Similar to the above task, this version uses a restart which stops the first start call and initiates a new timer
+t.start :another_task
+5.times do
+  sleep(rand())
+  t.restart :another_task
+end
+
+# Get the individual average stat for another task. Method calls are aliases so you could also use .average or .av to get the average.
+puts t.avg :another_task
+#=> 0.5790667057037353
+```
+
+By default the task timer will only keep the stats from 100 runs of each task it tracks. The retention can be increased or decreased using the _retention_ method. Also, call stop will return the total time the stopped task ran.
 
 ## Development
 
