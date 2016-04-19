@@ -1,9 +1,11 @@
 require 'time'
 
 class Hash
-  def hash_path_proc action, paths, *args, **params
+  def path_proc action, paths, *args, **params
     BBLib.hash_path_proc self, action, paths, *args, **params
   end
+
+  alias_method :hash_path_proc, :path_proc
 end
 
 class Array
@@ -55,8 +57,6 @@ module BBLib
     delete: { aliases: [:del]},
     remove: { aliases: [:rem]},
     custom: {aliases: [:send]},
-    # TODO
-    # titlecase: { aliases: [:title_case]},
     encapsulate: {aliases: []},
     uncapsulate: {aliases: []},
     extract_integers: {aliases: [:extract_ints]},
@@ -67,7 +67,6 @@ module BBLib
     avg_number: {aliases: [:avg, :average, :average_number]},
     sum_number: {aliases: [:sum]},
     strip: {aliases: [:trim]},
-    # rename: { aliases: [:rename_key]},
     concat: { aliases: [:join, :concat_with]},
     reverse_concat: { aliases: [:reverse_join, :reverse_concat_with]}
   }
