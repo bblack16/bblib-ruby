@@ -22,7 +22,7 @@ module BBLib
     BBLib.scan_dir(path, filter: filter, recursive: recursive).map{ |f| File.directory?(f) ? (mode == :dir ? Dir.new(f) : f ) : nil}.reject{ |r| r.nil? }
   end
 
-  # Shorthand method to write a string to dist. By default the path is created if it doesn't exist.
+  # Shorthand method to write a string to disk. By default the path is created if it doesn't exist.
   # Set mode to w to truncate file or leave at a to append.
   def self.string_to_file path, str, mkpath = true, mode: 'a'
     if !Dir.exists?(path) && mkpath
