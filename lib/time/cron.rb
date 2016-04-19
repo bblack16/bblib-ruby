@@ -3,7 +3,7 @@ module BBLib
   class Cron
     attr_reader :exp, :parts, :time
 
-    def initialize exp
+    def initialize exp = '* * * * * *'
       @parts = Hash.new
       self.exp = exp
     end
