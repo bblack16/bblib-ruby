@@ -37,4 +37,8 @@ class Array
   def interleave b
     BBLib.interleave self, b
   end
+
+  def diff b
+    (self-b) + (b-self)
+  end
 end
