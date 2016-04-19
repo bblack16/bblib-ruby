@@ -76,7 +76,7 @@ describe BBLib do
   it 'navigates hash' do
     expect(thash.hash_path('a')).to eq [1]
     expect(thash.hash_path('..e')).to eq [6,5]
-    expect(thash.hash_path('c.d[3].e')).to eq [6]
+    expect(thash.hash_path('c.d.[3].e')).to eq [6]
     expect(thash.hash_path('test.path')).to eq ['here']
 
     nhash = {a:[1,2], b:{ a: 3}}
@@ -85,7 +85,7 @@ describe BBLib do
   end
 
   it 'squishes hash' do
-    expect(thash.squish).to eq ({"a"=>1, "b"=>2, "c.d[0]"=>3, "c.d[1]"=>4, "c.d[2]"=>5, "c.d[3].e"=>6, "c.f"=>7, "g"=>8, "test.path"=>"here", "e"=>5})
+    expect(thash.squish).to eq ({"a"=>1, "b"=>2, "c.d.[0]"=>3, "c.d.[1]"=>4, "c.d.[2]"=>5, "c.d.[3].e"=>6, "c.f"=>7, "g"=>8, "test.path"=>"here", "e"=>5})
   end
 
   squished = thash.squish
