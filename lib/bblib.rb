@@ -5,9 +5,9 @@ require_relative "time/bbtime"
 require_relative "hash/bbhash"
 require_relative "number/bbnumber"
 require_relative "object/bbobject"
+require_relative "object/lazy_class"
 require_relative "array/bbarray"
 require 'fileutils'
-require 'net/http'
 require 'uri'
 
 module BBLib
