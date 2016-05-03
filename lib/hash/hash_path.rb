@@ -112,7 +112,7 @@ module BBLib
   protected
 
     def self.split_path *paths
-      paths.map{|pth| pth.gsub('..', '. .').scan(/(?:[\(|\[].*?[\)|\]]|[^\.])+/)}.flatten
+      paths.map{|pth| pth.to_s.gsub('..', '. .').scan(/(?:[\(|\[].*?[\)|\]]|[^\.])+/)}.flatten
     end
 
     def self.analyze_hash_path path
