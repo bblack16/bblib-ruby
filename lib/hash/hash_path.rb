@@ -203,15 +203,15 @@ class Hash
     BBLib.hash_path_key_for self, value
   end
 
-  alias_method :hash_path, :hpath
-  alias_method :hash_path_set, :hpath_set
-  alias_method :hash_path_move, :hpath_move
-  alias_method :hash_path_move_to, :hpath_move_to
-  alias_method :hash_path_delete, :hpath_delete
-  alias_method :hash_path_copy, :hpath_copy
-  alias_method :hash_path_copy_to, :hpath_copy_to
-  alias_method :hash_paths, :hpaths
-  alias_method :hash_path_for, :hpath_for
+  alias_method :hpath, :hash_path
+  alias_method :hpath_set, :hash_path_set
+  alias_method :hpath_move, :hash_path_move
+  alias_method :hpath_move_to, :hash_path_move_to
+  alias_method :hpath_delete, :hash_path_delete
+  alias_method :hpath_copy, :hash_path_copy
+  alias_method :hpath_copy_to, :hash_path_copy_to
+  alias_method :hpaths, :hash_paths
+  alias_method :hpath_for, :hash_path_for
 
   # Returns all matching values with a specific key (or Array of keys) recursively within a Hash (including nested Arrays)
   def dive *keys
