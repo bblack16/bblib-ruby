@@ -1,7 +1,7 @@
 
 module BBLib
 
-  # Converts any integer up to 1000 to a roman numeral string_a
+  # Converts any integer up to 1000 to a roman numeral
   def self.to_roman num
     return num.to_s if num > 1000
      roman = {1000 => 'M', 900 => 'CM', 500 => 'D', 400 => 'CD', 100 => 'C', 90 => 'XC', 50 => 'L',
