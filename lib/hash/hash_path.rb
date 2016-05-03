@@ -2,7 +2,12 @@ require_relative 'hash_path_proc'
 
 module BBLib
 
-  def self.hash_path hash, *paths
+  def self.hash_path hash, *paths, multi_path: false, multi_join: false
+    if multi_path || multi_join
+      results = paths.map{ |path| BBLib.hash_path(hash, path)}
+      results = (0..results.max_by{ |m| m.size }.size - 1).map{ |i| results.map{ |r| r[i] } } if multi_join
+      return results
+    end
     path = split_path(*paths)
     matches, recursive = [hash], false
     while !path.empty? && !matches.empty?
@@ -261,8 +266,8 @@ end
 
 class Array
 
-  def path *path
-    BBLib.hash_path self, *path
+  def path *path, **args
+    BBLib.hash_path self, *path, **args
   end
 
   def path_set *paths, **args
