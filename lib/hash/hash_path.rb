@@ -167,49 +167,51 @@ end
 
 class Hash
 
-  def path *path
+  def hash_path *path
     BBLib.hash_path self, *path
   end
 
-  def path_set *paths, **args
+  def hash_path_set *paths, **args
     BBLib.hash_path_set self, *paths, **args
   end
 
-  def path_copy *paths, **args
+  def hash_path_copy *paths, **args
     BBLib.hash_path_copy self, *paths, **args
   end
 
-  def path_copy_to to, *paths, **args
+  def hash_path_copy_to to, *paths, **args
     BBLib.hash_path_copy_to self, to, *paths, **args
   end
 
-  def path_delete *paths
+  def hash_path_delete *paths
     BBLib.hash_path_delete self, *paths
   end
 
-  def path_move *paths, **args
+  def hash_path_move *paths, **args
     BBLib.hash_path_move self, *paths, **args
   end
 
-  def path_move_to to, *paths, **args
+  def hash_path_move_to to, *paths, **args
     BBLib.hash_path_move_to self, to, *paths, **args
   end
 
-  def paths
+  def hash_paths
     BBLib.hash_path_keys self
   end
 
-  def path_for value
+  def hash_path_for value
     BBLib.hash_path_key_for self, value
   end
 
-  alias_method :hash_path, :path
-  alias_method :hash_path_set, :path_set
-  alias_method :hash_path_move, :path_move
-  alias_method :hash_path_move_to, :path_move_to
-  alias_method :hash_path_delete, :path_delete
-  alias_method :hash_path_copy, :path_copy
-  alias_method :hash_path_copy_to, :path_copy_to
+  alias_method :hash_path, :hpath
+  alias_method :hash_path_set, :hpath_set
+  alias_method :hash_path_move, :hpath_move
+  alias_method :hash_path_move_to, :hpath_move_to
+  alias_method :hash_path_delete, :hpath_delete
+  alias_method :hash_path_copy, :hpath_copy
+  alias_method :hash_path_copy_to, :hpath_copy_to
+  alias_method :hash_paths, :hpaths
+  alias_method :hash_path_for, :hpath_for
 
   # Returns all matching values with a specific key (or Array of keys) recursively within a Hash (including nested Arrays)
   def dive *keys
