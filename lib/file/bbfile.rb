@@ -102,4 +102,8 @@ class String
   def parse_file_size output: :byte
     BBLib.parse_file_size(self, output:output)
   end
+
+  def pathify
+    self.msplit('/', '\\').join('/')
+  end
 end
