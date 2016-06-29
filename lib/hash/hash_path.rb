@@ -120,9 +120,9 @@ module BBLib
       key = path.scan(/\A.*^[^\(]*/i).first.to_s
       if key =~ /\A\[\d+\]\z/
         key = key[1..-2].to_i
-      elsif key =~ /\[\-?\d+\.{2,3}\-?\d+\]/
+      elsif key =~ /\[\-?\d+\.\s?\.{1,2}\-?\d+\]/
         bounds = key.scan(/\-?\d+/).map{|x| x.to_i}
-        key = key =~ /\.{3}/ ? (bounds.first...bounds.last) : (bounds.first..bounds.last)
+        key = key =~ /\.\s?\.{2}/ ? (bounds.first...bounds.last) : (bounds.first..bounds.last)
       elsif key =~ /\/.*[\/|\/i]\z/
         if key.end_with?('i')
           key = /#{key[1..-3]}/i
