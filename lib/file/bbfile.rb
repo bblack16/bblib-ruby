@@ -51,18 +51,22 @@ module BBLib
   end
 
   # A mostly platform agnostic call to get root volumes
-  def self.root_dirs
-    begin # For windows
-      `wmic logicaldisk get name`.split("\n").map{ |m| m.strip }[1..-1].reject{ |r| r == '' }
-    rescue
-      begin # Windows attempt 2
-        `fsutil fsinfo drives`.scan(/(?<=\s)\w\:/)
-      rescue  # Linux
-        begin
-          `ls /`.split("\n").map{ |m| m.strip }.reject{ |r| r == '' }
-        rescue # All attempts failed
+  def self.root_volumes
+    if BBLib.windows?
+      begin # For windows
+        `wmic logicaldisk get name`.split("\n").map{ |m| m.strip }[1..-1].reject{ |r| r == '' }
+      rescue
+        begin # Windows attempt 2
+          `fsutil fsinfo drives`.scan(/(?<=\s)\w\:/)
+        rescue
           nil
         end
+      end
+    else
+      begin
+        `ls /`.split("\n").map{ |m| m.strip }.reject{ |r| r == '' }
+      rescue # All attempts failed
+        nil
       end
     end
   end
@@ -74,13 +78,13 @@ module BBLib
   end
 
   FILE_SIZES = {
-    byte: { mult: 1, exp: ['b', 'byt', 'byte'] },
-    kilobyte: { mult: 1024, exp: ['kb', 'kilo', 'k', 'kbyte', 'kilobyte'] },
-    megabyte: { mult: 1048576, exp: ['mb', 'mega', 'm', 'mib', 'mbyte', 'megabyte'] },
-    gigabyte: { mult: 1073741824, exp: ['gb', 'giga', 'g', 'gbyte', 'gigabyte'] },
-    terabyte: { mult: 1099511627776, exp: ['tb', 'tera', 't', 'tbyte', 'terabyte'] },
-    petabyte: { mult: 1125899906842624, exp: ['pb', 'peta', 'p', 'pbyte', 'petabyte'] },
-    exabyte: { mult: 1152921504606846976, exp: ['eb', 'exa', 'e', 'ebyte', 'exabyte'] },
+    byte:      { mult: 1, exp: ['b', 'byt', 'byte'] },
+    kilobyte:  { mult: 1024, exp: ['kb', 'kilo', 'k', 'kbyte', 'kilobyte'] },
+    megabyte:  { mult: 1048576, exp: ['mb', 'mega', 'm', 'mib', 'mbyte', 'megabyte'] },
+    gigabyte:  { mult: 1073741824, exp: ['gb', 'giga', 'g', 'gbyte', 'gigabyte'] },
+    terabyte:  { mult: 1099511627776, exp: ['tb', 'tera', 't', 'tbyte', 'terabyte'] },
+    petabyte:  { mult: 1125899906842624, exp: ['pb', 'peta', 'p', 'pbyte', 'petabyte'] },
+    exabyte:   { mult: 1152921504606846976, exp: ['eb', 'exa', 'e', 'ebyte', 'exabyte'] },
     zettabyte: { mult: 1180591620717411303424, exp: ['zb', 'zetta', 'z', 'zbyte', 'zettabyte'] },
     yottabyte: { mult: 1208925819614629174706176, exp: ['yb', 'yotta', 'y', 'ybyte', 'yottabyte'] }
   }
