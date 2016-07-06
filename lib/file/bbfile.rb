@@ -2,6 +2,12 @@
 
 module BBLib
 
+  # Takes one or more strings and normalizes slashes to create a consistent file path
+  # Useful when concating two strings that when you don't know if one or both will end or begin with a slash
+  def self.pathify *strings
+    strings.map(&:to_s).msplit('/', '\\').map(&:strip).join('/')
+  end
+
   # Scan for files and directories. Can be set to be recursive and can also have filters applied.
   def self.scan_dir path = Dir.pwd, filter: nil, recursive: false
     if !filter.nil?
@@ -63,6 +69,7 @@ module BBLib
 
   # Windows only method to get the volume labels of disk drives
   def self.root_volume_labels
+    return nil unless BBLib.windows?
     `wmic logicaldisk get caption,volumename`.split("\n")[1..-1].map{ |m| [m.split("  ").first.to_s.strip, m.split("  ")[1..-1].to_a.join(' ').strip] }.reject{ |o,t| o == '' }.to_h
   end
 
@@ -104,6 +111,6 @@ class String
   end
 
   def pathify
-    self.msplit('/', '\\').join('/')
+    self.msplit('/', '\\').map(&:strip).join('/')
   end
 end
