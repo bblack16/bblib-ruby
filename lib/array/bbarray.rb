@@ -19,18 +19,21 @@ class Array
   end
 
   def keys_to_sym clean: false
-    self.map{ |v| Hash === v || Array === v ? v.keys_to_sym(clean:clean) : v }
+    self.map{ |v| v.is_a?(Hash) || v.is_a?(Array) ? v.keys_to_sym(clean:clean) : v }
   end
 
   def keys_to_s clean: false
-    self.map{ |v| Hash === v || Array === v ? v.keys_to_s : v }
+    self.map{ |v| v.is_a?(Hash) || v.is_a?(Array) ? v.keys_to_s : v }
   end
 
   def to_xml level: 0, key:nil
     map do |v|
       nested = v.respond_to?(:to_xml)
-      value = nested ? v.to_xml(level:level+1, key:key) : v
-      "\t"*level + "<#{key}>\n" + (nested ? '' : "\t"*(level+1)) + "#{value}\n" + "\t"*level + "</#{key}>\n"
+      value = nested ? v.to_xml(level:level + 1, key:key) : v
+      "\t" * level + "<#{key}>\n" +
+      (nested ? '' : "\t"*(level+1)) +
+      "#{value}\n" +
+      "\t"*level + "</#{key}>\n"
     end.join
   end
 

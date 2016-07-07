@@ -101,7 +101,7 @@ class String
   end
 
   def to_clean_sym
-    self.strip.downcase.gsub('_', ' ').drop_symbols.gsub(' ', '_').to_sym
+    self.snake_case.to_sym
   end
 
   # Simple method to convert a string into an array containing only itself
@@ -117,6 +117,6 @@ end
 
 class Symbol
   def to_clean_sym
-    self.to_s.strip.downcase.gsub('_', ' ').drop_symbols.gsub(' ', '_').to_sym
+    self.to_s.to_clean_sym
   end
 end
