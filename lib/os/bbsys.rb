@@ -7,7 +7,20 @@ module BBLib
     if BBLib.windows?
       `wmic cpu get loadpercentage /format:value`.extract_numbers.first
     elsif BBLib.linux?
-      `top -bn2`.split("\n").find{|l| l.start_with?('%Cpu(s)')}.extract_numbers[0..2].inject(0){|sum, x| sum+=x.to_f }
+      cpu_usage.inject(0){ |sum, (k,v)| sum += v.to_f }
+    else
+      nil
+    end
+  end
+
+  def self.cpu_usages
+    if BBLib.linux?
+      readings = `top -bn2`.split("\n").find{|l| l.start_with?('%Cpu(s)')}.extract_numbers[0..2]
+      {
+        user: readings[0],
+        system: readings[1],
+        nice: readings[2]
+      }
     else
       nil
     end
