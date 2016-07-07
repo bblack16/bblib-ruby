@@ -19,8 +19,8 @@ class Hash
       self.merge(with, &merger)
   end
 
-  def deep_merge! with, merge_arrays: true, overwrite_vals: true
-    replace self.deep_merge(with, merge_arrays: merge_arrays, overwrite_vals: overwrite_vals)
+  def deep_merge! with, merge_arrays: true, overwrite: true
+    replace self.deep_merge(with, merge_arrays: merge_arrays, overwrite: overwrite)
   end
 
   # Converts the keys of the hash as well as any nested hashes to symbols.
