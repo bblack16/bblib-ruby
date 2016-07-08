@@ -121,17 +121,22 @@ module BBLib
     def self.processes
       if windows?
         tasks = `tasklist /v`
+        cpu = `wmic path win32_perfformatteddata_perfproc_process get PercentProcessorTime,percentusertime,IDProcess /format:list`
+        cpu = cpu.split("\n\n\n\n").reject(&:empty?)
+              .map{ |l| l.scan(/\d+/).map(&:to_i)}
+              .map{ |n|[ n[0], {cpu: n[1], user: n[2] }]}.to_h
         lines = tasks.split("\n")[3..-1].map{ |l| l.split(/\s{2,}/) }
         mem = mem_total
         cmds = `wmic process get processid,commandline /format:csv`.split("\n")[1..-1].reject{ |r| r.strip  == ''}.map{ |l| l.split(',')[1..-1] }.map{ |l| [l.last.to_i, l[0..-2].join(',')]}.to_h
         lines.map do |l|
+          pid = l[1].extract_numbers.first
           {
             name: l[0],
-            pid: l[1].extract_numbers.first,
+            pid: pid,
             user: l[4],
-            mem: (((l[3].gsub(',', '').extract_numbers.first / mem_total) * 100) rescue 0),
-            cpu: l[5].split(/\s/).first,
-            cmd: cmds[l[1].extract_numbers.first]
+            mem: (((l[3].gsub(',', '').extract_numbers.first / mem_total) * 100) rescue nil),
+            cpu: (cpu[pid][:cpu] rescue nil),
+            cmd: cmds[pid]
           }
         end
       else
