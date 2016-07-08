@@ -79,7 +79,7 @@ module BBLib
     # The following is Windows specific code
     if windows?
 
-      def parse_wmic cmd
+      def self.parse_wmic cmd
         `#{cmd} /format:list`
           .split("\n\n\n").reject(&:empty?)
           .map{ |l| l.split("\n\n")
