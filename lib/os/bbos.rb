@@ -28,15 +28,15 @@ module BBLib
       builds = ['darwin']
       !(/#{builds.join('|')}/i =~ RUBY_PLATFORM).nil?
     end
-    
+
     def self.os_info
       if windows?
         data = `wmic os get manufacturer,name,organization,osarchitecture,version /format:list`
-        data = data.split("\n").reject{ |r| r.strip == '' }.map do |m| 
+        data = data.split("\n").reject{ |r| r.strip == '' }.map do |m|
           spl = m.split('=')
           [spl.first.to_clean_sym.downcase, spl[1..-1].join('=')]
         end.to_h
-        data[:name] = data[:name].split(' |').first
+        data[:name] = data[:name].split('|').first
         data[:osarchitecture] = data[:osarchitecture].extract_integers.first
         data.hpath_move( 'osarchitecture' => 'bits' )
         data[:host] = `hostname`.strip
@@ -62,6 +62,19 @@ module BBLib
           os: os
         }.merge(release)
       end
+    end
+
+    # The following is Windows specific code
+    if windows?
+
+      def parse_wmic cmd
+        `#{cmd} /format:list`
+          .split("\n\n\n").reject(&:empty?)
+          .map{ |l| l.split("\n\n")
+            .map{ |l| spl = l.split('='); [spl.first.strip.downcase.to_clean_sym, spl[1..-1].join('=').strip ] }.to_h
+          }.reject(&:empty?)
+      end
+
     end
 
   end
