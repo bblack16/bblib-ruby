@@ -155,5 +155,55 @@ module BBLib
         end
       end
     end
+
+    def self.filesystems
+      if windows?
+        types = {
+          0 => 'Unknown',
+          1 => 'No Root Directory',
+          2 => 'Removable Disk',
+          3 => 'Local Disk',
+          4 => 'Network Drive',
+          5 => 'Compact Disc',
+          6 => 'RAM Disk'
+        }
+        parse_wmic('wmic logicaldisk get name,description,filesystem,freespace,size,volumename,volumeserialnumber,providername,drivetype')
+          .map do |v|
+            v.hpath_move(
+              'freespace'          => 'free',
+              'providername'       => 'provider',
+              'volumename'         => 'volume_name',
+              'volumeserialnumber' => 'serial_number',
+              'filesystem'         => 'filesystem_type',
+              'name'               => 'disk'
+            )
+            dt = v.delete(:drivetype).to_i
+            v[:type] = types[dt]
+            if (2..4) === dt
+              v[:free] = v[:free].to_i
+              v[:size] = v[:size].to_i
+              v[:used] = v[:size] - v[:free]
+              v[:free_p] = (v[:free] / v[:size].to_f) * 100
+              v[:used_p] = (v[:used] / v[:size].to_f) * 100
+            end
+            v
+          end
+      else
+        `df -aTB 1`
+          .split("\n")[1..-1]
+          .map{ |l| l.split(/\s{2,}|(?<=\d)\s|(?<=%)\s|(?<=\-)\s|(?<=\w)\s+(?=\w+\s+\d)/)}
+          .map do |i|
+            {
+              filesystem: i[0],
+              type:       i[1],
+              size:       i[2].to_i,
+              used:       i[3].to_i,
+              available:  i[4].to_i,
+              used_p:     i[5].extract_integers.first.to_f,
+              mount:      i[6],
+            }
+          end
+      end
+    end
   end
 end
