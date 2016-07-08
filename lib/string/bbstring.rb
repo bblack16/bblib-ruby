@@ -110,7 +110,37 @@ class String
   end
 
   def encap_by? str
-    self.start_with?(str) && self.end_with?(str)
+    case str
+    when '('
+      self.start_with?(str) && self.end_with?(')')
+    when '['
+      self.start_with?(str) && self.end_with?(']')
+    when '{'
+      self.start_with?(str) && self.end_with?('}')
+    when '<'
+      self.start_with?(str) && self.end_with?('>')
+    else
+      self.start_with?(str) && self.end_with?(str)
+    end
+  end
+
+  def uncapsulate char = '"'
+    case char
+    when '('
+      back = ')'
+    when '['
+      back = ']'
+    when '{'
+      back = '}'
+    when '<'
+      back = '>'
+    else
+      back = char
+    end
+    temp = self.dup
+    temp = temp[1..-1] while temp.start_with?(char)
+    temp = temp[0..-2] while temp.end_with?(back)
+    temp
   end
 
 end
