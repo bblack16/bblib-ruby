@@ -83,9 +83,9 @@ module BBLib
         }
       else
         stats = `top -b -n2 -d 0.1`.split("\n")
-        cpu = stats.find_all{|l| l.start_with?('%Cpu(s)')}.last.extract_numbers
-        loads = stats.find_all{|l| l.include?(' load average: ')}.last.scan(/load average:.*/i).first.extract_numbers
-        mem = stats.find_all{|l| l.start_with?('KiB Mem')}.last.extract_numbers
+        cpu = stats.find_all{|l| l =~ /\A\%?Cpu\(s\)/i }.last.extract_numbers
+        loads = stats.find_all{|l| l =~ / load average\: /i }.last.scan(/load average:.*/i).first.extract_numbers
+        mem = stats.find_all{|l| l =~ /KiB Mem|Mem\:/i }.last.extract_numbers
         time = `cat /proc/uptime`.extract_numbers
         {
           cpu: {
