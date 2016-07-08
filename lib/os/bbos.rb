@@ -61,7 +61,7 @@ module BBLib
               .split("\n")
               .reject{ |l| !(l.include?(':') || l.include?('=')) }
               .map{|l| l.msplit('=',':') }
-              .map{ |a| [a.first.downcase.to_clean_sym, a[1..-1].join(':')] }
+              .map{ |a| [a.first.downcase.to_clean_sym, a[1..-1].join(':').uncapsulate] }
               .to_h
           rescue
             # Both attempts failed
