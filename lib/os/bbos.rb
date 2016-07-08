@@ -45,6 +45,7 @@ module BBLib
       else
         release = {}
         begin
+          # First attempt to get release info uses lsb_release
           release = `lsb_release -a`.split("\n").map do |l|
             spl = l.split(':')
             [
@@ -54,11 +55,22 @@ module BBLib
           end.to_h
           release.hpath_move('description' => 'name', 'release' => 'name', 'distributor_id' => 'manufacturer')
         rescue
+          # Try finding the release file and parsing it instead of lsb_release
+          begin
+            release = `cat /etc/*release`
+              .split("\n")
+              .reject{ |l| !(l.include?(':') || l.include?('=')) }
+              .map{|l| l.msplit('=',':') }
+              .map{ |a| [a.first.downcase.to_clean_sym, a[1..-1].join(':')] }
+              .to_h
+          rescue
+            # Both attempts failed
+          end
         end
         {
-          release: `uname -r`,
+          release: `uname -r`.strip,
           bits: `uname -r` =~ /x86_64/i ? 64 : 32,
-          host: `uname -n`,
+          host: `uname -n`.strip,
           os: os
         }.merge(release)
       end
