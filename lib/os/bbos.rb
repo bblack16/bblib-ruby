@@ -69,9 +69,9 @@ module BBLib
         end
         {
           release: `uname -r`.strip,
-          bits: `uname -r` =~ /x86_64/i ? 64 : 32,
-          host: `uname -n`.strip,
-          os: os
+          bits:    `uname -r` =~ /x86_64/i ? 64 : 32,
+          host:    `uname -n`.strip,
+          os:      os
         }.merge(release)
       end
     end

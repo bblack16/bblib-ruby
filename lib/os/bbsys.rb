@@ -67,15 +67,15 @@ module BBLib
 
     def self.system_stats
       if windows?
-        memfree = mem_free
+        memfree  = mem_free
         memtotal = mem_total
-        memused = memtotal - memfree
+        memused  = memtotal - memfree
         {
           cpu: cpu_usages,
           memory: {
-            free: memfree,
-            used: memused,
-            total: memtotal,
+            free:   memfree,
+            used:   memused,
+            total:  memtotal,
             free_p: (memfree / memtotal.to_f) * 100,
             used_p: (memused / memtotal.to_f) * 100
           },
@@ -83,29 +83,29 @@ module BBLib
         }
       else
         stats = `top -b -n2 -d 0.1`.split("\n")
-        cpu = stats.find_all{|l| l =~ /\A\%?Cpu\(s\)/i }.last.extract_numbers
+        cpu   = stats.find_all{|l| l =~ /\A\%?Cpu\(s\)/i }.last.extract_numbers
         loads = stats.find_all{|l| l =~ / load average\: /i }.last.scan(/load average:.*/i).first.extract_numbers
-        mem = stats.find_all{|l| l =~ /KiB Mem|Mem\:/i }.last.extract_numbers
-        time = `cat /proc/uptime`.extract_numbers
+        mem   = stats.find_all{|l| l =~ /KiB Mem|Mem\:/i }.last.extract_numbers
+        time  = `cat /proc/uptime`.extract_numbers
         {
           cpu: {
-            user: cpu[0],
-            system: cpu[1],
-            nice: cpu[2],
-            total: cpu[0..2].inject(0){ |sum, v| sum += v.to_f },
-            idle: cpu[3],
-            wait: cpu[4],
+            user:                cpu[0],
+            system:              cpu[1],
+            nice:                cpu[2],
+            total:               cpu[0..2].inject(0){ |sum, v| sum += v.to_f },
+            idle:                cpu[3],
+            wait:                cpu[4],
             hardware_interrupts: cpu[5],
             software_interrupts: cpu[6],
-            hypervisor: cpu[7]
+            hypervisor:          cpu[7]
           },
           uptime: time[0],
           uptime_idle: time[1],
           memory: {
-            free: mem[1],
-            used: mem[2],
-            total: mem[0],
-            cache: mem[3],
+            free:   mem[1],
+            used:   mem[2],
+            total:  mem[0],
+            cache:  mem[3],
             free_p: (mem[1] / mem[0].to_f) * 100,
             used_p: (mem[2] / mem[0].to_f) * 100
           },
@@ -132,11 +132,11 @@ module BBLib
           pid = l[1].extract_numbers.first
           {
             name: l[0],
-            pid: pid,
+            pid:  pid,
             user: l[4],
-            mem: (((l[3].gsub(',', '').extract_numbers.first / mem_total) * 100) rescue nil),
-            cpu: (cpu[pid][:cpu] rescue nil),
-            cmd: cmds[pid]
+            mem:  (((l[3].gsub(',', '').extract_numbers.first / mem_total) * 100) rescue nil),
+            cpu:  (cpu[pid][:cpu] rescue nil),
+            cmd:  cmds[pid]
           }
         end
       else
@@ -146,11 +146,11 @@ module BBLib
         lines.map do |l|
           {
             name: l[0],
-            pid: l[1].to_i,
+            pid:  l[1].to_i,
             user: l[2],
-            cpu: l[3].to_f,
-            mem: l[4].to_f,
-            cmd: l[5]
+            cpu:  l[3].to_f,
+            mem:  l[4].to_f,
+            cmd:  l[5]
           }
         end
       end
@@ -180,9 +180,9 @@ module BBLib
             dt = v.delete(:drivetype).to_i
             v[:type] = types[dt]
             if (2..4) === dt
-              v[:free] = v[:free].to_i
-              v[:size] = v[:size].to_i
-              v[:used] = v[:size] - v[:free]
+              v[:free]   = v[:free].to_i
+              v[:size]   = v[:size].to_i
+              v[:used]   = v[:size] - v[:free]
               v[:free_p] = (v[:free] / v[:size].to_f) * 100
               v[:used_p] = (v[:used] / v[:size].to_f) * 100
             end
