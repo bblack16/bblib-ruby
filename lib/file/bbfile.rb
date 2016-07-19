@@ -5,7 +5,8 @@ module BBLib
   # Takes one or more strings and normalizes slashes to create a consistent file path
   # Useful when concating two strings that when you don't know if one or both will end or begin with a slash
   def self.pathify *strings
-    strings.map(&:to_s).msplit('/', '\\').map(&:strip).join('/')
+    start = strings.first.start_with?('/') || strings.first.start_with?('\\')
+    (start ? '/' : '' ) + strings.map(&:to_s).msplit('/', '\\').map(&:strip).join('/')
   end
 
   # Scan for files and directories. Can be set to be recursive and can also have filters applied.
@@ -115,6 +116,6 @@ class String
   end
 
   def pathify
-    self.msplit('/', '\\').map(&:strip).join('/')
+    BBLib.pathify(self)
   end
 end
