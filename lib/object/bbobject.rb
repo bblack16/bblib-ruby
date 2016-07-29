@@ -1,3 +1,5 @@
+require_relative 'attr'
+
 module BBLib
 
   def self.to_hash obj
