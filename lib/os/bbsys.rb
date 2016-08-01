@@ -205,5 +205,34 @@ module BBLib
           end
       end
     end
+
+
+    # A mostly platform agnostic call to get root volumes
+    def self.root_volumes
+      if BBLib.windows?
+        begin # For windows
+          `wmic logicaldisk get name`.split("\n").map{ |m| m.strip }[1..-1].reject{ |r| r == '' }
+        rescue
+          begin # Windows attempt 2
+            `fsutil fsinfo drives`.scan(/(?<=\s)\w\:/)
+          rescue
+            nil
+          end
+        end
+      else
+        begin
+          `ls /`.split("\n").map{ |m| m.strip }.reject{ |r| r == '' }
+        rescue # All attempts failed
+          nil
+        end
+      end
+    end
+
+    # Windows only method to get the volume labels of disk drives
+    def self.root_volume_labels
+      return nil unless BBLib.windows?
+      `wmic logicaldisk get caption,volumename`.split("\n")[1..-1].map{ |m| [m.split("  ").first.to_s.strip, m.split("  ")[1..-1].to_a.join(' ').strip] }.reject{ |o,t| o == '' }.to_h
+    end
+
   end
 end
