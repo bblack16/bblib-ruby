@@ -66,7 +66,7 @@ describe BBLib do
     b = {b:[8], c:{d:{e:9, f:'test', g:0}}}
     expect(a.deep_merge b).to eq ({:a=>1, :b=>[2, 3, 8], :c=>{:d=>{:e=>9, :f=>"test", :g=>0}}})
     expect(a.deep_merge b, merge_arrays: false).to eq ({:a=>1, :b=>[8], :c=>{:d=>{:e=>9, :f=>"test", :g=>0}}})
-    expect(a.deep_merge b, overwrite_vals: false).to eq ({:a=>1, :b=>[2, 3, 8], :c=>{:d=>{:e=>[4, 9], :f=>[5, 6, 7, "test"], :g=>0}}})
+    expect(a.deep_merge b, overwrite: false).to eq ({:a=>1, :b=>[2, 3, 8], :c=>{:d=>{:e=>[4, 9], :f=>[5, 6, 7, "test"], :g=>0}}})
   end
 
   # Hash Path
