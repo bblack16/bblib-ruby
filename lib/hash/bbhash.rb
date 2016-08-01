@@ -1,4 +1,5 @@
 require_relative 'hash_path'
+require_relative 'path_hash'
 
 class Hash
 
