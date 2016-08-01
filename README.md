@@ -1,31 +1,44 @@
 # BBLib
 
-BBLib (Brandon-Black-Lib) is a collection of various reusable methods and classes to extend the Ruby language.
+BBLib (Brandon-Black-Lib) is a collection of various reusable methods and classes to extend the Ruby language. One of the primary goals with the BBLib is to keep it as lightweight as possible. This means you will not find dependencies outside of the Ruby core libraries.
 
-One of the primary goals with the BBLib is to keep it as lightweight as possible. This means you will not find dependencies outside of the Ruby core libraries.
+Good news! BBLib is now compatible with Opal! Well, like 90% compatible, but it can be 100% compiled into Javascript. Only very small tweaks were made to support this, so base functionality for the BBLib outside of Opal remains the same. But now it can coexist as both a Ruby gem, and an Opal library.
 
-For a full breakdown of what is currently in this library, scroll down. For a quick overview of key features, read the following list.
+BBLib contains A LOT of functionality, but is a very small, lightweight library. As such, it can be hard to document everything that is included (and even harder to make a TL:DR version). Continue scrolling for a comprehensive view of what is offered, or take a look at the highlights below for the library's most significant features.
 
-* __BBLib HashPath:__ Hash path is an XPath or JSONPath like navigation library for native Ruby hashes. It uses dot ('.') delimited path strings to navigate hash AND array objects. What makes hash path stand out is that it can navigate recursively within hashes, arrays, nested hashes, nested arrays, nested hashes within nested arrays within nested arrays with...well, you get the picture. Not only does it support navigation of hashes, it also comes with many functions to easily manipulate hashes by moving paths, copying paths, deleting paths or processing paths (see below for a few examples).
+* __HashPath:__ Hash path is an XPath or JSONPath like navigation library for native Ruby hashes. It uses dot ('.') delimited path strings to navigate hash AND array objects. What makes hash path stand out is that it can navigate recursively within both hashes and arrays, including nested hashes/arrays (as deep as they can go!). It isn't only for navigating hashes; it can also copy, move, delete and run various methods using the same path notation.
 
 ```ruby
 myhash = {a:1, b:2, c:{d:[3,4,{e:5},6]}, f:7}
 p myhash.hash_path('c.d..e')
-#=> [5]
-p myhash.hash_path('..d')
-#=> [3, 4, {:e=>5}, 6]
-p myhash.hash_path('c.d[1]')
-#=> [4]
-p myhash.hash_path('c.d[0..1]')
-#=> [3, 4]
+# => [5] - !!Hash Path always returns an array!!
+p myhash.hash_path('..e')
+# => [5]
+p myhash.hash_path('c.d.[1]')
+# => [4]
+p myhash.hash_path('c.d.[0..1]')
+# => [3, 4]
+
+# Hash Path also supports formulas (evaluation statements)
+# Formulas are surrounded in parenthesis following a path name
+# A $ can be used to specify where in the eval statement to inject the variable
+
+myarray = [
+  {title: 'Catan', cost: 41.99},
+  {title: 'Mouse Trap', cost: 5.50},
+  {title: 'Chess', cost: 25.99}
+]
+
+p myarray.hpath('[0..-1]($[:cost] > 10).title') # hpath is a shorter alias for hash_path
+# => ["Catan", "Chess"]
 
 # Move key/values
 p myhash.hash_path_move('a' => 'c.g.h')
-#=> {:b=>2, :c=>{:d=>[3, 4, {:e=>5}, 6], :g=>{:h=>1}}, :f=>7}
+# => {:b=>2, :c=>{:d=>[3, 4, {:e=>5}, 6], :g=>{:h=>1}}, :f=>7}
 
 # Copy key/values
 p myhash.hash_path_copy('b' => 'z')
-#=> {:a=>1, :b=>2, :c=>{:d=>[3, 4, {:e=>5}, 6]}, :f=>7, :z=>2}
+# => {:a=>1, :b=>2, :c=>{:d=>[3, 4, {:e=>5}, 6]}, :f=>7, :z=>2}
 ```
 * __Deep Merge:__ A deep merge algorithm is included that can merge hashes with nested hashes or nested arrays or nested hashes with nested arrays with nested hashes and so on... It can also combine colliding values into arrays rather than overwriting using a toggle-able overwrite flag.
 * __File & Time Parsing From Strings:__ Have a string such as '1MB 15KB' and want to make it numeric? Look no further. BBLib has methods to parse files size expressions and duration expressions from strings (like '1min 10sec'). Nearly any variant of size or duration expression is supported. For instance, '1sec', '1s', '1 s', '1 second', '1secs' are all properly parsed as 1 second.
