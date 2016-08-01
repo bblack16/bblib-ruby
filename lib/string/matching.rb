@@ -30,7 +30,7 @@ module BBLib
     a.chars.each do |c|
       if temp.chars.include? c
         matches+=1
-        temp.sub! c, ''
+        temp = temp.sub(c, '')
       end
     end
     (matches / [a.length, b.length].max.to_f )* 100.0

@@ -4,7 +4,7 @@ module BBLib
     attr_reader :exp, :parts, :time
 
     def initialize exp = '* * * * * *'
-      @parts = Hash.new
+      @parts   = Hash.new
       self.exp = exp
     end
 
@@ -61,7 +61,7 @@ module BBLib
         exp = exp.to_s.downcase
         REPLACE.each do |k, v|
           v.each do |r|
-            exp.gsub!(r.to_s, k.to_s)
+            exp = exp.gsub(r.to_s, k.to_s)
           end
         end
         exp
@@ -69,8 +69,8 @@ module BBLib
 
       def parse_cron_numbers exp, min, max, qmark
         numbers = Array.new
-        exp = Cron.numeralize(exp)
-        exp.gsub!('?', qmark.to_s)
+        exp     = Cron.numeralize(exp)
+        exp     = exp.gsub('?', qmark.to_s)
         exp.scan(/\*\/\d+|\d+\/\d+|\d+-\d+\/\d+/).each do |s|
           range, divisor = s.split('/').first, s.split('/').last.to_i
           if range == '*'
@@ -87,15 +87,14 @@ module BBLib
             end
             index+=1
           end
-          exp.sub!(s, '')
+          exp = exp.sub(s, '')
         end
         numbers.push exp.scan(/\d+/).map{ |m| m.to_i }
         exp.strip.scan(/\d+\-\d+/).each do |e|
           nums = e.scan(/\d+/).map{ |n| n.to_i }
           numbers.push (nums.min..nums.max).map{ |n| n }
         end
-        numbers.flatten!.sort!
-        numbers.uniq.reject{ |r| r < min || r > max }
+        numbers.flatten.sort.uniq.reject{ |r| r < min || r > max }
       end
 
       def next_day time, direction
@@ -134,37 +133,37 @@ module BBLib
       end
 
       PARTS = {
-        minute: {send: :min, min:0, max:59, size: 60},
-        hour: {send: :hour, min:0, max:23, size: 60*60},
-        day: {send: :day, min:1, max:31, size: 60*60*24},
-        month: {send: :month, min:1, max:12},
+        minute:  {send: :min, min:0, max:59, size: 60},
+        hour:    {send: :hour, min:0, max:23, size: 60*60},
+        day:     {send: :day, min:1, max:31, size: 60*60*24},
+        month:   {send: :month, min:1, max:12},
         weekday: {send: :wday, min:0, max:6},
-        year: {send: :year, min:0, max:90000}
+        year:    {send: :year, min:0, max:90000}
       }
 
       REPLACE = {
-        0 => [:sunday, :sun],
-        1 => [:monday, :mon, :january, :jan],
-        2 => [:tuesday, :tues, :february, :feb],
-        3 => [:wednesday, :wednes, :tue, :march, :mar],
-        4 => [:thursday, :thurs, :wed, :april, :apr],
-        5 => [:friday, :fri, :thu, :may],
-        6 => [:saturday, :sat, :june, :jun],
-        7 => [:july, :jul],
-        8 => [:august, :aug],
-        9 => [:september, :sept, :sep],
+        0  => [:sunday, :sun],
+        1  => [:monday, :mon, :january, :jan],
+        2  => [:tuesday, :tues, :february, :feb],
+        3  => [:wednesday, :wednes, :tue, :march, :mar],
+        4  => [:thursday, :thurs, :wed, :april, :apr],
+        5  => [:friday, :fri, :thu, :may],
+        6  => [:saturday, :sat, :june, :jun],
+        7  => [:july, :jul],
+        8  => [:august, :aug],
+        9  => [:september, :sept, :sep],
         10 => [:october, :oct],
         11 => [:november, :nov],
         12 => [:december, :dec]
       }
 
       SPECIAL_EXP = {
-        '0 0 * * * *' => ['@daily', '@midnight', 'daily', 'midnight'],
+        '0 0 * * * *'  => ['@daily', '@midnight', 'daily', 'midnight'],
         '0 12 * * * *' => ['@noon', 'noon'],
-        '0 0 * * 0 *' => ['@weekly', 'weekly'],
-        '0 0 1 * * *' => ['@monthly', 'monthly'],
-        '0 0 1 1 * *' => ['@yearly', '@annually', 'yearly', 'annually'],
-        '? ? ? ? ? ?' => ['@reboot', '@restart', 'reboot', 'restart']
+        '0 0 * * 0 *'  => ['@weekly', 'weekly'],
+        '0 0 1 * * *'  => ['@monthly', 'monthly'],
+        '0 0 1 1 * *'  => ['@yearly', '@annually', 'yearly', 'annually'],
+        '? ? ? ? ? ?'  => ['@reboot', '@restart', 'reboot', 'restart']
       }
 
   end

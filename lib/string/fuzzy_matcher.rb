@@ -66,11 +66,15 @@ module BBLib
       end
 
       def prep_strings a, b
-        @a, @b = a.to_s.dup.strip, b.to_s.dup.strip
-        if !@case_sensitive then @a.downcase!; @b.downcase! end
-        if @remove_symbols then @a.drop_symbols!; @b.drop_symbols! end
-        if @convert_roman then @a.from_roman!; @b.from_roman! end
-        if @move_articles then @a.move_articles!(:front, @case_sensitive); @b.move_articles! :front, @case_sensitive end
+        @a, @b = a.to_s.dup, b.to_s.dup
+        methods = [
+          @case_sensitive ? nil : :downcase,
+          @remove_symbols ? :drop_symbols : nil,
+          @convert_roman ? :from_roman : nil,
+          @move_articles ? :move_articles : nil
+        ].reject(&:nil?).each do |method|
+          @a, @b = @a.send(method), @b.send(method)
+        end
       end
 
   end

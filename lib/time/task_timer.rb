@@ -3,9 +3,9 @@ module BBLib
   class TaskTimer
     attr_reader :tasks, :save, :retention
 
-    def initialize task = nil, retention:100
+    def initialize task = nil, opts = Hash.new
       @tasks = {}
-      self.retention = retention
+      self.retention = opts[:retention] || 100
       if task then start task end
     end
 
@@ -88,7 +88,7 @@ module BBLib
       temp = args.first.to_sym
       pretty = named.delete :pretty
       type, task = TIMER_TYPES.keys.find{ |k| k == temp || TIMER_TYPES[k].include?(temp) }, args[1] ||= :default
-      raise NoMethodError unless type
+      return super unless type
       t = time task, type
       pretty && type != :count && t ? (t.is_a?(Array) ? t.map{|m| m.to_duration} : t.to_duration) : t
     end
@@ -99,14 +99,14 @@ module BBLib
 
       TIMER_TYPES = {
         current: [],
-        count: [:total],
-        first: [:initial],
-        last: [:latest],
-        min: [:minimum, :smallest],
-        max: [:maximum, :largest],
-        avg: [:average, :av],
-        sum: [],
-        all: [:times]
+        count:   [:total],
+        first:   [:initial],
+        last:    [:latest],
+        min:     [:minimum, :smallest],
+        max:     [:maximum, :largest],
+        avg:     [:average, :av],
+        sum:     [],
+        all:     [:times]
       }
 
   end

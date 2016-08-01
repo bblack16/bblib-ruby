@@ -18,14 +18,13 @@ module BBLib
 
   def self.string_to_roman str
     sp = str.split ' '
-    sp.map! do |s|
+    sp.map do |s|
       if s.drop_symbols.to_i.to_s == s.drop_symbols && !(s =~ /\d+\.\d+/)
-        s.sub!(s.scan(/\d+/).first.to_s, BBLib.to_roman(s.to_i))
+        s = s.sub(s.scan(/\d+/).first.to_s, BBLib.to_roman(s.to_i))
       else
         s
       end
-    end
-    sp.join ' '
+    end.join ' '
   end
 
 
@@ -36,7 +35,7 @@ module BBLib
       if !sp.select{ |i| i[/#{num}/i]}.empty?
         for i in 0..(sp.length-1)
           if sp[i].drop_symbols.upcase == num
-            sp[i].sub!(num ,n.to_s)
+            sp[i] = sp[i].sub(num ,n.to_s)
           end
         end
       end
