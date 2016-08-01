@@ -1,4 +1,5 @@
 require_relative 'attr'
+require_relative 'hooks'
 
 module BBLib
 
@@ -25,6 +26,18 @@ module BBLib
       end
     end
     return hash
+  end
+
+  def self.named_args *args
+    args.last.is_a?(Hash) && args.last.keys.all?{|k|k.is_a?(Symbol)} ? args.last : Hash.new
+  end
+
+  def self.named_args! *args
+    if args.last.is_a?(Hash) && args.last.keys.all?{|k|k.is_a?(Symbol)}
+      args.delete_at(-1)
+    else
+      Hash.new
+    end
   end
 
 end
