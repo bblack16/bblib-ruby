@@ -2,10 +2,12 @@
 module BBLib
 
   class LazyClass
+    extend Hooks
+    extend Attr
 
-    def initialize *args, **named
+    def initialize *args
       lazy_setup
-      lazy_init(*args, **named)
+      lazy_init(*args)
     end
 
     protected
@@ -14,19 +16,22 @@ module BBLib
         # Instantiate necessary variables here
       end
 
-      def lazy_init *args, **named
-        hash = named
-        args.find_all{|a| a.is_a?(Hash)}.each{|a| hash.merge!(a)}
-        hash.each do |k,v|
+      def _lazy_init *args
+        BBLib::named_args(*args).each do |k,v|
           if self.respond_to?("#{k}=".to_sym)
             send("#{k}=".to_sym, v)
           end
         end
-        custom_lazy_init hash, *args
+        lazy_init *args
+        custom_lazy_init BBLib::named_args(*args), *args
       end
 
-      def custom_lazy_init hash, *args
-        # Defined custom initialization here...
+      def lazy_init *args
+        # Define custom initialization here...
+      end
+
+      def custom_lazy_init *args
+        # Left in for legacy support...don't use this!
       end
 
   end
