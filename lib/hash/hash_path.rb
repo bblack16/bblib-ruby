@@ -10,10 +10,13 @@ module BBLib
     end
     path = split_path(*paths)
     matches, recursive = [hash], false
-    while !path.empty? && !matches.empty?
+    until path.empty? || matches.empty?
       current = path.shift.to_s
-      current+= '.' + path.shift.to_s if current.end_with?("\\")
-      (recursive = true; next) if current.strip == ''
+      current = current[0..-2] + '.' + path.shift.to_s if current.end_with?("\\")
+      if current.strip == ''
+        recursive = true
+        next
+      end
       key, formula = BBLib.analyze_hash_path(current)
       matches = matches.map do |match|
         if recursive
@@ -21,14 +24,14 @@ module BBLib
         elsif key == '*'
           match.is_a?(Hash) ? match.values : (match.is_a?(Array) ? match : nil)
         elsif match.is_a?(Hash)
-          key.is_a?(Regexp) ? match.map{ |k,v| k.to_s =~ key ? v : nil } : [match[key.to_sym], match[key]]
+          key.is_a?(Regexp) ? match.map{ |k,v| k.to_s =~ key ? v : nil } : [(BBLib::in_opal? ? nil : match[key.to_sym]), match[key]]
         elsif match.is_a?(Array) && (key.is_a?(Fixnum) || key.is_a?(Range))
           key.is_a?(Range) ? match[key] : [match[key]]
         else
           nil
         end
       end.flatten(1).reject{ |m| m.nil? }
-      BBLib.analyze_hash_path_formula(formula, matches)
+      matches = BBLib.analyze_hash_path_formula(formula, matches)
       recursive = false
     end
     matches
@@ -97,14 +100,14 @@ module BBLib
     deleted.flatten.reject{ |v| v.nil? }
   end
 
-  def self.hash_path_move hash, *paths, **args
-    BBLib.hash_path_copy hash, *paths, **args
+  def self.hash_path_move hash, *paths
+    BBLib.hash_path_copy hash, *paths
     BBLib.hash_path_delete hash, *paths.find{|pt| pt.is_a?(Hash) }.keys
     hash
   end
 
-  def self.hash_path_move_to from, to, *paths, **args
-    BBLib.hash_path_copy_to from, to, *paths, **args
+  def self.hash_path_move_to from, to, *paths
+    BBLib.hash_path_copy_to from, to, *paths
     BBLib.hash_path_delete from, *paths.find{|pt| pt.is_a?(Hash) }.keys
     to
   end
@@ -117,20 +120,20 @@ module BBLib
 
     def self.analyze_hash_path path
       return '', nil if path == '' || path.nil?
-      key = path.scan(/\A.*^[^\(]*/i).first.to_s
-      if key =~ /\A\[\d+\]\z/
+      key = path.scan(/^.*^[^\(]*/i).first.to_s
+      if key =~ /^\[\d+\]$/
         key = key[1..-2].to_i
       elsif key =~ /\[\-?\d+\.\s?\.{1,2}\-?\d+\]/
         bounds = key.scan(/\-?\d+/).map{|x| x.to_i}
         key = key =~ /\.\s?\.{2}/ ? (bounds.first...bounds.last) : (bounds.first..bounds.last)
-      elsif key =~ /\/.*[\/|\/i]\z/
+      elsif key =~ /\/.*[\/|\/i]$/
         if key.end_with?('i')
           key = /#{key[1..-3]}/i
         else
           key = /#{key[1..-2]}/
         end
       end
-      formula = path.scan(/(?<=\().*(?=\))/).first
+      formula = path.scan(/\(.*\)/).first
       return key, formula
     end
 
@@ -139,7 +142,7 @@ module BBLib
       hashes.map do |p|
         begin
           if eval(p.is_a?(Hash) ? formula.gsub('$', "(#{p})") : formula.gsub('$', p.to_s))
-            temp << p
+            p
           else
             nil
           end
@@ -171,28 +174,28 @@ class Hash
     BBLib.hash_path self, *path
   end
 
-  def hash_path_set *paths, **args
-    BBLib.hash_path_set self, *paths, **args
+  def hash_path_set *paths
+    BBLib.hash_path_set self, *paths
   end
 
-  def hash_path_copy *paths, **args
-    BBLib.hash_path_copy self, *paths, **args
+  def hash_path_copy *paths
+    BBLib.hash_path_copy self, *paths
   end
 
-  def hash_path_copy_to to, *paths, **args
-    BBLib.hash_path_copy_to self, to, *paths, **args
+  def hash_path_copy_to to, *paths
+    BBLib.hash_path_copy_to self, to, *paths
   end
 
   def hash_path_delete *paths
     BBLib.hash_path_delete self, *paths
   end
 
-  def hash_path_move *paths, **args
-    BBLib.hash_path_move self, *paths, **args
+  def hash_path_move *paths
+    BBLib.hash_path_move self, *paths
   end
 
-  def hash_path_move_to to, *paths, **args
-    BBLib.hash_path_move_to self, to, *paths, **args
+  def hash_path_move_to to, *paths
+    BBLib.hash_path_move_to self, to, *paths
   end
 
   def hash_paths
@@ -236,7 +239,7 @@ class Hash
   def expand **args
     eh = Hash.new
     self.dup.each do |k,v|
-      eh.bridge k, **args.merge({value:v})
+      eh.bridge k, args.merge({value:v})
     end
     return eh
   end
@@ -268,32 +271,32 @@ end
 
 class Array
 
-  def hash_path *path, **args
-    BBLib.hash_path self, *path, **args
+  def hash_path *path
+    BBLib.hash_path self, *path
   end
 
-  def hash_path_set *paths, **args
-    BBLib.hash_path_set self, *paths, **args
+  def hash_path_set *paths
+    BBLib.hash_path_set self, *paths
   end
 
-  def hash_path_copy *paths, **args
-    BBLib.hash_path_copy self, *paths, **args
+  def hash_path_copy *paths
+    BBLib.hash_path_copy self, *paths
   end
 
-  def hash_path_copy_to to, *paths, **args
-    BBLib.hash_path_copy_to self, to, *paths, **args
+  def hash_path_copy_to to, *paths
+    BBLib.hash_path_copy_to self, to, *paths
   end
 
   def hash_path_delete *paths
     BBLib.hash_path_delete self, *paths
   end
 
-  def hash_path_move *paths, **args
-    BBLib.hash_path_move self, *paths, **args
+  def hash_path_move *paths
+    BBLib.hash_path_move self, *paths
   end
 
-  def hash_path_move_to to, *paths, **args
-    BBLib.hash_path_move_to self, to, *paths, **args
+  def hash_path_move_to to, *paths
+    BBLib.hash_path_move_to self, to, *paths
   end
 
   def hash_paths
@@ -320,6 +323,22 @@ class Array
       matches+= i.dive(*keys) if i.respond_to?(:dive)
     end
     matches
+  end
+
+  # Turns nested values' keys into delimiter separated paths
+  def squish delimiter: '.'
+    sh = Hash.new
+    BBLib.hash_path_nav(self.dup, nil, delimiter){ |k, v| sh[k] = v }
+    sh
+  end
+
+  # Expands keys in a hash using a delimiter. Opposite of squish.
+  def expand **args
+    eh = Hash.new
+    self.dup.each do |k,v|
+      eh.bridge k, args.merge({value:v})
+    end
+    return eh
   end
 
 end
