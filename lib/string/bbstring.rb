@@ -32,7 +32,7 @@ module BBLib
 
   # Used to move the position of the articles 'the', 'a' and 'an' in strings for normalization.
   def self.move_articles str, position = :front, capitalize: true
-    return str unless [:front, :back, :none].include? position
+    return str unless [:front, :back, :none].include?(position)
     articles = ["the", "a", "an"]
     articles.each do |a|
       starts, ends = str.downcase.start_with?(a + ' '), str.downcase.end_with?(' ' + a)
@@ -52,8 +52,8 @@ module BBLib
       end
     end
     while str.strip.end_with?(',')
-      str.strip!
-      str.chop!
+      str = str.strip
+      str = str.chop
     end
     str
   end
