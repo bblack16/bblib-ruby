@@ -14,9 +14,11 @@ module BBLib
 end
 
 class Array
+
   def msplit *delims, keep_empty: false
     self.map{ |i| i.msplit(delims, keep_empty:keep_empty)}.flatten
   end
+  alias_method :multi_split, :msplit
 
   def keys_to_sym clean: false
     self.map{ |v| v.is_a?(Hash) || v.is_a?(Array) ? v.keys_to_sym(clean:clean) : v }
@@ -44,4 +46,5 @@ class Array
   def diff b
     (self-b) + (b-self)
   end
+  
 end
