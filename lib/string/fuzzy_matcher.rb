@@ -1,15 +1,10 @@
 
 module BBLib
 
-  class FuzzyMatcher
-    attr_reader :threshold, :algorithms
-    attr_accessor :case_sensitive, :remove_symbols, :move_articles, :convert_roman, :a, :b
-
-    def initialize threshold: 75, case_sensitive: true, remove_symbols: false, move_articles: false, convert_roman: true
-      self.threshold = threshold
-      setup_algorithms
-      @case_sensitive, @remove_symbols, @move_articles, @convert_roman = case_sensitive, remove_symbols, move_articles, convert_roman
-    end
+  class FuzzyMatcher < LazyClass
+    attr_float_between 0, 100, :threshold, default: 75
+    attr_bool :case_sensitive, default: true
+    attr_bool :remove_symbols, :move_articles, :convert_roman, default: false
 
     # Calculates a percentage match between string a and string b.
     def similarity a, b
@@ -40,10 +35,6 @@ module BBLib
       sort ? matches.sort_by{ |k, v| v }.reverse.to_h : matches
     end
 
-    def threshold= threshold
-      @threshold = BBLib.keep_between(threshold, 0, 100)
-    end
-
     def set_weight algorithm, weight
       return nil unless @algorithms.include? algorithm
       @algorithms[algorithm][:weight] = BBLib.keep_between(weight, 0, nil)
@@ -55,7 +46,7 @@ module BBLib
 
     private
 
-      def setup_algorithms
+      def lazy_setup
         @algorithms = {
           levenshtein: {weight: 10, signature: :levenshtein_similarity},
           composition: {weight: 5, signature: :composition_similarity},
