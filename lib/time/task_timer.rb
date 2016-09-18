@@ -1,17 +1,8 @@
 module BBLib
 
-  class TaskTimer
-    attr_reader :tasks, :save, :retention
-
-    def initialize task = nil, opts = Hash.new
-      @tasks = {}
-      self.retention = opts[:retention] || 100
-      if task then start task end
-    end
-
-    def retention= num
-      @retention = num.nil? ? nil : BBLib.keep_between(num, -1, nil)
-    end
+  class TaskTimer < LazyClass
+    attr_hash :tasks, default: Hash.new
+    attr_int_between -1, nil, :retention, default: 100
 
     def time task = :default, type = :current
       return nil unless @tasks.keys.include? task
@@ -65,10 +56,6 @@ module BBLib
       start(task) unless stop(task).nil?
     end
 
-    def save= save
-      @save = save
-    end
-
     def active? task
       return false unless @tasks.keys.include? task
       !@tasks[task][:current].nil?
@@ -108,6 +95,12 @@ module BBLib
         sum:     [],
         all:     [:times]
       }
+
+      def lazy_init *args
+        if args.first.is_a?(Symbol)
+          start(args.first)
+        end
+      end
 
   end
 
