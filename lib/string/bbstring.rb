@@ -138,8 +138,8 @@ class String
       back = char
     end
     temp = self.dup
-    temp = temp[1..-1] while temp.start_with?(char)
-    temp = temp[0..-2] while temp.end_with?(back)
+    temp = temp[(char.size)..-1] while temp.start_with?(char) && temp != char
+    temp = temp[0..-(char.size + 1)] while temp.end_with?(back) && temp != char
     temp
   end
 
