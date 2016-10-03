@@ -63,38 +63,37 @@ module BBLib
 
     def stats task, pretty: false
       return nil unless @tasks.include?(task)
-      stats = "#{task}" + "\n" + '-'*30 + "\n"
-      TIMER_TYPES.each do |k,v|
+      TIMER_TYPES.map do |k, v|
         next if STATS_IGNORE.include?(k)
-        stats+= k.to_s.capitalize.ljust(10) + "#{self.send(k, task, pretty:pretty)}\n"
-      end
-      stats
+        [k, self.send(k, task, pretty:pretty)]
+      end.compact.to_h
     end
 
     def method_missing *args, **named
       temp = args.first.to_sym
       pretty = named.delete :pretty
-      type, task = TIMER_TYPES.keys.find{ |k| k == temp || TIMER_TYPES[k].include?(temp) }, args[1] ||= :default
+      type = TIMER_TYPES.keys.find{ |k| k == temp || TIMER_TYPES[k].include?(temp) }
+      task = args[1] ||= :default
       return super unless type
       t = time task, type
       pretty && type != :count && t ? (t.is_a?(Array) ? t.map{|m| m.to_duration} : t.to_duration) : t
     end
 
+    TIMER_TYPES = {
+      current: [],
+      count:   [:total],
+      first:   [:initial],
+      last:    [:latest],
+      min:     [:minimum, :smallest],
+      max:     [:maximum, :largest],
+      avg:     [:average, :av],
+      sum:     [],
+      all:     [:times]
+    }
+
     private
 
       STATS_IGNORE = [:current, :all]
-
-      TIMER_TYPES = {
-        current: [],
-        count:   [:total],
-        first:   [:initial],
-        last:    [:latest],
-        min:     [:minimum, :smallest],
-        max:     [:maximum, :largest],
-        avg:     [:average, :av],
-        sum:     [],
-        all:     [:times]
-      }
 
       def lazy_init *args
         if args.first.is_a?(Symbol)
