@@ -106,7 +106,8 @@ module BBLib::Attr
 
   def attr_array_of klass, *methods, raise: false, **opts
     methods.each do |m|
-      attr_type(m, opts, &attr_set(m, opts) do |*x|
+      attr_type(m, opts, &attr_set(m, opts) do |x|
+          x = [x].flatten(1)
           if raise && x.any?{ |i| klass.is_a?(Array) ? !klass.any?{ |k| i.is_a?(k) } : !i.is_a?(klass) }
             raise ArgumentError, "#{m} only accepts items of class #{klass}."
           end
