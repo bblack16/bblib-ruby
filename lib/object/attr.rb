@@ -85,39 +85,76 @@ module BBLib::Attr
 
   alias_method :attr_clean_sym, :attr_clean_symbol
 
+  def attr_element_of list, *methods, **opts
+    methods.each do |m|
+      attr_type(m, opts, &attr_set(m, opts) do |x|
+        if !list.include?(x)
+          raise ArgumentError, "#{m} only accepts the following (first 10 shown) #{list[0...10]}"
+        else
+          instance_variable_set("@#{m}", x)
+        end
+      end
+      )
+    end
+  end
+
   def attr_array *methods, **opts
-    methods.each{ |m| attr_type(m, opts, &attr_set(m, opts){ |*x| instance_variable_set("@#{m}", x) } )}
+    methods.each do |m|
+      attr_type(m, opts, &attr_set(m, opts){ |*x| instance_variable_set("@#{m}", x) } )
+      attr_array_adder(m, **opts) if opts[:adder] || opts[:add_rem]
+      attr_array_remover(m, **opts) if opts[:remover] || opts[:add_rem]
+    end
   end
 
   alias_method :attr_ary, :attr_array
 
-  def attr_element_of list, *methods, **opts
-    methods.each do |m|
-      attr_type(m, opts, &attr_set(m, opts) do |x|
-          if !list.include?(x)
-            raise ArgumentError, "#{m} only accepts the following (first 10 shown) #{list[0...10]}"
-          else
-            instance_variable_set("@#{m}", x)
-          end
-        end
-      )
-    end
-  end
-
   def attr_array_of klass, *methods, raise: false, **opts
     methods.each do |m|
       attr_type(m, opts, &attr_set(m, opts) do |x|
-          x = [x].flatten(1)
-          if raise && x.any?{ |i| klass.is_a?(Array) ? !klass.any?{ |k| i.is_a?(k) } : !i.is_a?(klass) }
-            raise ArgumentError, "#{m} only accepts items of class #{klass}."
-          end
-          instance_variable_set("@#{m}", x.reject{|i| klass.is_a?(Array) ? !klass.any?{ |k| i.is_a?(k) } : !i.is_a?(klass) })
+        x = [x].flatten(1)
+        if raise && x.any?{ |i| klass.is_a?(Array) ? !klass.any?{ |k| i.is_a?(k) } : !i.is_a?(klass) }
+          raise ArgumentError, "#{m} only accepts items of class #{klass}."
         end
+        instance_variable_set("@#{m}", x.reject{|i| klass.is_a?(Array) ? !klass.any?{ |k| i.is_a?(k) } : !i.is_a?(klass) })
+      end
       )
+      attr_array_adder(m, klass, **opts) if opts[:adder] || opts[:add_rem]
+      attr_array_remover(m, klass, **opts) if opts[:remover] || opts[:add_rem]
     end
   end
 
   alias_method :attr_ary_of, :attr_array_of
+
+  def attr_array_adder method, *klasses, **opts
+    define_method(
+      (opts[:adder_name] || "add_#{method}"),
+      proc do |*args|
+        args.each do |arg|
+          if klasses.empty? || klasses.any?{ |c| arg.is_a?(c) }
+            var = instance_variable_get("@#{method}")
+            var = Array.new if var.nil?
+            var.push(arg) unless opts[:uniq] && var.include?(arg)
+            instance_variable_set("@#{method}", var)
+          elsif opts[:raise]
+            raise "Invalid class '#{arg.class}' cannot be added to #{method}. Expected one of the following: #{klasses}"
+          end
+        end
+      end
+    )
+  end
+
+  def attr_array_remover method, *klasses, **opts
+    define_method(
+      (opts[:remover_name] || "remove_#{method}"),
+      proc do |*args|
+        args.map do |arg|
+          var = instance_variable_get("@#{method}")
+          var = Array.new if var.nil?
+          var.delete(arg)
+        end.compact
+      end
+    )
+  end
 
   def attr_hash *methods, **opts
     methods.each{ |m| attr_type(m, opts, &attr_set(m, opts) do |*a|
@@ -160,24 +197,26 @@ module BBLib::Attr
     end
   end
 
-  def attr_set method, allow_nil: false, fallback: :_nil, sender: false, default: nil, &block
-    proc{ |x|
-      if x.nil? && !allow_nil && fallback == :_nil && !sender
+  def attr_set method, **opts
+    defaults = { allow_nil: false, fallback: :_nil, sender: false, default: nil }
+    defaults.each{ |k, v| opts[k] = v unless opts.include?(k) }
+    proc do |x|
+      if x.nil? && !opts[:allow_nil] && opts[:fallback] == :_nil && !opts[:sender]
         raise ArgumentError, "#{method} cannot be set to nil!"
-      elsif x.nil? && !allow_nil && fallback != :_nil && !sender
-        instance_variable_set("@#{method}", fallback)
+      elsif x.nil? && !opts[:allow_nil] && opts[:fallback] != :_nil && !opts[:sender]
+        instance_variable_set("@#{method}", opts[:fallback])
       else
         begin
-          instance_variable_set("@#{method}", x.nil? && !sender ? x : yield(x) )
+          instance_variable_set("@#{method}", x.nil? && !opts[:sender] ? x : yield(x) )
         rescue Exception => e
-          if fallback != :_nil
-            instance_variable_set("@#{method}", fallback)
+          if opts[:fallback] != :_nil
+            instance_variable_set("@#{method}", opts[:fallback])
           else
             raise e
           end
         end
       end
-    }
+    end
   end
 
 end
