@@ -100,9 +100,9 @@ module BBLib::Attr
 
   def attr_array *methods, **opts
     methods.each do |m|
-      attr_type(m, opts, &attr_set(m, opts){ |*x| instance_variable_set("@#{m}", x) } )
-      attr_array_adder(m, **opts) if opts[:adder] || opts[:add_rem]
-      attr_array_remover(m, **opts) if opts[:remover] || opts[:add_rem]
+      attr_type(m, opts, &attr_set(m, opts){ |*x| instance_variable_set("@#{m}", *x) } )
+      attr_array_adder(m, opts) if opts[:adder] || opts[:add_rem]
+      attr_array_remover(m, opts) if opts[:remover] || opts[:add_rem]
     end
   end
 
@@ -118,8 +118,8 @@ module BBLib::Attr
         instance_variable_set("@#{m}", x.reject{|i| klass.is_a?(Array) ? !klass.any?{ |k| i.is_a?(k) } : !i.is_a?(klass) })
       end
       )
-      attr_array_adder(m, klass, **opts) if opts[:adder] || opts[:add_rem]
-      attr_array_remover(m, klass, **opts) if opts[:remover] || opts[:add_rem]
+      attr_array_adder(m, klass, opts) if opts[:adder] || opts[:add_rem]
+      attr_array_remover(m, klass, opts) if opts[:remover] || opts[:add_rem]
     end
   end
 
