@@ -17,17 +17,20 @@ module BBLib
 
   # Extract all integers from a string. Use extract_floats if numbers may contain decimal places.
   def self.extract_integers str, convert: true
-    BBLib.extract_numbers(str, convert:false).reject{ |r| r.include?('.') }.map{ |m| convert ? m.to_i : m }
+    BBLib.extract_numbers(str, convert:false).reject{ |r| r.include?('.') }
+      .map{ |m| convert ? m.to_i : m }
   end
 
   # Extracts all integers or decimals from a string into an array.
   def self.extract_floats str, convert: true
-    BBLib.extract_numbers(str, convert:false).reject{ |r| !r.include?('.') }.map{ |m| convert ? m.to_f : m }
+    BBLib.extract_numbers(str, convert:false).reject{ |r| !r.include?('.') }
+      .map{ |m| convert ? m.to_f : m }
   end
 
   # Extracts any correctly formed integers or floats from a string
   def self.extract_numbers str, convert: true
-    str.scan(/\d+\.\d+[^\.]|\d+[^\.]/).map{ |f| convert ? (f.include?('.') ? f.to_f : f.to_i) : f }
+    str.scan(/\d+\.\d+(?<=[^\.])|\d+(?<=[^\.])|\d+\.\d+$|\d+$/)
+      .map{ |f| convert ? (f.include?('.') ? f.to_f : f.to_i) : f }
   end
 
   # Used to move the position of the articles 'the', 'a' and 'an' in strings for normalization.
