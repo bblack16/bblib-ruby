@@ -1,17 +1,19 @@
 require 'time'
 
 class Hash
-  def path_proc action, paths, *args
+  def hash_path_proc action, paths, *args
     BBLib.hash_path_proc self, action, paths, *args
   end
 
-  alias_method :hash_path_proc, :path_proc
+  alias_method :hpath_proc, :hash_path_proc
 end
 
 class Array
   def hash_path_proc action, paths, *args
     BBLib.hash_path_proc self, action, paths, *args
   end
+
+  alias_method :hpath_proc, :hash_path_proc
 end
 
 module BBLib
@@ -229,15 +231,15 @@ module BBLib
       hash.hash_path_set path => (value.respond_to?(:strip) ? value.strip : value)
     end
 
-    def self.extract_integers hash, path, value, args
+    def self.extract_integers hash, path, value, *args
       hash.hash_path_set path => (value.extract_integers)
     end
 
-    def self.extract_floats hash, path, value, args
+    def self.extract_floats hash, path, value, *args
       hash.hash_path_set path => (value.extract_floats)
     end
 
-    def self.extract_numbers hash, path, value, args
+    def self.extract_numbers hash, path, value, *args
       hash.hash_path_set path => (value.extract_numbers)
     end
 
