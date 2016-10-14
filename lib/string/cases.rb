@@ -17,7 +17,7 @@ module BBLib
       end
     end
     # Always cap the first word
-    words.first.capitalize
+    words[0] = words.first.to_s.capitalize
     words.interleave(spacing).join
   end
 
