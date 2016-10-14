@@ -11,6 +11,6 @@ if BBLib.in_opal?
 
     alias_native :replace_with, :replaceWith
     alias_native :prepend
-    alias_native :get_context, :getContext
+    
   end
 end
