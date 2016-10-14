@@ -50,8 +50,8 @@ module BBLib
         @algorithms = {
           levenshtein: {weight: 10, signature: :levenshtein_similarity},
           composition: {weight: 5, signature: :composition_similarity},
-          numeric: {weight: 0, signature: :numeric_similarity},
-          phrase: {weight: 0, signature: :phrase_similarity}
+          numeric:     {weight: 0, signature: :numeric_similarity},
+          phrase:      {weight: 0, signature: :phrase_similarity}
           # FUTURE qwerty: {weight: 0, signature: :qwerty_similarity}
         }
       end
@@ -63,7 +63,7 @@ module BBLib
           @remove_symbols ? :drop_symbols : nil,
           @convert_roman ? :from_roman : nil,
           @move_articles ? :move_articles : nil
-        ].reject(&:nil?).each do |method|
+        ].compact.each do |method|
           @a, @b = @a.send(method), @b.send(method)
         end
       end
