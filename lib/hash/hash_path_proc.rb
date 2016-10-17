@@ -2,7 +2,7 @@ require 'time'
 
 class Hash
   def hash_path_proc action, paths, *args
-    BBLib.hash_path_proc self, action, paths, *args
+    BBLib.hash_path_proc(self, action, paths, *args)
   end
 
   alias_method :hpath_proc, :hash_path_proc
@@ -10,7 +10,7 @@ end
 
 class Array
   def hash_path_proc action, paths, *args
-    BBLib.hash_path_proc self, action, paths, *args
+    BBLib.hash_path_proc(self, action, paths, *args)
   end
 
   alias_method :hpath_proc, :hash_path_proc
@@ -38,40 +38,40 @@ module BBLib
   end
 
   HASH_PATH_PROC_TYPES = {
-    evaluate:         { aliases: [:eval, :equation, :equate]},
-    append:           { aliases: [:suffix]},
-    prepend:          { aliases: [:prefix]},
-    split:            { aliases: [:delimit, :delim, :separate, :msplit]},
-    replace:          { aliases: [:swap]},
-    extract:          { aliases: [:grab, :scan]},
-    extract_first:    { aliases: [:grab_first, :scan_first]},
-    extract_last:     { aliases: [:grab_last, :scan_last]},
-    parse_date:       { aliases: [:date, :parse_time, :time]},
-    parse_date_unix:  { aliases: [:unix_time, :unix_date]},
-    parse_duration:   { aliases: [:duration]},
-    parse_file_size:  { aliases: [:file_size]},
-    to_string:        { aliases: [:to_s, :stringify]},
-    downcase:         { aliases: [:lower, :lowercase, :to_lower]},
-    upcase:           { aliases: [:upper, :uppercase, :to_upper]},
-    roman:            { aliases: [:convert_roman, :roman_numeral, :parse_roman]},
-    remove_symbols:   { aliases: [:chop_symbols, :drop_symbols]},
-    format_articles:  { aliases: [:articles]},
-    reverse:          { aliases: [:invert]},
-    delete:           { aliases: [:del]},
-    remove:           { aliases: [:rem]},
-    custom:           { aliases: [:send]},
-    encapsulate:      { aliases: []},
-    uncapsulate:      {aliases: []},
-    extract_integers: { aliases: [:extract_ints]},
-    extract_floats:   { aliases: []},
-    extract_numbers:  { aliases: []},
-    max_number:       { aliases: [:max, :maximum, :maximum_number]},
-    min_number:       { aliases: [:min, :minimum, :minimum_number]},
-    avg_number:       { aliases: [:avg, :average, :average_number]},
-    sum_number:       { aliases: [:sum]},
-    strip:            { aliases: [:trim]},
-    concat:           { aliases: [:join, :concat_with]},
-    reverse_concat:   { aliases: [:reverse_join, :reverse_concat_with]}
+    evaluate:         { aliases: [:eval, :equation, :equate] },
+    append:           { aliases: [:suffix] },
+    prepend:          { aliases: [:prefix] },
+    split:            { aliases: [:delimit, :delim, :separate, :msplit] },
+    replace:          { aliases: [:swap] },
+    extract:          { aliases: [:grab, :scan] },
+    extract_first:    { aliases: [:grab_first, :scan_first] },
+    extract_last:     { aliases: [:grab_last, :scan_last] },
+    parse_date:       { aliases: [:date, :parse_time, :time] },
+    parse_date_unix:  { aliases: [:unix_time, :unix_date] },
+    parse_duration:   { aliases: [:duration] },
+    parse_file_size:  { aliases: [:file_size] },
+    to_string:        { aliases: [:to_s, :stringify] },
+    downcase:         { aliases: [:lower, :lowercase, :to_lower] },
+    upcase:           { aliases: [:upper, :uppercase, :to_upper] },
+    roman:            { aliases: [:convert_roman, :roman_numeral, :parse_roman] },
+    remove_symbols:   { aliases: [:chop_symbols, :drop_symbols] },
+    format_articles:  { aliases: [:articles] },
+    reverse:          { aliases: [:invert] },
+    delete:           { aliases: [:del] },
+    remove:           { aliases: [:rem] },
+    send:             { aliases: [:custom] },
+    encapsulate:      { aliases: [] },
+    uncapsulate:      { aliases: [] },
+    extract_integers: { aliases: [:extract_ints] },
+    extract_floats:   { aliases: [] },
+    extract_numbers:  { aliases: [] },
+    max_number:       { aliases: [:max, :maximum, :maximum_number] },
+    min_number:       { aliases: [:min, :minimum, :minimum_number] },
+    avg_number:       { aliases: [:avg, :average, :average_number] },
+    sum_number:       { aliases: [:sum] },
+    strip:            { aliases: [:trim] },
+    concat:           { aliases: [:join, :concat_with] },
+    reverse_concat:   { aliases: [:reverse_join, :reverse_concat_with] }
   }
 
   module HashPath
@@ -89,7 +89,7 @@ module BBLib
       hash.hash_path_set path => "#{args}#{value}"
     end
 
-    def self.split hash, path, value, args
+    def self.split hash, path, value, *args
       hash.hash_path_set path => value.msplit(args)
     end
 
