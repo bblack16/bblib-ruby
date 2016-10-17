@@ -8,6 +8,9 @@ module BBLib::Attr
     if defined?(:before) && opts.include?(:default)
       define_method("__reset_#{method}".to_sym){ send("#{method}=", opts[:default]) }
     end
+    if opts[:serialize]
+      _serialize_fields[method.to_sym] = { always: opts[:always], ignore: opts[:ignore] }
+    end
   end
 
   def attr_sender call, *methods, **opts
@@ -25,14 +28,23 @@ module BBLib::Attr
 
   def attr_of klass, *methods, **opts
     methods.each{ |m| attr_type(m, opts, &attr_set(m, opts){ |x|
+        x = attr_serialize(klass, x) unless opts[:to_serialize_only]
         if x.is_a?(klass)
           instance_variable_set("@#{m}", x)
         else
-          raise ArgumentError, "#{method} must be set to a #{klass}!"
+          raise ArgumentError, "#{methods.join(', ')} must be set to a #{klass}!"
         end
       }
     )
   }
+  end
+
+  def attr_serialize klass, hash
+    if !hash.is_a?(klass) && hash.is_a?(Hash)
+      klass.new(hash)
+    else
+      hash
+    end
   end
 
   def attr_boolean *methods, **opts
@@ -111,7 +123,7 @@ module BBLib::Attr
   def attr_array_of klass, *methods, raise: false, **opts
     methods.each do |m|
       attr_type(m, opts, &attr_set(m, opts) do |x|
-        x = [x].flatten(1)
+        x = x.map{ |h| attr_serialize(klass, h) } if opts[:serialize] && !opts[:to_serialize_only]
         if raise && x.any?{ |i| klass.is_a?(Array) ? !klass.any?{ |k| i.is_a?(k) } : !i.is_a?(klass) }
           raise ArgumentError, "#{m} only accepts items of class #{klass}."
         end
@@ -130,6 +142,7 @@ module BBLib::Attr
       (opts[:adder_name] || "add_#{method}"),
       proc do |*args|
         args.each do |arg|
+          arg = attr_serialize(klasses.first, arg) if opts[:serialize] &&  !opts[:to_serialize_only]
           if klasses.empty? || klasses.any?{ |c| arg.is_a?(c) }
             var = instance_variable_get("@#{method}")
             var = Array.new if var.nil?
@@ -150,7 +163,11 @@ module BBLib::Attr
         args.map do |arg|
           var = instance_variable_get("@#{method}")
           var = Array.new if var.nil?
-          var.delete(arg)
+          if arg.is_a?(Fixnum)
+            var.delete_at(arg)
+          else
+            var.delete(arg)
+          end
         end.compact
       end
     )
