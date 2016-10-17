@@ -2,9 +2,9 @@
 module BBLib
 
   class FuzzyMatcher < LazyClass
-    attr_float_between 0, 100, :threshold, default: 75
-    attr_bool :case_sensitive, default: true
-    attr_bool :remove_symbols, :move_articles, :convert_roman, default: false
+    attr_float_between 0, 100, :threshold, default: 75, serialize: true
+    attr_bool :case_sensitive, default: true, serialize: true
+    attr_bool :remove_symbols, :move_articles, :convert_roman, default: false, serialize: true
 
     # Calculates a percentage match between string a and string b.
     def similarity a, b

@@ -15,6 +15,13 @@ module BBLib
     def serialize
       _serialize_fields.map do |name, h|
         value = send(h[:method])
+        if value.is_a?(Hash)
+          value = value.map{ |k, v| [k, v.respond_to?(:serialize) ? v.serialize : v] }.to_h
+        elsif value.is_a?(Array)
+          value = value.map{ |v| v.respond_to?(:serialize) ? v.serialize : v }
+        elsif value.respond_to?(:serialize)
+          value = value.serialize
+        end
         if !h[:always] && value == h[:ignore]
           nil
         else
@@ -37,6 +44,8 @@ module BBLib
         end
         lazy_init *args
         custom_lazy_init BBLib::named_args(*args), *args
+
+        self.class._serialize_fields.each{ |k, v| serialize_method k, v }
       end
 
       def _pre_setup
@@ -66,6 +75,18 @@ module BBLib
 
       def _serialize_fields
         @_serialize_fields ||= Hash.new
+      end
+
+      def self._serialize_fields
+        @_serialize_fields ||= Hash.new
+      end
+
+      def attr_serialize klass, hash
+        if !hash.is_a?(klass) && hash.is_a?(Hash)
+          klass.new(hash)
+        else
+          hash
+        end
       end
 
   end
