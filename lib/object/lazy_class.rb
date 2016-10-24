@@ -45,7 +45,7 @@ module BBLib
         lazy_init *args
         custom_lazy_init BBLib::named_args(*args), *args
 
-        self.class.ancestors.map{ |a| a.instance_variable_get('@_serialize_fields') }.compact
+        self.class.ancestors.reverse.map{ |a| a.instance_variable_get('@_serialize_fields') }.compact
               .each{ |ary| ary.each{ |k, v| self.serialize_method(k, v.delete(:method), v) } }
       end
 
