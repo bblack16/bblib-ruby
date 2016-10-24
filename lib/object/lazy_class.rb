@@ -27,7 +27,7 @@ module BBLib
         else
           [ name, value ]
         end
-      end.reject(&:nil?).to_h
+      end.compact.to_h
     end
 
     protected
@@ -45,7 +45,8 @@ module BBLib
         lazy_init *args
         custom_lazy_init BBLib::named_args(*args), *args
 
-        self.class._serialize_fields.each{ |k, v| serialize_method k, v }
+        self.class.ancestors.map{ |a| a.instance_variable_get('@_serialize_fields') }.compact
+              .each{ |ary| ary.each{ |k, v| self.serialize_method(k, v.delete(:method), v) } }
       end
 
       def _pre_setup
@@ -65,6 +66,15 @@ module BBLib
       end
 
       def serialize_method name, method = nil, ignore: nil, always: false
+        return if method == :serialize || name == :serialize && method.nil?
+        _serialize_fields[name.to_sym] = {
+          method: (method.nil? ? name.to_sym : method.to_sym),
+          ignore: ignore,
+          always: always
+        }
+      end
+
+      def self.serialize_method name, method = nil, ignore: nil, always: false
         return if method == :serialize || name == :serialize && method.nil?
         _serialize_fields[name.to_sym] = {
           method: (method.nil? ? name.to_sym : method.to_sym),
