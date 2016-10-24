@@ -3,13 +3,17 @@ module BBLib::Attr
   private
 
   def attr_type method, opts, &block
+    opts = opts.dup
+    if opts[:default].respond_to?(:dup) && !opts[:shared_default]
+      opts[:default] = opts[:default].dup rescue opts[:default]
+    end
     define_method("#{method}=", &block)
     define_method(method){ instance_variable_get("@#{method}")}
     if defined?(:before) && opts.include?(:default)
       define_method("__reset_#{method}".to_sym){ send("#{method}=", opts[:default]) }
     end
-    if opts[:serialize]
-      _serialize_fields[method.to_sym] = { always: opts[:always], ignore: opts[:ignore] }
+    if opts[:serialize] && respond_to?(:_serialize_fields)
+      _serialize_fields[method.to_sym] = { always: opts[:always], ignore: opts[:ignore] || (opts[:default].dup rescue nil) }
     end
   end
 
@@ -113,8 +117,8 @@ module BBLib::Attr
   def attr_array *methods, **opts
     methods.each do |m|
       attr_type(m, opts, &attr_set(m, opts){ |*x| instance_variable_set("@#{m}", *x) } )
-      attr_array_adder(m, opts) if opts[:adder] || opts[:add_rem]
-      attr_array_remover(m, opts) if opts[:remover] || opts[:add_rem]
+      attr_array_adder(m, Object, opts) if opts[:adder] || opts[:add_rem]
+      attr_array_remover(m, Object, opts) if opts[:remover] || opts[:add_rem]
     end
   end
 
@@ -123,6 +127,7 @@ module BBLib::Attr
   def attr_array_of klass, *methods, raise: false, **opts
     methods.each do |m|
       attr_type(m, opts, &attr_set(m, opts) do |x|
+        x = [x] unless x.is_a?(Array)
         x = x.map{ |h| attr_serialize(klass, h) } if opts[:serialize] && !opts[:to_serialize_only]
         if raise && x.any?{ |i| klass.is_a?(Array) ? !klass.any?{ |k| i.is_a?(k) } : !i.is_a?(klass) }
           raise ArgumentError, "#{m} only accepts items of class #{klass}."
@@ -174,16 +179,17 @@ module BBLib::Attr
   end
 
   def attr_hash *methods, **opts
-    methods.each{ |m| attr_type(m, opts, &attr_set(m, opts) do |*a|
-          begin
-            hash = a.find_all{ |i| i.is_a?(Hash) }.inject({}){ |m, h| m.merge(h) } || Hash.new
-            instance_variable_set("@#{m}", hash)
-          rescue ArgumentError => e
-            raise ArgumentError, "#{m} only accepts a hash for its parameters"
-          end
+    methods.each do |m|
+      attr_type(m, opts, &attr_set(m, opts) do |*a|
+        begin
+          hash = a.find_all{ |i| i.is_a?(Hash) }.inject({}){ |m, h| m.merge(h) } || Hash.new
+          instance_variable_set("@#{m}", hash)
+        rescue ArgumentError => e
+          raise ArgumentError, "#{m} only accepts a hash for its parameters"
         end
+      end
       )
-    }
+    end
   end
 
   def attr_valid_file *methods, raise: true, **opts
