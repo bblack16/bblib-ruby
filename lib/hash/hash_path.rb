@@ -259,7 +259,7 @@ class Hash
         bail = true if !hash[part].is_a?(Hash) && !hash[part].is_a?(Array)
         hash = hash[part] unless bail
       else
-        hash[part] = path.first =~ /\A\[\d+\]\z/ ? Array.new : Hash.new
+        hash[part] ||= path.first =~ /\A\[\d+\]\z/ ? Array.new : Hash.new
         hash = hash[part] unless bail || path.empty?
       end
     end
