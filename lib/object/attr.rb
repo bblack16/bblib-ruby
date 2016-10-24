@@ -32,8 +32,8 @@ module BBLib::Attr
 
   def attr_of klass, *methods, **opts
     methods.each{ |m| attr_type(m, opts, &attr_set(m, opts){ |x|
-        x = attr_serialize(klass, x) unless opts[:to_serialize_only]
-        if x.is_a?(klass)
+        x = attr_serialize(x, *klass) unless opts[:to_serialize_only]
+        if (klass.is_a?(Array) ? klass.include?(x.class) : x.is_a?(klass))
           instance_variable_set("@#{m}", x)
         else
           raise ArgumentError, "#{methods.join(', ')} must be set to a #{klass}!"
@@ -43,9 +43,9 @@ module BBLib::Attr
   }
   end
 
-  def attr_serialize klass, hash
-    if !hash.is_a?(klass) && hash.is_a?(Hash)
-      klass.new(hash)
+  def attr_serialize hash, *klasses
+    if !klasses.include?(hash.class) && hash.is_a?(Hash)
+      klasses.first.new(hash)
     else
       hash
     end
@@ -128,7 +128,7 @@ module BBLib::Attr
     methods.each do |m|
       attr_type(m, opts, &attr_set(m, opts) do |x|
         x = [x] unless x.is_a?(Array)
-        x = x.map{ |h| attr_serialize(klass, h) } if opts[:serialize] && !opts[:to_serialize_only]
+        x = x.map{ |h| attr_serialize(h, *klass) } if opts[:serialize] && !opts[:to_serialize_only]
         if raise && x.any?{ |i| klass.is_a?(Array) ? !klass.any?{ |k| i.is_a?(k) } : !i.is_a?(klass) }
           raise ArgumentError, "#{m} only accepts items of class #{klass}."
         end
@@ -147,7 +147,7 @@ module BBLib::Attr
       (opts[:adder_name] || "add_#{method}"),
       proc do |*args|
         args.each do |arg|
-          arg = attr_serialize(klasses.first, arg) if opts[:serialize] &&  !opts[:to_serialize_only]
+          arg = attr_serialize(arg, *klasses) if opts[:serialize] &&  !opts[:to_serialize_only]
           if klasses.empty? || klasses.any?{ |c| arg.is_a?(c) }
             var = instance_variable_get("@#{method}")
             var = Array.new if var.nil?

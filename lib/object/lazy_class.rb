@@ -91,9 +91,9 @@ module BBLib
         @_serialize_fields ||= Hash.new
       end
 
-      def attr_serialize klass, hash
-        if !hash.is_a?(klass) && hash.is_a?(Hash)
-          klass.new(hash)
+      def attr_serialize hash, *klasses
+        if !klasses.include?(hash.class) && hash.is_a?(Hash)
+          klasses.first.new(hash)
         else
           hash
         end
