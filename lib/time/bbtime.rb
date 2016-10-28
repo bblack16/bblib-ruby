@@ -34,13 +34,14 @@ module BBLib
 
   # Turns a numeric input into a time string.
   def self.to_duration num, input: :sec, stop: :milli, style: :medium
-    return nil unless Numeric === num || num > 0
+    return nil unless Numeric === num
+    return '0' if num == 0
     if ![:full, :medium, :short].include?(style) then style = :medium end
     expression = []
     n, done = num * TIME_EXPS[input.to_sym][:mult], false
     TIME_EXPS.reverse.each do |k, v|
-      next unless !done
-      if k == stop then done = true end
+      next if done
+      done = true if k == stop
       div = n / v[:mult]
       if div >= 1
         val = (done ? div.round : div.floor)
