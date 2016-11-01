@@ -1,9 +1,6 @@
 
-
-
 module BBLib
   module OS
-
     def self.cpu_usages
       if windows?
         {
@@ -11,14 +8,12 @@ module BBLib
         }
       elsif linux? || mac?
         system_stats[:cpu]
-      else
-        nil
       end
     end
 
     def self.uptime
       if windows?
-        uptime = `net statistics server`.split("\n").find{|l| l.start_with?('Statistics since ')}.split(/since /i).last.strip
+        uptime = `net statistics server`.split("\n").find { |l| l.start_with?('Statistics since ') }.split(/since /i).last.strip
         Time.now - Time.strptime(uptime, '%m/%d/%Y %l:%M:%S %p')
       else
         `cat /proc/uptime`.extract_numbers.first
@@ -38,8 +33,6 @@ module BBLib
         `wmic computersystem get TotalPhysicalMemory`.extract_numbers.first / 1024.0
       elsif linux?
         system_stats.hpath('memory.total')
-      else
-        nil
       end
     end
 
@@ -56,8 +49,6 @@ module BBLib
         `wmic os get freephysicalmemory /format:value`.extract_numbers.first
       elsif linux?
         system_stats.hpath('memory.free')
-      else
-        nil
       end
     end
 
@@ -83,16 +74,16 @@ module BBLib
         }
       else
         stats = `top -b -n2 -d 0.1`.split("\n")
-        cpu   = stats.find_all{|l| l =~ /\A\%?Cpu\(s\)/i }.last.extract_numbers
-        loads = stats.find_all{|l| l =~ / load average\: /i }.last.scan(/load average:.*/i).first.extract_numbers
-        mem   = stats.find_all{|l| l =~ /KiB Mem|Mem\:/i }.last.extract_numbers
+        cpu   = stats.find_all { |l| l =~ /\A\%?Cpu\(s\)/i }.last.extract_numbers
+        loads = stats.find_all { |l| l =~ / load average\: /i }.last.scan(/load average:.*/i).first.extract_numbers
+        mem   = stats.find_all { |l| l =~ /KiB Mem|Mem\:/i }.last.extract_numbers
         time  = `cat /proc/uptime`.extract_numbers
         {
           cpu: {
             user:                cpu[0],
             system:              cpu[1],
             nice:                cpu[2],
-            total:               cpu[0..2].inject(0){ |sum, v| sum += v.to_f },
+            total:               cpu[0..2].inject(0) { |sum, v| sum += v.to_f },
             idle:                cpu[3],
             wait:                cpu[4],
             hardware_interrupts: cpu[5],
@@ -123,26 +114,35 @@ module BBLib
         tasks = `tasklist /v`
         cpu = `wmic path win32_perfformatteddata_perfproc_process get PercentProcessorTime,percentusertime,IDProcess /format:list`
         cpu = cpu.split("\n\n\n\n").reject(&:empty?)
-              .map{ |l| l.scan(/\d+/).map(&:to_i)}
-              .map{ |n|[ n[0], {cpu: n[1], user: n[2] }]}.to_h
-        lines = tasks.split("\n")[3..-1].map{ |l| l.split(/\s{2,}/) }
-        mem = mem_total
-        cmds = `wmic process get processid,commandline /format:csv`.split("\n")[1..-1].reject{ |r| r.strip  == ''}.map{ |l| l.split(',')[1..-1] }.map{ |l| [l.last.to_i, l[0..-2].join(',')]}.to_h
+                 .map { |l| l.scan(/\d+/).map(&:to_i) }
+                 .map { |n| [n[0], { cpu: n[1], user: n[2] }] }.to_h
+        lines = tasks.split("\n")[3..-1].map { |l| l.split(/\s{2,}/) }
+        cmds = `wmic process get processid,commandline /format:csv`.split("\n")[1..-1].reject { |r| r.strip == '' }
+                                                                   .map { |l| l.split(',')[1..-1] }
+                                                                   .map { |l| [l.last.to_i, l[0..-2].join(',')] }.to_h
         lines.map do |l|
           pid = l[1].extract_numbers.first
           {
             name: l[0],
             pid:  pid,
             user: l[4],
-            mem:  (((l[3].gsub(',', '').extract_numbers.first / mem_total) * 100) rescue nil),
-            cpu:  (cpu[pid][:cpu] rescue nil),
+            mem:  (begin
+                     ((l[3].delete(',').extract_numbers.first / mem_total) * 100)
+                   rescue
+                     nil
+                   end),
+            cpu:  (begin
+                     cpu[pid][:cpu]
+                   rescue
+                     nil
+                   end),
             cmd:  cmds[pid]
           }
         end
       else
         t = `ps -e -o comm,pid,ruser,%cpu,%mem,cmd`
-        lines = t.split("\n")[1..-1].map{ |l| l.split(/\s+/) }
-        lines.map{ |l| l.size == 6 ? l : [l[0], l[1], l[2], l[3], l[4], l[5..-1].join(' ')] }
+        lines = t.split("\n")[1..-1].map { |l| l.split(/\s+/) }
+        lines.map { |l| l.size == 6 ? l : [l[0], l[1], l[2], l[3], l[4], l[5..-1].join(' ')] }
         lines.map do |l|
           {
             name: l[0],
@@ -191,7 +191,7 @@ module BBLib
       else
         `df -aTB 1`
           .split("\n")[1..-1]
-          .map{ |l| l.split(/\s{2,}|(?<=\d)\s|(?<=%)\s|(?<=\-)\s|(?<=\w)\s+(?=\w+\s+\d)/)}
+          .map { |l| l.split(/\s{2,}|(?<=\d)\s|(?<=%)\s|(?<=\-)\s|(?<=\w)\s+(?=\w+\s+\d)/) }
           .map do |i|
             {
               filesystem: i[0],
@@ -200,18 +200,17 @@ module BBLib
               used:       i[3].to_i,
               available:  i[4].to_i,
               used_p:     i[5].extract_integers.first.to_f,
-              mount:      i[6],
+              mount:      i[6]
             }
           end
       end
     end
 
-
     # A mostly platform agnostic call to get root volumes
     def self.root_volumes
       if BBLib.windows?
         begin # For windows
-          `wmic logicaldisk get name`.split("\n").map{ |m| m.strip }[1..-1].reject{ |r| r == '' }
+          `wmic logicaldisk get name`.split("\n").map(&:strip)[1..-1].reject { |r| r == '' }
         rescue
           begin # Windows attempt 2
             `fsutil fsinfo drives`.scan(/(?<=\s)\w\:/)
@@ -221,7 +220,7 @@ module BBLib
         end
       else
         begin
-          `ls /`.split("\n").map{ |m| m.strip }.reject{ |r| r == '' }
+          `ls /`.split("\n").map(&:strip).reject { |r| r == '' }
         rescue # All attempts failed
           nil
         end
@@ -231,8 +230,9 @@ module BBLib
     # Windows only method to get the volume labels of disk drives
     def self.root_volume_labels
       return nil unless BBLib.windows?
-      `wmic logicaldisk get caption,volumename`.split("\n")[1..-1].map{ |m| [m.split("  ").first.to_s.strip, m.split("  ")[1..-1].to_a.join(' ').strip] }.reject{ |o,t| o == '' }.to_h
+      `wmic logicaldisk get caption,volumename`.split("\n")[1..-1]
+                                               .map { |m| [m.split('  ').first.to_s.strip, m.split('  ')[1..-1].to_a.join(' ').strip] }
+                                               .reject { |o, _t| o == '' }.to_h
     end
-
   end
 end
