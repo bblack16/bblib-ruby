@@ -1,4 +1,5 @@
 
+# frozen_string_literal: true
 module BBLib
   # Takes two arrays (can be of different length) and interleaves
   # them like [a[0], b[0], a[1], b[1]...]
@@ -13,17 +14,17 @@ module BBLib
 end
 
 class Array
-  def msplit(*delims, keep_empty: false)
-    map { |i| i.msplit(delims, keep_empty: keep_empty) }.flatten
+  def msplit(*delims)
+    map { |i| i.msplit(*delims) if i.respond_to?(:msplit) }.flatten
   end
   alias multi_split msplit
 
   def keys_to_sym(clean: false)
-    map { |v| v.is_a?(Hash) || v.is_a?(Array) ? v.keys_to_sym(clean: clean) : v }
+    map { |v| v.respond_to?(:keys_to_sym) ? v.keys_to_sym(clean: clean) : v }
   end
 
   def keys_to_s
-    map { |v| v.is_a?(Hash) || v.is_a?(Array) ? v.keys_to_s : v }
+    map { |v| v.respond_to?(:keys_to_s) ? v.keys_to_s : v }
   end
 
   def interleave(b)

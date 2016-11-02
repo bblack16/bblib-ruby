@@ -82,10 +82,8 @@ module BBLib
                 else
                   (range.to_i..max)
                 end
-        index = 0
-        range.each do |i|
+        range.each_with_index do |i, index|
           numbers.push i if index.zero? || (index % divisor.to_i).zero?
-          index+=1
         end
         exp = exp.sub(s, '')
       end
@@ -100,11 +98,11 @@ module BBLib
     def next_day(time, direction)
       return nil unless time
       weekdays = @parts[:weekday]
-      days = @parts[:day]
-      months = @parts[:month]
-      years = @parts[:year]
-      date = nil
-      safety = 0
+      days     = @parts[:day]
+      months   = @parts[:month]
+      years    = @parts[:year]
+      date     = nil
+      safety   = 0
       while date.nil? && safety < 50_000
         if (days.empty? || days.include?(time.day)) && (months.empty? || months.include?(time.month)) && (years.empty? || years.include?(time.year)) && (weekdays.empty? || weekdays.include?(time.wday))
           date = time
@@ -112,15 +110,15 @@ module BBLib
           time+= 24*60*60*direction
           # time = Time.new(time.year, time.month, time.day, 0, 0)
         end
-        safety+=1
+        safety += 1
       end
       return nil if safety == 50_000
       time
     end
 
     def next_time(time, direction)
-      orig = time.to_f
-      fw = (direction == 1)
+      orig    = time.to_f
+      fw      = (direction == 1)
       current = next_day(time, direction)
       return nil unless current
       if fw ? current.to_f > orig : current.to_f < orig
@@ -130,7 +128,7 @@ module BBLib
       end
       while !@parts[:day].empty? && !@parts[:day].include?(current.day) || !@parts[:hour].empty? && !@parts[:hour].include?(current.hour) || !@parts[:minute].empty? && !@parts[:minute].include?(current.min)
         day = [current.day, current.month, current.year]
-        current+= (fw ? 60 : -60)
+        current += (fw ? 60 : -60)
         if day != [current.day, current.month, current.year] then current = next_day(current, direction) end
         return nil unless current
       end

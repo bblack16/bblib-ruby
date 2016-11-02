@@ -30,7 +30,7 @@ module BBLib
       end
     end
 
-    def clear(task)
+    def clear(task = :default)
       return nil unless @tasks.keys.include?(task)
       stop task
       @tasks[task][:history].clear
@@ -56,12 +56,12 @@ module BBLib
       start(task) unless stop(task).nil?
     end
 
-    def active?(task)
+    def active?(task = :default)
       return false unless @tasks.keys.include? task
       !@tasks[task][:current].nil?
     end
 
-    def stats(task, pretty: false)
+    def stats(task = :default, pretty: false)
       return nil unless @tasks.include?(task)
       TIMER_TYPES.map do |k, _v|
         next if STATS_IGNORE.include?(k)

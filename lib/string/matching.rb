@@ -62,7 +62,7 @@ module BBLib
     b = b.extract_numbers
     return 100.0 if a.empty? && b.empty? || a == b
     matches = []
-    for i in 0..[a.size, b.size].max-1
+    (0..[a.size, b.size].max-1).each do |i|
       matches << 1.0 / ([a[i].to_f, b[i].to_f].max - [a[i].to_f, b[i].to_f].min + 1.0)
     end
     (matches.inject { |sum, m| sum + m } / matches.size.to_f) * 100.0

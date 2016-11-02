@@ -16,12 +16,9 @@ module BBLib::Attr
       define_method("__reset_#{method}".to_sym) { send("#{method}=", opts[:default]) }
     end
     if opts[:serialize] && respond_to?(:_serialize_fields)
-      _serialize_fields[method.to_sym] = { always: opts[:always], ignore: opts[:ignore] || (begin
-                                                                                              opts[:default].dup
-                                                                                            rescue
-                                                                                              nil
-                                                                                            end) }
+      _serialize_fields[method.to_sym] = { always: opts[:always], ignore: opts[:ignore] || (opts[:default].dup rescue nil) }
     end
+    nil
   end
 
   def attr_sender(call, *methods, **opts)
@@ -113,7 +110,7 @@ module BBLib::Attr
   def attr_element_of(list, *methods, **opts)
     methods.each do |m|
       attr_type(m, opts, &attr_set(m, opts) do |x|
-        if !list.include?(x)
+        unless list.include?(x)
           raise ArgumentError, "#{m} only accepts the following (first 10 shown) #{list[0...10]}"
         else
           instance_variable_set("@#{m}", x)
@@ -187,11 +184,11 @@ module BBLib::Attr
 
   def attr_hash(*methods, **opts)
     methods.each do |m|
-      attr_type(m, opts, &attr_set(m, opts) do |*a|
+      attr_type(m, opts, &attr_set(m, opts) do |*at|
         begin
-          hash = a.find_all { |i| i.is_a?(Hash) }.inject({}) { |m, h| m.merge(h) } || {}
+          hash = at.find_all { |i| i.is_a?(Hash) }.inject({}) { |a, e| a.merge(e) } || {}
           instance_variable_set("@#{m}", hash)
-        rescue ArgumentError => e
+        rescue ArgumentError
           raise ArgumentError, "#{m} only accepts a hash for its parameters"
         end
       end)
@@ -237,7 +234,7 @@ module BBLib::Attr
       else
         begin
           instance_variable_set("@#{method}", x.nil? && !opts[:sender] ? x : yield(x))
-        rescue Exception => e
+        rescue StandardError => e
           if opts[:fallback] != :_nil
             instance_variable_set("@#{method}", opts[:fallback])
           else

@@ -1,17 +1,17 @@
+# frozen_string_literal: true
 module BBLib::Hooks
-
-  def method_added name
+  def method_added(name)
     [:before, :after].each do |hook_type|
-      self.send("#{hook_type}_hooks_for", name).each do |hook|
-        existing = self.send("#{hook_type}_hooked_methods")[hook[:method]]
+      send("#{hook_type}_hooks_for", name).each do |hook|
+        existing = send("#{hook_type}_hooked_methods")[hook[:method]]
         next if existing && existing.include?(name)
-        self.send("add_#{hook_type}_hook", name, hook[:method], hook[:opts] || Hash.new)
+        send("add_#{hook_type}_hook", name, hook[:method], hook[:opts] || {})
       end
     end
   end
 
-  def before hook, *methods, **opts
-    methods.each{ |m| before_hooks[hook] = { methods: methods, opts: opts } }
+  def before(hook, *methods, **opts)
+    methods.each { |_m| before_hooks[hook] = { methods: methods, opts: opts } }
   end
 
   def before_hooks
@@ -22,16 +22,16 @@ module BBLib::Hooks
     @before_hooked_methods ||= {}
   end
 
-  def before_hooks_for name
-    before_hooks.map{ |n, m| m[:methods].include?(name)? { method: n, opts: m[:opts] } : nil }.compact
+  def before_hooks_for(name)
+    before_hooks.map { |n, m| m[:methods].include?(name)? { method: n, opts: m[:opts] } : nil }.compact
   end
 
   # Current opts:
   # send_args - Sends the arguments of the method to the before hook.
   # modify_args - Replaces the original args with the returned value of the
-  # =>              before hook method.
-  def add_before_hook method, hook, opts = Hash.new
-    before_hooked_methods[hook] = Array.new unless before_hooked_methods[hook]
+  #               before hook method.
+  def add_before_hook(method, hook, opts = {})
+    before_hooked_methods[hook] = [] unless before_hooked_methods[hook]
     before_hooked_methods[hook] += [method]
     original = instance_method(method)
     define_method(method) do |*args, &block|
@@ -45,8 +45,8 @@ module BBLib::Hooks
     end
   end
 
-  def after hook, *methods, **opts
-    methods.each{ |m| after_hooks[hook] = { methods: methods, opts: opts } }
+  def after(hook, *methods, **opts)
+    methods.each { |_m| after_hooks[hook] = { methods: methods, opts: opts } }
   end
 
   def after_hooks
@@ -57,8 +57,8 @@ module BBLib::Hooks
     @after_hooked_methods ||= {}
   end
 
-  def after_hooks_for name
-    after_hooks.map{ |n, m| m[:methods].include?(name)? { method: n, opts: m[:opts] } : nil }.compact
+  def after_hooks_for(name)
+    after_hooks.map { |n, m| m[:methods].include?(name)? { method: n, opts: m[:opts] } : nil }.compact
   end
 
   # Current opts:
@@ -69,8 +69,8 @@ module BBLib::Hooks
   # modify_value - Opts must also include one of the two above. Passes the returned
   # =>              value of the method to the hook and returns the hooks value
   # =>              rather than the original methods value.
-  def add_after_hook method, hook, opts = Hash.new
-    after_hooked_methods[hook] = Array.new unless after_hooked_methods[hook]
+  def add_after_hook(method, hook, opts = {})
+    after_hooked_methods[hook] = [] unless after_hooked_methods[hook]
     after_hooked_methods[hook] += [method]
     original = instance_method(method)
 
@@ -90,5 +90,4 @@ module BBLib::Hooks
       rtr
     end
   end
-
 end

@@ -9,7 +9,7 @@ module BBLib
       prep_strings a, b
       return 100.0 if @a == @b
       score = 0
-      total_weight = @algorithms.map { |_alg, v| v[:weight] }.inject { |sum, w| sum+=w }
+      total_weight = @algorithms.map { |_alg, v| v[:weight] }.inject { |sum, w| sum += w }
       @algorithms.each do |_algo, vals|
         next unless vals[:weight].positive?
         score+= @a.send(vals[:signature], @b) * vals[:weight]

@@ -1,5 +1,5 @@
-
 # frozen_string_literal: true
+
 # This module provides similar functionality as hash path, but instead
 # generates a PathHash object which wraps a Hash or Array. Elements may
 # be accessed via method calls rather than path strings.
@@ -43,8 +43,7 @@ module BBLib
       method_missing arg, formula
     end
 
-    private
-
+    # Does not fall back on super as ALL input is accepted
     def method_missing(arg, formula = nil)
       arg = (@recursive ? "..#{arg}" : arg.to_s) +
             (formula ? "(#{formula})" : '')
@@ -53,6 +52,10 @@ module BBLib
       else
         PathHash.new @hash.hpath(arg)
       end
+    end
+
+    def respond_to_missing?(*args)
+      true || super
     end
   end
 end

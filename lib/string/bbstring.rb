@@ -36,8 +36,7 @@ module BBLib
   # Used to move the position of the articles 'the', 'a' and 'an' in strings for normalization.
   def self.move_articles(str, position = :front, capitalize: true)
     return str unless [:front, :back, :none].include?(position)
-    articles = %w(the a an)
-    articles.each do |a|
+    %w(the a an).each do |a|
       starts = str.downcase.start_with?(a + ' ')
       ends = str.downcase.end_with?(' ' + a)
       if starts && position != :front
@@ -54,24 +53,20 @@ module BBLib
         str = (!starts ? "#{capitalize ? a.capitalize : a} " : '') + str[0..-(a.length + 2)]
       end
     end
-    while str.strip.end_with?(',')
-      str = str.strip
-      str = str.chop
-    end
+    str = str.strip.chop while str.strip.end_with?(',')
     str
   end
 end
 
 class String
   # Multi-split. Similar to split, but can be passed an array of delimiters to split on.
-  def msplit(*delims, keep_empty: false)
-    return [self] unless !delims.nil? && !delims.empty?
-    ar = [self]
-    [delims].flatten.each do |d|
-      ar.map! { |a| a.split d }
-      ar.flatten!
+  def msplit(*delims)
+    ary = [self]
+    return ary if delims.empty?
+    delims.flatten.each do |d|
+      ary = ary.flat_map { |a| a.split d }
     end
-    keep_empty ? ar : ar.reject(&:empty?)
+    ary
   end
 
   def move_articles(position = :front, capitalize = true)

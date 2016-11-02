@@ -4,8 +4,8 @@ module BBLib
   # min and max are inclusive to the allowed bounds.
   def self.keep_between(num, min, max)
     raise "Argument must be numeric: #{num} (#{num.class})" unless num.is_a?(Numeric)
-    num = min if !min.nil? && num < min
-    num = max if !max.nil? && num > max
+    num = min if min && num < min
+    num = max if max && num > max
     num
   end
 end

@@ -29,7 +29,7 @@ module BBLib
         elsif match.is_a?(Array) && (key.is_a?(Integer) || key.is_a?(Range))
           key.is_a?(Range) ? match[key] : [match[key]]
         end
-      end.reject(&:nil?)
+      end.compact
       matches = BBLib.analyze_hash_path_formula(formula, matches)
       recursive = false
     end
@@ -50,7 +50,7 @@ module BBLib
       parts = split_path(path)
       matches = BBLib.hash_path(hash, *parts[0..-2])
       matches.each do |match|
-        key, formula = BBLib.analyze_hash_path(parts.last)
+        key, _formula = BBLib.analyze_hash_path(parts.last)
         key = match.include?(key.to_sym) || (symbols && !match.include?(key)) ? key.to_sym : key
         if match.is_a?(Hash)
           match[key] = value
@@ -88,7 +88,7 @@ module BBLib
     paths.each do |path|
       parts = split_path(path)
       BBLib.hash_path(hash, *parts[0..-2]).each do |match|
-        key, formula = BBLib.analyze_hash_path(parts.last)
+        key, _formula = BBLib.analyze_hash_path(parts.last)
         if match.is_a?(Hash)
           deleted << match.delete(key) << match.delete(key.to_sym)
         elsif match.is_a?(Array) && key.is_a?(Integer)
@@ -123,7 +123,7 @@ module BBLib
     elsif key =~ /\[\-?\d+\.\s?\.{1,2}\-?\d+\]/
       bounds = key.scan(/\-?\d+/).map(&:to_i)
       key = key =~ /\.\s?\.{2}/ ? (bounds.first...bounds.last) : (bounds.first..bounds.last)
-    elsif key =~ /\/.*[\/|\/i]$/
+    elsif key =~ /\/.*\/i?$/
       key = if key.end_with?('i')
               /#{key[1..-3]}/i
             else
@@ -136,24 +136,25 @@ module BBLib
 
   def self.analyze_hash_path_formula(formula, hashes)
     return hashes unless formula
-    hashes.map do |p|
+    hashes.map do |hash|
       begin
-        if eval(p.is_a?(Hash) ? formula.gsub('$', "(#{p})") : formula.gsub('$', p.to_s))
-          p
+        if eval(formula.gsub('$', (hash.is_a?(Hash) ? "(#{hash})" : hash.to_s)))
+          hash
         end
-      rescue StandardError, Exception => e
-        # Do nothing, the formula failed and we reject the value as a false
+      rescue StandardError => e
+        e # Do Nothing, the formula failed...
       end
     end.reject(&:nil?)
   end
 
   def self.hash_path_nav(obj, path = '', delimiter = '.', &block)
-    case [obj.class]
-    when [Hash]
+    case obj
+    when Hash
       obj.each { |k, v| hash_path_nav(v, (path.nil? ? k.to_s : [path, k].join(delimiter)).to_s, delimiter, &block) }
-    when [Array]
-      index = 0
-      obj.each { |o| hash_path_nav(o, (path.nil? ? "[#{index}]" : [path, "[#{index}]"].join(delimiter)).to_s, delimiter, &block); index+=1 }
+    when Array
+      obj.each_with_index do |o, index|
+        hash_path_nav(o, (path.nil? ? "[#{index}]" : [path, "[#{index}]"].join(delimiter)).to_s, delimiter, &block)
+      end
     else
       yield path, obj
     end
@@ -212,7 +213,7 @@ class Hash
     matches = []
     each do |k, v|
       matches << v if keys.any? { |a| (a.is_a?(Regexp) ? a =~ k : a == k) }
-      matches+= v.dive(*keys) if v.respond_to? :dive
+      matches += v.dive(*keys) if v.respond_to?(:dive)
     end
     matches
   end
@@ -239,13 +240,12 @@ class Hash
     hash = self
     part = nil
     bail = false
-    last = nil
-    while !path.empty? && !bail
+    until path.empty? || bail
       part = path.shift
       if part =~ /\A\[\d+\]\z/
         part = part[1..-2].to_i
-      else
-        part = part.to_sym if symbols
+      elsif symbols
+        part = part.to_sym
       end
       if (hash.is_a?(Hash) && hash.include?(part) || hash.is_a?(Array) && hash.size > part.to_i) && !overwrite
         bail = true if !hash[part].is_a?(Hash) && !hash[part].is_a?(Array)
