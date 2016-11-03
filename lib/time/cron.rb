@@ -2,7 +2,7 @@
 module BBLib
   class Cron < BBLib::LazyClass
     attr_str :expression, default: '* * * * * *'
-    attr_reader :parts, :time
+    attr_reader :parts
 
     def next(exp = @expression, count: 1, time: Time.now)
       expression = exp unless exp == @expression
@@ -22,11 +22,11 @@ module BBLib
     end
 
     def self.next(exp, count: 1, time: Time.now)
-      BBLib::Cron.new(expression: exp).next(count: count, time: time)
+      BBLib::Cron.new(exp).next(count: count, time: time)
     end
 
     def self.prev(exp, count: 1, time: Time.now)
-      BBLib::Cron.new(expression: exp).prev(count: count, time: time)
+      BBLib::Cron.new(exp).prev(count: count, time: time)
     end
 
     def self.valid?(exp)
@@ -58,6 +58,7 @@ module BBLib
     private
 
     def lazy_init(*args)
+      @parts = {}
       self.expression = args.first if args.first.is_a?(String)
     end
 
@@ -129,9 +130,7 @@ module BBLib
 
     def next_day(time, direction)
       return time if @parts[:day].empty?
-      until @parts[:day].include?(time.day)
-        time += 24*60*60 * direction
-      end
+      time += 24*60*60 * direction until @parts[:day].include?(time.day)
       time
     end
 
