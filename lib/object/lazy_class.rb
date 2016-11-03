@@ -49,11 +49,12 @@ module BBLib
 
     def _pre_setup
       methods.each do |m|
+        next unless m.to_s.start_with?('__reset_')
         begin
           send(m)
         rescue
           nil # Nothing to rescue, default initializer failed.
-        end if m.to_s.start_with?('__reset_')
+        end
       end
     end
 
