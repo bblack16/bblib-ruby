@@ -10,23 +10,17 @@ module BBLib
       case type
       when :current
         return nil unless @tasks[task][:current]
-        return Time.now.to_f - @tasks[task][:current]
-      when :min
-        return numbers.min
-      when :max
-        return numbers.max
+        Time.now.to_f - @tasks[task][:current]
+      when :min, :max, :first, :last
+        numbers.send(type)
       when :avg
-        return numbers.inject { |sum, n| sum + n }.to_f / numbers.size
+        numbers.inject { |sum, n| sum + n }.to_f / numbers.size
       when :sum
-        return numbers.inject { |sum, n| sum + n }
+        numbers.inject { |sum, n| sum + n }
       when :all
-        return numbers
-      when :first
-        return numbers.first
-      when :last
-        return numbers.last
+        numbers
       when :count
-        return numbers.size
+        numbers.size
       end
     end
 
@@ -71,12 +65,11 @@ module BBLib
 
     def method_missing(*args, **named)
       temp   = args.first.to_sym
-      pretty = named.delete :pretty
       type   = TIMER_TYPES.keys.find { |k| k == temp || TIMER_TYPES[k].include?(temp) }
-      task   = args[1] ||= :default
       return super unless type
-      t = time task, type
-      pretty && type != :count && t ? (t.is_a?(Array) ? t.map(&:to_duration) : t.to_duration) : t
+      t = time(args[1] || :default, type)
+      return t if type == :count || !named[:pretty]
+      t.is_a?(Array) ? t.map(&:to_duration) : t.to_duration
     end
 
     def respond_to_missing?(method, include_private = false)
