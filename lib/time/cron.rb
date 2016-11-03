@@ -1,41 +1,32 @@
 # frozen_string_literal: true
 module BBLib
-  class Cron
-    attr_reader :exp, :parts, :time
+  class Cron < BBLib::LazyClass
+    attr_str :expression, default: '* * * * * *'
+    attr_reader :parts, :time
 
-    def initialize(exp = '* * * * * *')
-      @parts   = {}
-      self.exp = exp
+    def next(exp = @expression, count: 1, time: Time.now)
+      expression = exp unless exp == @expression
+      closest(count: count, time: time, direction: 1)
     end
 
-    def closest(exp = @exp, direction: 1, count: 1, time: Time.now)
-      self.exp = exp if exp
-      results = []
-      return results unless @exp
-      (1..count).each { |i| results.push next_time(i == 1 ? time : results.last, direction) }
-      count <= 1 ? results.first : results.reject(&:nil?)
+    def prev(exp = @expression, count: 1, time: Time.now)
+      expression = exp unless exp == @expression
+      closest(count: count, time: time, direction: -1)
     end
 
-    def next(exp = @exp, count: 1, time: Time.now)
-      closest exp, count: count, time: time, direction: 1
-    end
-
-    def prev(exp = @exp, count: 1, time: Time.now)
-      closest exp, count: count, time: time, direction: -1
-    end
-
-    def exp=(e)
+    def expression=(e)
+      e = e.to_s.downcase
       SPECIAL_EXP.each { |x, v| e = x if v.include?(e) }
-      @exp = e
+      @expression = e
       parse
     end
 
     def self.next(exp, count: 1, time: Time.now)
-      BBLib::Cron.new(exp).next(count: count, time: time)
+      BBLib::Cron.new(expression: exp).next(count: count, time: time)
     end
 
     def self.prev(exp, count: 1, time: Time.now)
-      BBLib::Cron.new(exp).prev(count: count, time: time)
+      BBLib::Cron.new(expression: exp).prev(count: count, time: time)
     end
 
     def self.valid?(exp)
@@ -47,92 +38,142 @@ module BBLib
     end
 
     def self.numeralize(exp)
-      exp = exp.to_s.downcase
       REPLACE.each do |k, v|
         v.each do |r|
-          exp = exp.gsub(r.to_s, k.to_s)
+          exp = exp.to_s.gsub(r.to_s, k.to_s)
         end
       end
       exp
     end
 
+    def time_match?(time)
+      (@parts[:minute].empty? || @parts[:minute].include?(time.min)) &&
+      (@parts[:hour].empty? || @parts[:hour].include?(time.hour)) &&
+      (@parts[:day].empty? || @parts[:day].include?(time.day)) &&
+      (@parts[:weekday].empty? || @parts[:weekday].include?(time.wday)) &&
+      (@parts[:month].empty? || @parts[:month].include?(time.month)) &&
+      (@parts[:year].empty? || @parts[:year].include?(time.year))
+    end
+
     private
 
+    def lazy_init(*args)
+      self.expression = args.first if args.first.is_a?(String)
+    end
+
     def parse
-      return nil unless @exp
-      pieces = @exp.split(' ')
-      i = 0
-      PARTS.each do |part, info|
-        @parts[part] = parse_cron_numbers(pieces[i], info[:min], info[:max], Time.now.send(info[:send]))
-        i+=1
+      @parts = {}
+      PARTS.keys.zip(@expression.split(' ')).to_h.each do |part, piece|
+        info = PARTS[part]
+        @parts[part] = parse_cron_numbers(piece, info[:min], info[:max], Time.now.send(info[:send]))
       end
     end
 
     def parse_cron_numbers(exp, min, max, qmark)
       numbers = []
-      exp     = Cron.numeralize(exp)
-      exp     = exp.gsub('?', qmark.to_s)
+      return numbers if exp == '*'
+      exp = Cron.numeralize(exp).gsub('?', qmark.to_s).gsub('*', "#{min}-#{max}")
       exp.scan(/\*\/\d+|\d+\/\d+|\d+-\d+\/\d+/).each do |s|
-        range = s.split('/').first
+        range = s.split('/').first.split('-').map(&:to_i) + [max]
         divisor = s.split('/').last.to_i
-        range = if range == '*'
-                  (min..max)
-                elsif range =~ /\d+\-\d+/
-                  (range.split('-').first.to_i..range.split('-').last.to_i)
-                else
-                  (range.to_i..max)
-                end
-        range.each_with_index do |i, index|
-          numbers.push i if index.zero? || (index % divisor.to_i).zero?
+        Range.new(*range[0..1]).each_with_index do |i, index|
+          numbers.push(i) if index.zero? || (index % divisor).zero?
         end
         exp = exp.sub(s, '')
       end
-      numbers.push exp.scan(/\d+/).map(&:to_i)
-      exp.strip.scan(/\d+\-\d+/).each do |e|
+      exp.scan(/\d+\-\d+/).each do |e|
         nums = e.scan(/\d+/).map(&:to_i)
-        numbers.push((nums.min..nums.max).map { |n| n })
+        numbers.push(Range.new(*nums).to_a)
       end
-      numbers.flatten.sort.uniq.reject { |r| r < min || r > max }
+      numbers.push(exp.scan(/\d+/).map(&:to_i))
+      numbers.flatten.uniq.sort.reject { |r| r < min || r > max }
     end
 
-    def next_day(time, direction)
-      return nil unless time
-      weekdays = @parts[:weekday]
-      days     = @parts[:day]
-      months   = @parts[:month]
-      years    = @parts[:year]
-      date     = nil
-      safety   = 0
-      while date.nil? && safety < 50_000
-        if (days.empty? || days.include?(time.day)) && (months.empty? || months.include?(time.month)) && (years.empty? || years.include?(time.year)) && (weekdays.empty? || weekdays.include?(time.wday))
-          date = time
-        else
-          time+= 24*60*60*direction
-          # time = Time.new(time.year, time.month, time.day, 0, 0)
-        end
-        safety += 1
+    def closest(direction: 1, count: 1, time: Time.now)
+      return unless @expression
+      results = (1..count).flat_map do |_i|
+        time = next_time(time + 60 * direction, direction)
       end
-      return nil if safety == 50_000
-      time
+      count <= 1 ? results.first : results.compact
     end
 
     def next_time(time, direction)
-      orig    = time.to_f
-      fw      = (direction == 1)
-      current = next_day(time, direction)
-      return nil unless current
-      if fw ? current.to_f > orig : current.to_f < orig
-        current = Time.new(current.year, current.month, current.day, (fw ? 0 : 23), (fw ? 0 : 59))
-      else
-        current+= (fw ? 60 : -60)
+      original = time.dup
+      safety = 0
+      methods = [:next_min, :next_hour, :next_day, :next_weekday, :next_month, :next_year]
+      methods = methods.reverse if direction.positive?
+      until safety >= 1_000_000 || time_match?(time)
+        methods.each do |sym|
+          time = send(sym, time, direction)
+        end
+        safety += 1
       end
-      while !@parts[:day].empty? && !@parts[:day].include?(current.day) || !@parts[:hour].empty? && !@parts[:hour].include?(current.hour) || !@parts[:minute].empty? && !@parts[:minute].include?(current.min)
-        day = [current.day, current.month, current.year]
-        current += (fw ? 60 : -60)
-        if day != [current.day, current.month, current.year] then current = next_day(current, direction) end
-        return nil unless current
+      time - (time.sec.zero? ? 0 : original.sec)
+    end
+
+    def next_min(time, direction)
+      return time if @parts[:minute].empty?
+      time += 60 * direction until @parts[:minute].include?(time.min)
+      time
+    end
+
+    def next_hour(time, direction)
+      return time if @parts[:hour].empty?
+      until @parts[:hour].include?(time.hour)
+        time -= time.min * 60 if direction.positive?
+        time += (59 - time.min) * 60 if direction.negative?
+        time += 60*60 * direction
       end
-      current - current.sec
+      time
+    end
+
+    def next_day(time, direction)
+      return time if @parts[:day].empty?
+      until @parts[:day].include?(time.day)
+        time += 24*60*60 * direction
+      end
+      time
+    end
+
+    def next_weekday(time, direction)
+      return time if @parts[:weekday].empty?
+      time += 24*60*60 * direction until @parts[:weekday].include?(time.wday)
+      time
+    end
+
+    def next_month(time, direction)
+      return time if @parts[:month].empty?
+      until @parts[:month].include?(time.month)
+        original = time.month
+        min      = direction.positive? ? 0 : 59
+        hour     = direction.positive? ? 0 : 23
+        day      = direction.positive? ? 1 : 31
+        month = BBLib.loop_between(time.month + direction, 1, 12)
+        year  = if direction.positive? && month == 1
+                  time.year + 1
+                elsif direction.negative? && month == 12
+                  time.year - 1
+                else
+                  time.year
+                end
+        time  = Time.new(year, month, day, hour, min)
+        if direction.negative? && time.month == original
+          time -= 24 * 60 * 60 while time.month == original
+        end
+      end
+      time
+    end
+
+    def next_year(time, direction)
+      return time if @parts[:year].empty?
+      until @parts[:year].include?(time.year)
+        day   = direction.positive? ? 1 : 31
+        hour  = direction.positive? ? 0 : 23
+        min   = direction.positive? ? 0 : 59
+        month = direction.positive? ? 1 : 12
+        time  = Time.new(time.year + direction, month, day, hour, min)
+      end
+      time
     end
 
     PARTS = {
@@ -141,7 +182,7 @@ module BBLib
       day:     { send: :day, min: 1, max: 31, size: 60*60*24 },
       month:   { send: :month, min: 1, max: 12 },
       weekday: { send: :wday, min: 0, max: 6 },
-      year:    { send: :year, min: 0, max: 90_000 }
+      year:    { send: :year, min: 0, max: 3_000 }
     }.freeze
 
     REPLACE = {
