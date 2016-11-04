@@ -101,8 +101,7 @@ module BBLib
     def next_time(time, direction)
       original = time.dup
       safety = 0
-      methods = [:next_min, :next_hour, :next_day, :next_weekday, :next_month, :next_year]
-      methods = methods.reverse if direction.positive?
+      methods = [:next_year, :next_month, :next_weekday, :next_day, :next_hour, :next_min]
       until safety >= 1_000_000 || time_match?(time)
         methods.each do |sym|
           time = send(sym, time, direction)
