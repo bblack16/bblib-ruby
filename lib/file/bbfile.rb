@@ -9,7 +9,7 @@ module BBLib
   # Scan for files and directories. Can be set to be recursive and can also have filters applied.
   def self.scan_dir(path = Dir.pwd, *filters, recursive: false, &block)
     filters = [''] if filters.empty?
-    Dir.glob(filters.flat_map { |f| "#{path}/#{f}#{recursive ? '/**/*' : '/*'}".pathify }, &block)
+    Dir.glob(filters.flat_map { |f| "#{path}/#{recursive ? '/**/*' : '/*'}#{f}".pathify }, &block)
   end
 
   # Uses BBLib.scan_dir but returns only files
