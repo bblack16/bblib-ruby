@@ -6,20 +6,20 @@ module BBLib
 
     private
 
-    def attr_reader(*methods)
-      methods.each { |m| _register_attr(m, :reader, {}) }
-      super
-    end
-
-    def attr_writer(*methods)
-      methods.each { |m| _register_attr(m, :writer, {}) }
-      super
-    end
-
-    def attr_accessor(*methods)
-      methods.each { |m| _register_attr(m, :accessor, {}) }
-      super
-    end
+    # def attr_reader(*methods)
+    #   methods.each { |m| _register_attr(m, :reader, {}) }
+    #   super
+    # end
+    #
+    # def attr_writer(*methods)
+    #   methods.each { |m| _register_attr(m, :writer, {}) }
+    #   super
+    # end
+    #
+    # def attr_accessor(*methods)
+    #   methods.each { |m| _register_attr(m, :accessor, {}) }
+    #   super
+    # end
 
     def _register_attr(method, type, opts = {})
       _attrs[method] = { type: type, options: opts }
