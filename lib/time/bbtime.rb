@@ -51,9 +51,20 @@ module BBLib
       next unless div >= 1
       val = (done ? div.round : div.floor)
       expression << "#{val}#{v[:styles][style]}#{val > 1 && style != :short ? 's' : nil}"
-      n-= val.to_f * v[:mult]
+      n -= val.to_f * v[:mult]
     end
     expression.join ' '
+  end
+
+  def self.to_nearest_duration(num, input: :sec, style: :medium)
+    n = num * TIME_EXPS[input.to_sym][:mult]
+    stop = nil
+    TIME_EXPS.each do |k, v|
+      stop = k if v[:mult] <= n
+    end
+    stop = :year unless stop
+    puts stop
+    to_duration(num, input: input, style: style, stop: stop)
   end
 
   TIME_EXPS = {
@@ -144,5 +155,9 @@ end
 class Numeric
   def to_duration(input: :sec, stop: :milli, style: :medium)
     BBLib.to_duration self, input: input, stop: stop, style: style
+  end
+
+  def to_nearest_duration(*args)
+    BBLib.to_nearest_duration(self, *args)
   end
 end
