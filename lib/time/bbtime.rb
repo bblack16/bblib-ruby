@@ -63,7 +63,6 @@ module BBLib
       stop = k if v[:mult] <= n
     end
     stop = :year unless stop
-    puts stop
     to_duration(num, input: input, style: style, stop: stop)
   end
 
