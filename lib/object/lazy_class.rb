@@ -10,6 +10,7 @@ module BBLib
       _pre_setup
       lazy_setup
       _lazy_init(*args)
+      yield self if block_given?
     end
 
     def serialize
