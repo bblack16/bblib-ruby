@@ -1,50 +1,30 @@
 module BBLib
   module Attr
     def attrs
-      (ancestors[1].respond_to?(:attrs) ? ancestors[1].attrs : {}).merge(_attrs)
-    end
-
-    private
-
-    # def attr_reader(*methods)
-    #   methods.each { |m| _register_attr(m, :reader, {}) }
-    #   super
-    # end
-    #
-    # def attr_writer(*methods)
-    #   methods.each { |m| _register_attr(m, :writer, {}) }
-    #   super
-    # end
-    #
-    # def attr_accessor(*methods)
-    #   methods.each { |m| _register_attr(m, :accessor, {}) }
-    #   super
-    # end
-
-    def _register_attr(method, type, opts = {})
-      _attrs[method] = { type: type, options: opts }
+      ancestors.reverse.each_with_object({}) do |klass, hash|
+        hash.merge!(klass._attrs) if klass.respond_to?(:_attrs)
+      end
     end
 
     def _attrs
       @_attrs ||= {}
     end
 
+    private
+
+    def _register_attr(method, type, opts = {})
+      _attrs[method] = { type: type, options: opts }
+    end
+
     def attr_type(method, opts, &block)
       opts = opts.dup
-      if opts[:default].respond_to?(:dup) && !opts[:shared_default]
-        opts[:default] = begin
-                           opts[:default].dup
-                         rescue
-                           opts[:default]
-                         end
-      end
       define_method("#{method}=", &block)
       define_method(method) { instance_variable_get("@#{method}") }
-      if defined?(:before) && opts.include?(:default)
+      if opts.include?(:default)
         define_method("__reset_#{method}".to_sym) { send("#{method}=", opts[:default]) }
       end
       if opts[:serialize] && respond_to?(:_serialize_fields)
-        _serialize_fields[method.to_sym] = { always: opts[:always], ignore: opts[:ignore] || (opts[:default].dup rescue nil) }
+        _serialize_fields[method.to_sym] = { always: opts[:always], ignore: opts[:ignore] || (opts[:default].dup rescue opts[:default]) }
       end
       nil
     end
