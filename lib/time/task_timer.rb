@@ -14,7 +14,7 @@ module BBLib
       when :min, :max, :first, :last
         numbers.send(type)
       when :avg
-        numbers.inject { |sum, n| sum + n }.to_f / numbers.size
+        numbers.size.zero? ? nil : numbers.inject { |sum, n| sum + n }.to_f / numbers.size
       when :sum
         numbers.inject { |sum, n| sum + n }
       when :all
@@ -90,7 +90,7 @@ module BBLib
 
     private
 
-    STATS_IGNORE = [:current, :all].freeze
+    STATS_IGNORE = [:all].freeze
 
     def lazy_init(*args)
       start(args.first) if args.first.is_a?(Symbol)
