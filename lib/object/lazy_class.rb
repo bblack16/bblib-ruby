@@ -7,6 +7,7 @@ module BBLib
     attr_reader :_serialize_fields
 
     def initialize(*args)
+      self.class.hook_em_all
       _pre_setup
       lazy_setup
       _lazy_init(*args)
@@ -15,6 +16,7 @@ module BBLib
 
     def serialize
       _serialize_fields.map do |name, h|
+        next if _dont_serialize_fields.include?(name)
         value = send(h[:method])
         if value.is_a?(Hash)
           value = value.map { |k, v| [k, v.respond_to?(:serialize) ? v.serialize : v] }.to_h
@@ -31,6 +33,27 @@ module BBLib
       end.compact.to_h
     end
 
+    def self.serialize_method(name, method = nil, ignore: nil, always: false)
+      return if method == :serialize || name == :serialize && method.nil?
+      _serialize_fields[name.to_sym] = {
+        method: (method.nil? ? name.to_sym : method.to_sym),
+        ignore: ignore,
+        always: always
+      }
+    end
+
+    def self.dont_serialize_method(*names)
+      names.each { |name| _dont_serialize_fields.push(name) unless _dont_serialize_fields.include?(name) }
+    end
+
+    def self._serialize_fields
+      @_serialize_fields ||= {}
+    end
+
+    def self._dont_serialize_fields
+      @_dont_serialize_fields ||= []
+    end
+
     protected
 
     def lazy_setup
@@ -38,14 +61,19 @@ module BBLib
     end
 
     def _lazy_init(*args)
+
       BBLib.named_args(*args).each do |k, v|
         send("#{k}=".to_sym, v) if respond_to?("#{k}=".to_sym)
       end
-      lazy_init(*args)
-      custom_lazy_init BBLib.named_args(*args), *args
 
       self.class.ancestors.reverse.map { |a| a.instance_variable_get('@_serialize_fields') }.compact
-          .each { |ary| ary.each { |k, v| serialize_method(k, v.delete(:method), v) } }
+          .each { |ary| ary.each { |k, v| v = v.dup; serialize_method(k, v.delete(:method), v) } }
+
+      self.class.ancestors.reverse.map { |a| a.instance_variable_get('@_dont_serialize_fields') }.compact
+          .each { |ary| ary.each { |k| dont_serialize_method(k) } }
+
+      lazy_init(*args)
+      custom_lazy_init BBLib.named_args(*args), *args
     end
 
     def _pre_setup
@@ -55,6 +83,17 @@ module BBLib
           send(m)
         rescue
           nil # Nothing to rescue, default initializer failed.
+        end
+      end
+
+      # Fixes issues with duplication of defaults like arrays, hashes, etc...
+      self.class.attrs.each do |k, v|
+        begin
+          default = v[:options][:default]
+          if default.respond_to?(:clone) && !v[:options][:shared_default]
+            send("#{k}=", v[:options][:default].clone)
+          end
+        rescue
         end
       end
     end
@@ -76,21 +115,16 @@ module BBLib
       }
     end
 
-    def self.serialize_method(name, method = nil, ignore: nil, always: false)
-      return if method == :serialize || name == :serialize && method.nil?
-      _serialize_fields[name.to_sym] = {
-        method: (method.nil? ? name.to_sym : method.to_sym),
-        ignore: ignore,
-        always: always
-      }
+    def dont_serialize_method(*names)
+      names.each { |name| _dont_serialize_fields.push(name) unless _dont_serialize_fields.include?(name) }
     end
 
     def _serialize_fields
       @_serialize_fields ||= {}
     end
 
-    def self._serialize_fields
-      @_serialize_fields ||= {}
+    def _dont_serialize_fields
+      @_dont_serialize_fields ||= []
     end
 
     def attr_serialize(hash, *klasses)
