@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 module BBLib::Hooks
-  def method_added(name)
+  def hook_method(name)
     [:before, :after].each do |hook_type|
       send("#{hook_type}_hooks_for", name).each do |hook|
         existing = send("#{hook_type}_hooked_methods")[hook[:method]]
@@ -10,12 +10,28 @@ module BBLib::Hooks
     end
   end
 
+  # This method is used to catch ALL hook methods in the event that some are inherited
+  # or are defined after the hook is set. If extending from this module, CALL THIS somewhere during initialization.
+  def hook_em_all
+    before_hooks.each_value { |v| v[:methods].each { |method| hook_method(method) } }
+    after_hooks.each_value { |v| v[:methods].each { |method| hook_method(method) } }
+  end
+
   def before(hook, *methods, **opts)
     methods.each { |_m| before_hooks[hook] = { methods: methods, opts: opts } }
   end
 
   def before_hooks
-    @before_hooks ||= {}
+    @before_hooks ||= superclass_hooks(:before)
+  end
+
+  def superclass_hooks(type)
+    hooks = {}
+    ancestors.reverse.each do |ancestor|
+      next if ancestor == self
+      hooks = hooks.deep_merge(ancestor.send("#{type}_hooks".to_sym)) if ancestor.respond_to?("#{type}_hooks".to_sym)
+    end
+    hooks
   end
 
   def before_hooked_methods
@@ -31,7 +47,7 @@ module BBLib::Hooks
   # modify_args - Replaces the original args with the returned value of the
   #               before hook method.
   def add_before_hook(method, hook, opts = {})
-    before_hooked_methods[hook] = [] unless before_hooked_methods[hook]
+    before_hooked_methods[hook] ||= []
     before_hooked_methods[hook] += [method]
     original = instance_method(method)
     define_method(method) do |*args, &block|
@@ -50,7 +66,7 @@ module BBLib::Hooks
   end
 
   def after_hooks
-    @after_hooks ||= {}
+    @after_hooks ||= superclass_hooks(:after)
   end
 
   def after_hooked_methods
