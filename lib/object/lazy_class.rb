@@ -54,6 +54,10 @@ module BBLib
       @_dont_serialize_fields ||= []
     end
 
+    def attrs
+      self.class.attrs
+    end
+
     protected
 
     def lazy_setup
