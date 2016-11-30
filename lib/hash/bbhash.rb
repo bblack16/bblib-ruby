@@ -56,4 +56,8 @@ class Hash
     hash = { hash => value } unless hash.is_a?(Hash)
     replace hash.merge(self).merge(hash)
   end
+
+  def diff(hash)
+    to_a.diff(hash.to_a).to_h
+  end
 end
