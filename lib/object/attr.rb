@@ -85,6 +85,7 @@ module BBLib
     alias attr_s attr_string
 
     def attr_integer(*methods, **opts)
+      opts[:pre_proc] = [proc { |x| x == '' ? nil : x }, opts[:pre_proc]].flatten.compact
       attr_sender :to_i, *methods, opts
       methods.each { |m| _register_attr(m, :int, opts) }
     end
@@ -93,6 +94,7 @@ module BBLib
     alias attr_i attr_integer
 
     def attr_float(*methods, **opts)
+      opts[:pre_proc] = [proc { |x| x == '' ? nil : x }, opts[:pre_proc]].flatten.compact
       attr_sender :to_f, *methods, opts
       methods.each { |m| _register_attr(m, :float, opts) }
     end
@@ -144,12 +146,16 @@ module BBLib
 
     def attr_array(*methods, **opts)
       methods.each do |m|
-        attr_type(m, opts, &attr_set(m, opts) { |*x| instance_variable_set("@#{m}", *x) })
+        attr_type(m, opts, &attr_set(m, opts) do |x|
+          x = [x] unless x.is_a?(Array)
+          instance_variable_set("@#{m}", x)
+        end)
         attr_array_adder(m, Object, opts) if opts[:adder] || opts[:add_rem]
         attr_array_remover(m, Object, opts) if opts[:remover] || opts[:add_rem]
         _register_attr(m, :array, opts)
       end
     end
+
 
     alias attr_ary attr_array
 
@@ -260,6 +266,11 @@ module BBLib
       defaults = { allow_nil: false, fallback: :_nil, sender: false, default: nil }
       defaults.each { |k, v| opts[k] = v unless opts.include?(k) }
       proc do |x|
+        if opts[:pre_proc]
+          [opts[:pre_proc]].flatten.each do |pre_proc|
+            x = pre_proc.call(x)
+          end
+        end
         if x.nil? && !opts[:allow_nil] && opts[:fallback] == :_nil && !opts[:sender]
           raise ArgumentError, "#{method} cannot be set to nil!"
         elsif x.nil? && !opts[:allow_nil] && opts[:fallback] != :_nil && !opts[:sender]
