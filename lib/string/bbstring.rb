@@ -3,6 +3,8 @@ require_relative 'matching'
 require_relative 'roman'
 require_relative 'fuzzy_matcher'
 require_relative 'cases'
+require 'securerandom'
+require 'base64'
 
 module BBLib
 
@@ -73,6 +75,30 @@ class String
       ar.flatten!
     end
     keep_empty ? ar : ar.reject{ |l| l.empty? }
+  end
+
+  def md5hex
+    Digest::MD5.hexdigest(self)
+  end
+
+  def sha1hex
+    Digest::SHA1.hexdigest(self)
+  end
+
+  def sha384hex
+    Digest::SHA384.hexdigest(self)
+  end
+
+  def sha256hex
+    Digest::SHA256.hexdigest(self)
+  end
+
+  def sha512hex
+    Digest::SHA512.hexdigest(self)
+  end
+
+  def encode64
+    Base64.encode64(self)
   end
 
   def move_articles position = :front, capitalize = true
