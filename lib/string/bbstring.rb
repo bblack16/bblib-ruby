@@ -4,6 +4,7 @@ require_relative 'matching'
 require_relative 'roman'
 require_relative 'fuzzy_matcher'
 require_relative 'cases'
+require_relative 'regexp'
 
 module BBLib
   ##############################################
@@ -121,7 +122,7 @@ class String
     end
   end
 
-  def uncapsulate(char = '"')
+  def uncapsulate(char = '"', limit: nil)
     back = case char
            when '('
              ')'
@@ -135,8 +136,16 @@ class String
              char
            end
     temp = dup
-    temp = temp[(char.size)..-1] while temp.start_with?(char) && temp != char
-    temp = temp[0..-(char.size + 1)] while temp.end_with?(back) && temp != char
+    count = 0
+    while temp.start_with?(char) && temp != char && (limit.nil? || count < limit)
+      temp = temp[(char.size)..-1]
+      count += 1
+    end
+    count = 0
+    while temp.end_with?(back) && temp != char && (limit.nil? || count < limit)
+      temp = temp[0..-(char.size + 1)]
+      count += 1
+    end
     temp
   end
 end
