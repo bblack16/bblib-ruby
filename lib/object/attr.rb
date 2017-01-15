@@ -135,7 +135,7 @@ module BBLib
       methods.each do |m|
         attr_type(m, opts, &attr_set(m, opts) do |x|
           unless list.include?(x)
-            raise ArgumentError, "#{m} only accepts the following (first 10 shown) #{list[0...10]}"
+            raise ArgumentError, "#{m} only accepts the following (first 10 shown) #{list[0...10]}; not #{x}."
           else
             instance_variable_set("@#{m}", x)
           end
@@ -214,17 +214,13 @@ module BBLib
     end
 
     def attr_hash(*methods, **opts)
-      methods.each do |m|
-        attr_type(m, opts, &attr_set(m, opts) do |*at|
-          begin
-            hash = at.find_all { |i| i.is_a?(Hash) }.inject({}) { |a, e| a.merge(e) } || {}
-            instance_variable_set("@#{m}", hash)
-          rescue ArgumentError
-            raise ArgumentError, "#{m} only accepts a hash for its parameters"
-          end
-        end)
-        _register_attr(m, :hash, opts)
-      end
+      attr_of(Hash, *methods, **opts)
+      methods.each { |m| _register_attr(m, :hash, opts) }
+    end
+
+    def attr_json(*methods, **opts)
+      attr_of([Hash, Array], *methods, **opts)
+      methods.each { |m| _register_attr(m, :json, opts) }
     end
 
     def attr_valid_file(*methods, raise: true, **opts)
