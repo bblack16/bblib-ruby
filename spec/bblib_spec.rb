@@ -95,6 +95,11 @@ describe BBLib do
     expect(t).to eq 'Title 7'
   end
 
+  it 'converts a string to a regular expression' do
+    expect(/test/i).to eq '/test/i'.to_regex
+    expect(/\:example\s\d\w/mix.inspect.to_regex).to eq /\:example\s\d\w/mix
+  end
+
   # Number
 
   it 'keep number between min and max' do
