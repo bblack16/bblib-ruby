@@ -163,6 +163,7 @@ module BBLib
       methods.each do |m|
         attr_type(m, opts, &attr_set(m, opts) do |x|
           x = [x] unless x.is_a?(Array)
+          x = x.uniq if opts.include?(:uniq) || opts.include?(:unique)
           x = x.map { |h| attr_serialize(h, *klass) } if opts[:serialize] && !opts[:to_serialize_only]
           if raise && x.any? { |i| klass.is_a?(Array) ? !klass.any? { |k| i.is_a?(k) } : !i.is_a?(klass) }
             raise ArgumentError, "#{m} only accepts items of class #{klass}."
