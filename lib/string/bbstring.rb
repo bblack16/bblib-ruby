@@ -7,10 +7,6 @@ require_relative 'cases'
 require_relative 'regexp'
 
 module BBLib
-  ##############################################
-  # General Functions
-  ##############################################
-
   # Quickly remove any symbols from a string leaving only alpha-numeric characters and white space.
   def self.drop_symbols(str)
     str.gsub(/[^\w\s\d]|_/, '')
@@ -69,6 +65,39 @@ class String
     end
     ary
   end
+
+  # Split on delimiters
+  def quote_split(*delimiters)
+    encap_split('"\'', *delimiters)
+  end
+
+  alias qsplit quote_split
+
+  # Split on only delimiters not between specific encapsulators
+  # Various characters are special and automatically recognized such as parens
+  # which automatically match anything between a begin and end character.
+  def encap_split(encapsulator, *delimiters)
+    pattern = case encapsulator
+              when '('
+                '\\(\\)'
+              when '['
+                '\\[\\]'
+              when '{'
+                '\\{\\}'
+              when '<'
+                '\\<\\>'
+              else
+                encapsulator
+              end
+    patterns = delimiters.map { |d| /#{d}(?=(?:[^#{pattern}]|[#{pattern}][^#{pattern}]*[#{pattern}])*$)/}
+    msplit(*patterns)
+  end
+
+  alias esplit encap_split
+
+  # def bracket_split(*delimiters)
+  #   encap_split('\\(\\)\\[\\]\\{\\}', *delimiters)
+  # end
 
   def move_articles(position = :front, capitalize = true)
     BBLib.move_articles self, position, capitalize: capitalize
