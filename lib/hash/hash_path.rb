@@ -150,7 +150,7 @@ module BBLib
   def self.hash_path_nav(obj, path = '', delimiter = '.', &block)
     case obj
     when Hash
-      obj.each { |k, v| hash_path_nav(v, (path.nil? ? k.to_s : [path, k].join(delimiter)).to_s, delimiter, &block) }
+      obj.each { |k, v| hash_path_nav(v, (path.nil? ? k.to_s.gsub(delimiter, "\\#{delimiter}") : [path, k.to_s.gsub(delimiter, "\\#{delimiter}")].join(delimiter)).to_s, delimiter, &block) }
     when Array
       obj.each_with_index do |o, index|
         hash_path_nav(o, (path.nil? ? "[#{index}]" : [path, "[#{index}]"].join(delimiter)).to_s, delimiter, &block)
@@ -236,7 +236,10 @@ class Hash
 
   # Add a hash path to a hash
   def bridge(*path, value: nil, delimiter: '.', symbols: true, overwrite: false)
+    escaped = "\\#{delimiter}"
+    path = path.map { |path| path.gsub(escaped, '[[::SAVE::]]') }
     path = path.msplit(delimiter).flatten
+    path = path.map { |path| path.gsub('[[::SAVE::]]', delimiter) }
     hash = self
     part = nil
     bail = false
