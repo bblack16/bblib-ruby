@@ -58,6 +58,16 @@ module BBLib
       self.class.attrs
     end
 
+    # Return all classes that inherit from this class
+    def self.descendants
+      ObjectSpace.each_object(Class).select { |c| c < self }
+    end
+
+    # Return all classes that directly inherit from this class
+    def self.subclasses
+      ObjectSpace.each_object(Class).select { |c| c.ancestors[1] == self }
+    end
+
     protected
 
     def lazy_setup
