@@ -1,5 +1,6 @@
 require_relative 'hash_path'
 require_relative 'path_hash'
+require_relative 'tree_hash'
 
 class Hash
   # Merges with another hash but also merges all nested hashes and arrays/values.
