@@ -1,80 +1,127 @@
 # frozen_string_literal: true
 require 'time'
 
+module BBLib
+  class HashPathProc < BBLib::LazyClass
+    attr_ary_of String, :paths, default: [], serialize: true, uniq: true
+    attr_of [String, Symbol], :action, default: nil, allow_nil: true, serialize: true, pre_proc: proc { |a| HashPathProc.map_action(a.to_sym) }
+    attr_ary_of Object, :args, default: [], serialize: true
+    attr_hash :options, default: {}, serialize: true
+    attr_str :condition, default: nil, allow_nil: true, serialize: true
+    attr_bool :recursive, default: false, serialize: true
+
+    def process(hash)
+      return hash unless @action
+      paths.each do |path|
+        hash.hpath(path).each do |value|
+          if condition
+            begin
+              next unless eval(condition.gsub('$', value.to_s))
+            rescue => e
+              next
+            end
+          end
+          if recursive && (hash.is_a?(Hash) || hash.is_a?(Array))
+            hash.squish.keys.each do |sub_path|
+              value = hash.hpath(sub_path).first
+              HashPathProcs.send(find_action(action), hash, sub_path, value, *full_args)
+            end
+          else
+            HashPathProcs.send(find_action(action), hash, path, value, *full_args)
+          end
+        end
+      end
+      hash
+    end
+
+    protected
+    USED_KEYWORDS = [:action, :args, :paths, :recursive]
+
+    def find_action(action)
+      (HashPathProcs.respond_to?(action) ? action : :custom)
+    end
+
+    def full_args
+      (HASH_PATH_PROC_TYPES.include?(action) ? [] : [action]) +
+      args +
+      (options.empty? || options.nil? ? [] : [options])
+    end
+
+    def self.map_action(action)
+      clean = HASH_PATH_PROC_TYPES.find { |k, v| action == k || v.include?(action) }
+      clean ? clean.first : action
+    end
+
+    def lazy_init(*args)
+      options = BBLib.named_args(*args)
+      options.merge(options.delete(:options)) if options[:options]
+      USED_KEYWORDS.each { |k| options.delete(k) }
+      self.options = options
+      self.paths += args.find_all { |a| a.is_a?(String) }
+      self.action = args.first if args.first.is_a?(Symbol) && @action.nil?
+    end
+  end
+end
+
 class Hash
-  def hash_path_proc(action, paths, *args)
-    BBLib.hash_path_proc(self, action, paths, *args)
+  def hash_path_proc(*args)
+    BBLib.hash_path_proc(self, *args)
   end
 
   alias hpath_proc hash_path_proc
 end
 
 class Array
-  def hash_path_proc(action, paths, *args)
-    BBLib.hash_path_proc(self, action, paths, *args)
+  def hash_path_proc(*args)
+    BBLib.hash_path_proc(self, *args)
   end
 
   alias hpath_proc hash_path_proc
 end
 
 module BBLib
-  def self.hash_path_proc(hash, action, paths, *args)
-    params = BBLib.named_args(*args)
-    action = HASH_PATH_PROC_TYPES.keys.find { |k| k == action || HASH_PATH_PROC_TYPES[k][:aliases].include?(action) }
-    return nil unless action
-    paths.to_a.each do |path|
-      hash.hash_path(path).each do |value|
-        if params.include?(:condition) && params[:condition]
-          begin
-            next unless eval(params[:condition].gsub('$', value.to_s))
-          rescue StandardError, SyntaxError => e
-            next
-          end
-        end
-        HashPath.send(action, hash, path, value, *args)
-      end
-    end
-    hash
+  def self.hash_path_proc(hash, *args)
+    HashPathProc.new(*args).process(hash)
   end
 
   HASH_PATH_PROC_TYPES = {
-    evaluate:         { aliases: [:eval, :equation, :equate] },
-    append:           { aliases: [:suffix] },
-    prepend:          { aliases: [:prefix] },
-    split:            { aliases: [:delimit, :delim, :separate, :msplit] },
-    replace:          { aliases: [:swap] },
-    extract:          { aliases: [:grab, :scan] },
-    extract_first:    { aliases: [:grab_first, :scan_first] },
-    extract_last:     { aliases: [:grab_last, :scan_last] },
-    parse_date:       { aliases: [:date, :parse_time, :time] },
-    parse_date_unix:  { aliases: [:unix_time, :unix_date] },
-    parse_duration:   { aliases: [:duration] },
-    parse_file_size:  { aliases: [:file_size] },
-    to_string:        { aliases: [:to_s, :stringify] },
-    downcase:         { aliases: [:lower, :lowercase, :to_lower] },
-    upcase:           { aliases: [:upper, :uppercase, :to_upper] },
-    roman:            { aliases: [:convert_roman, :roman_numeral, :parse_roman] },
-    remove_symbols:   { aliases: [:chop_symbols, :drop_symbols] },
-    format_articles:  { aliases: [:articles] },
-    reverse:          { aliases: [:invert] },
-    delete:           { aliases: [:del] },
-    remove:           { aliases: [:rem] },
-    send:             { aliases: [:custom] },
-    encapsulate:      { aliases: [] },
-    uncapsulate:      { aliases: [] },
-    extract_integers: { aliases: [:extract_ints] },
-    extract_floats:   { aliases: [] },
-    extract_numbers:  { aliases: [] },
-    max_number:       { aliases: [:max, :maximum, :maximum_number] },
-    min_number:       { aliases: [:min, :minimum, :minimum_number] },
-    avg_number:       { aliases: [:avg, :average, :average_number] },
-    sum_number:       { aliases: [:sum] },
-    strip:            { aliases: [:trim] },
-    concat:           { aliases: [:join, :concat_with] },
-    reverse_concat:   { aliases: [:reverse_join, :reverse_concat_with] }
+    evaluate:         [:eval, :equation, :equate],
+    append:           [:suffix],
+    prepend:          [:prefix],
+    split:            [:delimit, :delim, :separate, :msplit],
+    replace:          [:swap],
+    extract:          [:grab, :scan],
+    extract_first:    [:grab_first, :scan_first],
+    extract_last:     [:grab_last, :scan_last],
+    parse_date:       [:date, :parse_time, :time],
+    parse_date_unix:  [:unix_time, :unix_date],
+    parse_duration:   [:duration],
+    parse_file_size:  [:file_size],
+    to_string:        [:to_s, :stringify],
+    downcase:         [:lower, :lowercase, :to_lower],
+    upcase:           [:upper, :uppercase, :to_upper],
+    roman:            [:convert_roman, :roman_numeral, :parse_roman],
+    remove_symbols:   [:chop_symbols, :drop_symbols],
+    format_articles:  [:articles],
+    reverse:          [:invert],
+    delete:           [:del],
+    remove:           [:rem],
+    custom:           [:send],
+    encapsulate:      [],
+    uncapsulate:      [],
+    extract_integers: [:extract_ints, :extract_i],
+    extract_floats:   [:extract_f],
+    extract_numbers:  [:extract_nums],
+    max_number:       [:max, :maximum, :maximum_number],
+    min_number:       [:min, :minimum, :minimum_number],
+    avg_number:       [:avg, :average, :average_number],
+    sum_number:       [:sum],
+    strip:            [:trim],
+    concat:           [:join, :concat_with],
+    reverse_concat:   [:reverse_join, :reverse_concat_with]
   }.freeze
 
-  module HashPath
+  module HashPathProcs
     def self.evaluate(hash, path, value, args)
       exp = args.to_a.first.to_s.gsub('$', value.to_s)
       hash.hash_path_set path => eval(exp)

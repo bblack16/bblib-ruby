@@ -1,39 +1,80 @@
 # frozen_string_literal: true
+require_relative 'hash_path_part'
 require_relative 'hash_path_proc'
+
+class HashPath < BBLib::LazyClass
+  attr_ary_of Part, :parts, default: [], serialize: true
+
+  def append(path)
+    insert(path, parts.size)
+  end
+
+  def prepend(path)
+    insert(path, 0)
+  end
+
+  def insert(path, index)
+    parse_path(path).each do |part|
+      @parts[index] = part
+      index += 1
+    end
+  end
+
+  def find(hash)
+    hash = TreeHash.new unless hash.is_a?(TreeHash)
+    hash.find(self)
+  end
+
+  protected
+
+  def lazy_init(*args)
+    args.find_all { |a| a.is_a?(String) }.each do |path|
+      append(path)
+    end
+  end
+
+  # TODO Better recursive detection
+  def parse_path(path)
+    path.to_s.gsub('..', '.[[:recursive:]]').scan(/(?:[\(|\[|\/].*?[\)|\]|\/]|[^\.])+/).map do |part|
+      Part.new(part)
+    end
+  end
+end
 
 module BBLib
   def self.hash_path(hash, *paths, multi_path: false, multi_join: false)
-    if multi_path || multi_join
-      results = paths.map { |path| BBLib.hash_path(hash, path) }
-      results = (0..results.max_by(&:size).size - 1).map { |i| results.map { |r| r[i] } } if multi_join
-      return results
-    end
-    path = split_path(*paths)
-    matches = [hash]
-    recursive = false
-    until path.empty? || matches.empty?
-      current = path.shift.to_s
-      current = current[0..-2] + '.' + path.shift.to_s if current.end_with?('\\')
-      if current.strip == ''
-        recursive = true
-        next
-      end
-      key, formula = BBLib.analyze_hash_path(current)
-      matches = matches.flat_map do |match|
-        if recursive
-          match.dive(key.to_sym, key)
-        elsif key == '*'
-          match.is_a?(Hash) ? match.values : (match.is_a?(Array) ? match : nil)
-        elsif match.is_a?(Hash)
-          key.is_a?(Regexp) ? match.map { |k, v| k.to_s =~ key ? v : nil } : [(BBLib.in_opal? ? nil : match[key.to_sym]), match[key]]
-        elsif match.is_a?(Array) && (key.is_a?(Integer) || key.is_a?(Range))
-          key.is_a?(Range) ? match[key] : [match[key]]
-        end
-      end.compact
-      matches = BBLib.analyze_hash_path_formula(formula, matches)
-      recursive = false
-    end
-    matches
+    TreeHash.new(hash).find(paths).map(&:value)
+    # if multi_path || multi_join
+    #   results = paths.map { |path| BBLib.hash_path(hash, path) }
+    #   results = (0..results.max_by(&:size).size - 1).map { |i| results.map { |r| r[i] } } if multi_join
+    #   return results
+    # end
+    # path = split_path(*paths)
+    # matches = [hash]
+    # recursive = false
+    # until path.empty? || matches.empty?
+    #   current = path.shift.to_s
+    #   current = current[0..-2] + '.' + path.shift.to_s if current.end_with?('\\')
+    #   if current.strip == ''
+    #     recursive = true
+    #     next
+    #   end
+    #   key, formula = BBLib.analyze_hash_path(current)
+    #   matches = matches.flat_map do |match|
+    #     if recursive
+    #       match.dive(key.to_sym, key)
+    #     elsif key == '*'
+    #       match.is_a?(Hash) ? match.values : (match.is_a?(Array) ? match : nil)
+    #     elsif match.is_a?(Hash)
+    #       key.is_a?(Regexp) ? match.map { |k, v| k.to_s =~ key ? v : nil } : [(BBLib.in_opal? ? nil : match[key.to_sym]), match[key]]
+    #     elsif match.is_a?(Array) && (key.is_a?(Integer) || key.is_a?(Range))
+    #       key.is_a?(Range) ? match[key] : [match[key]]
+    #     end
+    #   end.compact
+    #   matches = BBLib.analyze_hash_path_formula(formula, matches)
+    #   recursive = false
+    # end
+    # matches
   end
 
   def self.hash_path_keys(hash)
