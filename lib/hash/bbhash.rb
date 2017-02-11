@@ -61,4 +61,47 @@ class Hash
   def diff(hash)
     to_a.diff(hash.to_a).to_h
   end
+
+  # Returns all matching values with a specific key (or keys) recursively within a Hash (including nested Arrays)
+  def dive(*keys)
+    matches = []
+    each do |k, v|
+      matches << v if keys.any? { |a| (a.is_a?(Regexp) ? a =~ k : a == k) }
+      matches += v.dive(*keys) if v.respond_to?(:dive)
+    end
+    matches
+  end
+
+  def path_nav(obj, path = '', delimiter = '.', &block)
+    case obj
+    when Hash
+      obj.each { |k, v| path_nav(v, (path.nil? ? k.to_s.gsub(delimiter, "\\#{delimiter}") : [path, k.to_s.gsub(delimiter, "\\#{delimiter}")].join(delimiter)).to_s, delimiter, &block) }
+    when Array
+      obj.each_with_index do |o, index|
+        path_nav(o, (path.nil? ? "[#{index}]" : [path, "[#{index}]"].join(delimiter)).to_s, delimiter, &block)
+      end
+    else
+      yield path, obj
+    end
+  end
+
+  # Turns nested values' keys into delimiter separated paths
+  def squish(delimiter: '.')
+    sh = {}
+    path_nav(dup, nil, delimiter) { |k, v| sh[k] = v }
+    sh
+  end
+
+  # Expands keys in a hash using a delimiter. Opposite of squish.
+  def expand(**args)
+    {}.to_tree_hash.tap do |hash|
+      each do |k, v|
+        hash.bridge(k => v)
+      end
+    end.value
+  end
+
+  def to_tree_hash
+    TreeHash.new(self)
+  end
 end
