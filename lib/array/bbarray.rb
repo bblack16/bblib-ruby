@@ -34,4 +34,8 @@ class Array
   def diff(b)
     (self-b) + (b-self)
   end
+  
+  def to_tree_hash
+    TreeHash.new(self)
+  end
 end
