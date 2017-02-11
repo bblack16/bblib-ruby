@@ -40,9 +40,9 @@ class HashPath < BBLib::LazyClass
           # puts e
         end
       elsif object.children?
-        object.children.each do |key, value|
-          matches << value if key_match?(key, object) && evaluates?(value)
-          matches += matches(value) if recursive? && value.children?
+        object.children.each do |k, v|
+          matches << v if key_match?(k, object) && evaluates?(v)
+          matches += matches(v) if recursive? && v.children?
         end
       end
       matches
@@ -50,7 +50,7 @@ class HashPath < BBLib::LazyClass
 
     def evaluates?(object)
       return true unless evaluation
-      eval(evaluation.gsub('$', object.to_s))
+      eval(evaluation.gsub('$', 'object.value'))
     rescue => e
       # The eval resulted in an error so we return false
       false
