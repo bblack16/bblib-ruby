@@ -151,6 +151,22 @@ class String
     end
   end
 
+  def encapsulate(char = '"')
+    back = case char
+           when '('
+             ')'
+           when '['
+             ']'
+           when '{'
+             '}'
+           when '<'
+             '>'
+           else
+             char
+           end
+     "#{char}#{self}#{back}"
+  end
+
   def uncapsulate(char = '"', limit: nil)
     back = case char
            when '('
