@@ -101,6 +101,10 @@ class Hash
     end.value
   end
 
+  def only(*args)
+    select { |k, v| args.include?(k) }
+  end
+
   def to_tree_hash
     TreeHash.new(self)
   end
