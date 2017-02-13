@@ -13,8 +13,15 @@ module BBLib
   end
 
   # Uses BBLib.scan_dir but returns only files
-  def self.scan_files(*args)
-    BBLib.scan_dir(*args).select { |f| File.file?(f) }
+  def self.scan_files(*args, &block)
+    [].tap do |files|
+      BBLib.scan_dir(*args) do |file|
+        if File.file?(file)
+          files << file
+          yield file if block_given?
+        end
+      end
+    end
   end
 
   # Uses BBLib.scan_dir but returns only directories.
