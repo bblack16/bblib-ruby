@@ -1,4 +1,12 @@
 # frozen_string_literal: true
+
+# Opal seems to be missing the extended flag, this MonkeyPatch prevents errors.
+if BBLib.in_opal?
+  class Regexp
+    EXTENDED = 2
+  end
+end
+
 module BBLib
   REGEXP_MODE_HASH = {
     i: Regexp::IGNORECASE,
