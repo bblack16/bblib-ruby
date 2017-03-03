@@ -60,12 +60,16 @@ module BBLib
 
     # Return all classes that inherit from this class
     def self.descendants(include_singletons = false)
-      ObjectSpace.each_object(Class).select { |c| (include_singletons || !c.singleton_class?) && c < self }
+      ObjectSpace.each_object(Class).select do |c|
+        (include_singletons || !c.singleton_class?) && c < self
+      end
     end
 
     # Return all classes that directly inherit from this class
     def self.subclasses(include_singletons = false)
-      ObjectSpace.each_object(Class).select { |c| (include_singletons || !c.singleton_class?) && c.ancestors[1] == self }
+      ObjectSpace.each_object(Class).select do |c|
+        (include_singletons || !c.singleton_class?) && c.ancestors[1] == self
+      end
     end
 
     protected
