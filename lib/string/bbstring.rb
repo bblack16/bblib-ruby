@@ -95,10 +95,6 @@ class String
 
   alias esplit encap_split
 
-  # def bracket_split(*delimiters)
-  #   encap_split('\\(\\)\\[\\]\\{\\}', *delimiters)
-  # end
-
   def move_articles(position = :front, capitalize = true)
     BBLib.move_articles self, position, capitalize: capitalize
   end
