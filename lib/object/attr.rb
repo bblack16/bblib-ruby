@@ -233,7 +233,15 @@ module BBLib
 
     def attr_valid_dir(*methods, raise: true, **opts)
       methods.each do |m|
-        attr_type(m, opts, &attr_set(m, opts) { |x| Dir.exist?(x.to_s) ? x.to_s : (raise ? raise(ArgumentError, "Dir '#{x}' does not exist. @#{m} must be set to a valid directory location!") : nil) })
+        attr_type(m, opts, &attr_set(m, opts) do |x|
+          if Dir.exist?(x.to_s) || FileUtils.mkpath(x.to_s)
+            x.to_s
+          elsif raise
+            raise ArgumentError, "Dir '#{x}' does not exist. @#{m} must be set to a valid directory location!"
+          else
+            nil
+          end
+        end)
         _register_attr(m, :valid_dir, opts)
       end
     end
