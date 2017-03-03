@@ -5,7 +5,7 @@ module BBLib
   class HashPathProc < BBLib::LazyClass
     attr_ary_of String, :paths, default: [], serialize: true, uniq: true
     attr_of [String, Symbol], :action, default: nil, allow_nil: true, serialize: true, pre_proc: proc { |a| HashPathProc.map_action(a.to_sym) }
-    attr_ary_of Object, :args, default: [], serialize: true
+    attr_ary :args, default: [], serialize: true
     attr_hash :options, default: {}, serialize: true
     attr_str :condition, default: nil, allow_nil: true, serialize: true
     attr_bool :recursive, default: false, serialize: true
