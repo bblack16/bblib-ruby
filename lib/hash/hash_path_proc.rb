@@ -3,36 +3,41 @@ require_relative 'hash_path_processors'
 
 module BBLib
   class HashPathProc < BBLib::LazyClass
-    attr_ary_of String, :paths, default: [], serialize: true, uniq: true
+    attr_ary_of String, :paths, default: [''], serialize: true, uniq: true
     attr_of [String, Symbol], :action, default: nil, allow_nil: true, serialize: true, pre_proc: proc { |a| HashPathProc.map_action(a.to_sym) }
     attr_ary :args, default: [], serialize: true
     attr_hash :options, default: {}, serialize: true
-    attr_str :condition, default: nil, allow_nil: true, serialize: true
+    attr_of [String, Proc], :condition, default: nil, allow_nil: true, serialize: true
     attr_bool :recursive, default: false, serialize: true
+    attr_bool :class_based, default: true, serialize: true
 
     def process(hash)
-      return hash unless @action
+      return hash unless @action && hash
       tree = hash.to_tree_hash
       paths.each do |path|
-        children = recursive ? tree.find(path).flat_map(&:leaf_children) : tree.find(path)
+        children = recursive ? tree.find(path).flat_map(&:descendants) : tree.find(path)
         children.each do |child|
           next unless check_condition(child.value)
-          HashPathProcs.send(find_action(action), child, *full_args)
+          HashPathProcs.send(find_action(action), child, *full_args, class_based: class_based)
         end
       end
-      hash.replace(tree.value)
+      hash.replace(tree.value) rescue tree.value
     end
 
     def check_condition(value)
       return true unless condition
-      eval(condition.gsub('$', value.to_s))
+      if condition.is_a?(String)
+        eval(condition)
+      else
+        condition.call(value)
+      end
     rescue => e
       false
     end
 
     protected
 
-    USED_KEYWORDS = [:action, :args, :paths, :recursive]
+    USED_KEYWORDS = [:action, :args, :paths, :recursive, :condition]
 
     def find_action(action)
       (HashPathProcs.respond_to?(action) ? action : :custom)
