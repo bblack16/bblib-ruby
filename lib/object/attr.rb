@@ -45,7 +45,7 @@ module BBLib
     def attr_of(klass, *methods, **opts)
       methods.each do |m|
         attr_type(m, opts, &attr_set(m, opts) do |x|
-                              x = attr_serialize(x, *klass) unless opts[:to_serialize_only]
+                              x = attr_serialize(x, *klass) unless !opts[:serialize] || opts[:to_serialize_only]
                               if klass.is_a?(Array) ? klass.include?(x.class) : x.is_a?(klass)
                                 instance_variable_set("@#{m}", x)
                               else
@@ -57,8 +57,12 @@ module BBLib
     end
 
     def attr_serialize(hash, *klasses)
-      if !klasses.include?(hash.class) && hash.is_a?(Hash)
-        klasses.first.new(hash)
+      if !klasses.include?(hash.class)
+        if hash.is_a?(Hash)
+          klasses.first.new(hash)
+        elsif hash.is_a?(Array)
+          klasses.first.new(*hash)
+        end
       else
         hash
       end
