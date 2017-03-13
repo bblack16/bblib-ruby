@@ -47,4 +47,15 @@ module BBLib
       {}
     end
   end
+
+  def self.hash_args(*args)
+    args.find_all { |a| a.is_a?(Hash) }.each_with_object({}) { |a, h| h.merge!(a) }
+  end
+
+  def self.recursive_send(obj, *methods)
+    methods.each do |args|
+      obj = obj.send(*args)
+    end
+    obj
+  end
 end
