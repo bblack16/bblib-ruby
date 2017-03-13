@@ -48,6 +48,10 @@ module BBLib
     BBLib.delimited_case str, '_'
   end
 
+  def self.method_case(str)
+    str.gsub(/(?<=[^^])([A-Z])/, '_\1').gsub(/\s+/, '').snake_case.downcase
+  end
+
   def self.spinal_case(str)
     BBLib.delimited_case str, '-'
   end
@@ -76,6 +80,10 @@ class String
 
   def snake_case
     BBLib.snake_case self
+  end
+
+  def method_case
+    BBLib.method_case(self)
   end
 
   def spinal_case
