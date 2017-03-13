@@ -47,6 +47,16 @@ class TreeHash
     (node_class == Hash || node_class == Array) && !children.empty?
   end
 
+  def descendants
+    return [] unless children?
+    desc = []
+    children.each do |key, child|
+      desc << child
+      desc += child.descendants if child.children?
+    end
+    desc
+  end
+
   def [](key)
     children[key]
   end
