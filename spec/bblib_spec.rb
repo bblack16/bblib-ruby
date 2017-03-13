@@ -194,8 +194,8 @@ describe BBLib do
   end
 
   it 'evals a hash' do
-    expect({ a: { b: 2 } }.hash_path_proc(:eval, 'a.b', '$ * 10')).to eq(a: { b: 20 })
-    expect({ a: { 'test' => 'TEST' } }.hash_path_proc(:eval, 'a.test', '$.downcase + " passed"')).to eq(a: { 'test' => 'test passed' })
+    expect({ a: { b: 2 } }.hash_path_proc(:eval, 'a.b', 'value.to_i * 10')).to eq(a: { b: 20 })
+    expect({ a: { 'test' => 'TEST' } }.hash_path_proc(:eval, 'a.test', 'value.downcase + " passed"')).to eq(a: { 'test' => 'test passed' })
   end
 
   it 'splits a hash value' do

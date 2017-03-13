@@ -61,9 +61,9 @@ module BBLib
       self.options = options
       if args.first.is_a?(Symbol) && @action.nil?
         self.action = args.shift
-        self.paths << args.shift if args.first.is_a?(String)
+        self.paths = args.shift if args.first.is_a?(String)
       elsif action && args.first.is_a?(String)
-        self.paths << args.first
+        self.paths = args.first
       end
       self.args += args.find_all { |a| !a.is_a?(Hash) } unless args.empty?
     end
