@@ -146,8 +146,12 @@ module BBLib
     end
 
     def attr_serialize(hash, *klasses)
-      if !klasses.include?(hash.class) && hash.is_a?(Hash)
-        klasses.first.new(hash)
+      if !klasses.include?(hash.class)
+        if hash.is_a?(Hash)
+          klasses.first.new(hash)
+        elsif hash.is_a?(Array)
+          klasses.first.new(*hash)
+        end
       else
         hash
       end
