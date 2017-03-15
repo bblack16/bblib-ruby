@@ -101,8 +101,7 @@ module BBLib
     end
 
     def self.parse_date(child, *args, class_based: true)
-      params = BBLib.named_args(args)
-      format = params.include?(:format) ? params[:format] : '%Y-%m-%d %H:%M:%S'
+      format = BBLib.named_args(*args)[:format]
       child.replace_with(
         if class_based && child.node_class == Hash
           child.value.map do |k, v|
@@ -122,7 +121,8 @@ module BBLib
       formatted = nil
       patterns.each do |pattern|
         next unless formatted.nil?
-        formatted = Time.strptime(value.to_s, pattern.to_s).strftime(format) rescue nil
+        formatted = Time.strptime(value.to_s, pattern.to_s) rescue nil
+        formatted = formatted.strftime(format) if format
       end
       formatted
     end
