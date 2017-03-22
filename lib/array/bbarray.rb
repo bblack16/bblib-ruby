@@ -11,6 +11,16 @@ module BBLib
     end
     ary
   end
+
+  def self.most_frequent(*args)
+    totals = args.each_with_object(Hash.new(0)) { |v, h| h[v] += 1 }
+    max = totals.values.max
+    totals.keys.find { |k| totals[k] == max }
+  end
+
+  def self.most_frequent_str(*args, case_insensitive: false)
+    most_frequent(*args.map { |a| case_insensitive ? a.to_s.downcase : a.to_s })
+  end
 end
 
 class Array
@@ -34,7 +44,7 @@ class Array
   def diff(b)
     (self-b) + (b-self)
   end
-  
+
   def to_tree_hash
     TreeHash.new(self)
   end
