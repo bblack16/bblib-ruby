@@ -21,7 +21,7 @@ module BBLib
       define_method("#{method}=", &block)
       define_method(method) { instance_variable_get("@#{method}") }
       if opts.include?(:default)
-        define_method("__reset_#{method}".to_sym) { send("#{method}=", opts[:default]) }
+        define_method("__reset_#{method}".to_sym) { send("#{method}=", (opts[:default].dup rescue opts[:default])) }
       end
       if opts[:serialize] && respond_to?(:_serialize_fields)
         _serialize_fields[method.to_sym] = { always: opts[:always], ignore: opts[:ignore] || (opts[:default].dup rescue opts[:default]) }
@@ -57,7 +57,7 @@ module BBLib
     end
 
     def attr_serialize(hash, *klasses)
-      if !klasses.include?(hash.class)
+      if !klasses.any? { |c| hash.is_a?(c) }
         if hash.is_a?(Hash)
           klasses.first.new(hash)
         elsif hash.is_a?(Array)
