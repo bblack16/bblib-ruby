@@ -58,4 +58,14 @@ module BBLib
     end
     obj
   end
+
+  def self.namespace_of(klass)
+    split = klass.to_s.split('::')
+    return klass if split.size == 1
+    Object.const_get(split[0..-2].join('::'))
+  end
+
+  def self.root_namespace_of(klass)
+    Object.const_get(klass.to_s.gsub(/::.*/, ''))
+  end
 end
