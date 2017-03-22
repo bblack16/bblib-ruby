@@ -1,5 +1,6 @@
 module BBLib
   def self.title_case(str, first_only: true)
+    str = str.to_s unless str.is_a?(String)
     ignoreables = %w(a an the on upon and but or in with to)
     regx = /[[:space:]]+|\-|\_|\"|\'|\(|\)|\[|\]|\{|\}|\#/
     spacing = str.scan(regx).to_a
@@ -7,14 +8,16 @@ module BBLib
       if ignoreables.include?(word.downcase)
         word.downcase
       elsif first_only
-        word[0] = word[0].upcase
+        word[0] = word[0].to_s.upcase
         word
       else
         word.capitalize
       end
     end
     # Always cap the first word
-    words[0] = words.first.to_s.capitalize
+    first = words.first.to_s
+    first[0] = first[0].to_s.upcase
+    words[0] = first
     words.interleave(spacing).join
   end
 
