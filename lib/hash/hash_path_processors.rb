@@ -6,6 +6,7 @@ module BBLib
 
   HASH_PATH_PROC_TYPES = {
     evaluate:         [:eval, :equation, :equate],
+    debug:            [:puts],
     append:           [:suffix],
     prepend:          [:prefix],
     split:            [:delimit, :delim, :separate, :msplit],
@@ -48,7 +49,7 @@ module BBLib
         if class_based && child.node_class == Hash
           child.value.map { |k, v| [BBLib.recursive_send(k, *methods), v] }.to_h
         elsif class_based && child.node_class == Array
-          child.value.flat_map { |v| BBLib.recursive_send(v, *methods) }
+          child.children.values.flat_map { |v| class_based_proc(v, true, *methods) }
         else
           BBLib.recursive_send(child.value, *methods)
         end
@@ -62,6 +63,11 @@ module BBLib
       else
         child.replace_with(args.first.call(value))
       end
+    end
+
+    def self.debug(child, *args, class_based: true)
+      puts "DEBUG: #{child.value}" + (args.empty? ? '' : "(#{args.join(', ')})")
+      child
     end
 
     def self.append(child, *args, class_based: true)
@@ -80,7 +86,7 @@ module BBLib
 
     def self.replace(child, *args, class_based: true)
       methods = [:to_s]
-      BBLib.hash_args(*args).each { |k, v| methods << [:gsub, k, v.to_s] }
+      BBLib.hash_args(*args).each { |k, v| methods << [:gsub, (k ? k : k.to_s), v.to_s] }
       class_based_proc(child, class_based, *methods)
     end
 
