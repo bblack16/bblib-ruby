@@ -12,6 +12,7 @@ module BBLib
       lazy_setup
       _lazy_init(*args)
       yield self if block_given?
+      _validate_required_params
     end
 
     def serialize
@@ -80,15 +81,15 @@ module BBLib
 
     def _lazy_init(*args)
 
-      BBLib.named_args(*args).each do |k, v|
-        send("#{k}=".to_sym, v) if respond_to?("#{k}=".to_sym)
-      end
-
       self.class.ancestors.reverse.map { |a| a.instance_variable_get('@_serialize_fields') }.compact
           .each { |ary| ary.each { |k, v| v = v.dup; serialize_method(k, v.delete(:method), v) } }
 
       self.class.ancestors.reverse.map { |a| a.instance_variable_get('@_dont_serialize_fields') }.compact
           .each { |ary| ary.each { |k| dont_serialize_method(k) } }
+
+      BBLib.named_args(*args).each do |k, v|
+        send("#{k}=".to_sym, v) if respond_to?("#{k}=".to_sym)
+      end
 
       lazy_init(*args)
       custom_lazy_init BBLib.named_args(*args), *args
@@ -145,16 +146,28 @@ module BBLib
       @_dont_serialize_fields ||= []
     end
 
-    def attr_serialize(hash, *klasses)
-      if !klasses.include?(hash.class)
-        if hash.is_a?(Hash)
-          klasses.first.new(hash)
-        elsif hash.is_a?(Array)
-          klasses.first.new(*hash)
+    # def attr_serialize(hash, *klasses)
+    #   if !klasses.any? { |c| hash.is_a?(c) }
+    #     if hash.is_a?(Hash)
+    #       klasses.first.new(hash)
+    #     elsif hash.is_a?(Array)
+    #       klasses.first.new(*hash)
+    #     end
+    #   else
+    #     hash
+    #   end
+    # end
+
+    def _validate_required_params
+      missing = []
+      attrs.each do |method, hash|
+        if hash[:options].include?(:required)
+          if hash[:options][:required] && !hash[:options][:allow_nil] && send(method).nil?
+            missing << method
+          end
         end
-      else
-        hash
       end
+      raise ArgumentError, "You are missing the following parameter#{missing.size == 1 ? nil : 's'}: #{missing.join(', ')}" unless missing.empty?
     end
   end
 end
