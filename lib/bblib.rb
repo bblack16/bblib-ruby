@@ -8,6 +8,7 @@ require_relative 'file/bbfile'
 require_relative 'time/bbtime'
 require_relative 'number/bbnumber'
 require_relative 'array/bbarray'
+require_relative 'system/bbsystem'
 
 non_opal = ['os/bbos', 'gem/bbgem']
 
