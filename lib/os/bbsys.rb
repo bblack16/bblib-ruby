@@ -11,6 +11,10 @@ module BBLib
       end
     end
 
+    def self.up_since
+      Time.now - uptime
+    end
+
     def self.uptime
       if windows?
         uptime = `net statistics server`.split("\n").find { |l| l.start_with?('Statistics since ') }.split(/since /i).last.strip
@@ -126,16 +130,8 @@ module BBLib
             name: l[0],
             pid:  pid,
             user: l[4],
-            mem:  (begin
-                     ((l[3].delete(',').extract_numbers.first / mem_total) * 100)
-                   rescue
-                     nil
-                   end),
-            cpu:  (begin
-                     cpu[pid][:cpu]
-                   rescue
-                     nil
-                   end),
+            mem:  (((l[3].delete(',').extract_numbers.first / mem_total) * 100) rescue nil),
+            cpu:  (cpu[pid][:cpu] rescue nil),
             cmd:  cmds[pid]
           }
         end
@@ -154,6 +150,18 @@ module BBLib
           }
         end
       end
+    end
+
+    def self.process_list
+      if windows?
+        tasks = `tasklist /v`
+        lines = tasks.split("\n")[3..-1].map { |l| l.split(/\s{2,}/) }
+      else
+        t = `ps -e -o comm,pid,ruser,%cpu,%mem,cmd`
+        lines = t.split("\n")[1..-1].map { |l| l.split(/\s+/) }
+        lines.map { |l| l.size == 6 ? l : [l[0], l[1], l[2], l[3], l[4], l[5..-1].join(' ')] }
+      end
+      lines.map { |l| l[0] }.sort
     end
 
     def self.filesystems
@@ -184,7 +192,9 @@ module BBLib
               v[:size]   = v[:size].to_i
               v[:used]   = v[:size] - v[:free]
               v[:free_p] = (v[:free] / v[:size].to_f) * 100
+              v[:free_p] = nil if v[:free_p].nan?
               v[:used_p] = (v[:used] / v[:size].to_f) * 100
+              v[:used_p] = nil if v[:used_p].nan?
             end
             v
           end
