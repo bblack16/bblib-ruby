@@ -52,7 +52,9 @@ module BBLib::Hooks
     original = instance_method(method)
     define_method(method) do |*args, &block|
       if opts[:send_args] || opts[:send_arg] || opts[:modify_args]
-        result = method(hook).call(*args)
+        margs = args
+        margs = args + [opts[:add_args]].flatten(1) if opts[:add_args]
+        result = method(hook).call(*margs)
         args = result if opts[:modify_args]
       else
         method(hook).call
