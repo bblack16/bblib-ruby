@@ -45,13 +45,13 @@ module BBLib
     def attr_of(klass, *methods, **opts)
       methods.each do |m|
         attr_type(m, opts, &attr_set(m, opts) do |x|
-                              x = attr_serialize(x, *klass) unless !opts[:serialize] || opts[:to_serialize_only]
-                              if klass.is_a?(Array) ? klass.include?(x.class) : x.is_a?(klass)
-                                instance_variable_set("@#{m}", x)
-                              else
-                                raise ArgumentError, "#{m} must be set to a #{klass} NOT #{x.class}."
-                              end
-                            end)
+          x = attr_serialize(x, *klass) unless !opts[:serialize] || opts[:to_serialize_only]
+          if klass.is_a?(Array) ? klass.include?(x.class) : x.is_a?(klass)
+            instance_variable_set("@#{m}", x)
+          else
+            raise ArgumentError, "#{m} must be set to a #{klass} NOT #{x.class}."
+          end
+        end)
         _register_attr(m, :of, opts.merge(class: klass))
       end
     end
