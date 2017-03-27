@@ -80,7 +80,6 @@ module BBLib
     end
 
     def _lazy_init(*args)
-
       self.class.ancestors.reverse.map { |a| a.instance_variable_get('@_serialize_fields') }.compact
           .each { |ary| ary.each { |k, v| v = v.dup; serialize_method(k, v.delete(:method), v) } }
 
@@ -146,17 +145,17 @@ module BBLib
       @_dont_serialize_fields ||= []
     end
 
-    # def attr_serialize(hash, *klasses)
-    #   if !klasses.any? { |c| hash.is_a?(c) }
-    #     if hash.is_a?(Hash)
-    #       klasses.first.new(hash)
-    #     elsif hash.is_a?(Array)
-    #       klasses.first.new(*hash)
-    #     end
-    #   else
-    #     hash
-    #   end
-    # end
+    def attr_serialize(hash, *klasses)
+      if !klasses.any? { |c| hash.is_a?(c) }
+        if hash.is_a?(Hash)
+          klasses.first.new(hash)
+        elsif hash.is_a?(Array)
+          klasses.first.new(*hash)
+        end
+      else
+        hash
+      end
+    end
 
     def _validate_required_params
       missing = []
