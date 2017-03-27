@@ -22,26 +22,26 @@ class Hash
   end
 
   # Converts the keys of the hash as well as any nested hashes to symbols.
-  def keys_to_sym(clean: false)
+  def keys_to_sym(clean: false, recursive: true)
     each_with_object({}) do |(k, v), memo|
       key = clean ? k.to_s.to_clean_sym : k.to_s.to_sym
-      memo[key] = v.respond_to?(:keys_to_sym) ? v.keys_to_sym(clean: clean) : v
+      memo[key] = recursive && v.respond_to?(:keys_to_sym) ? v.keys_to_sym(clean: clean) : v
     end
   end
 
-  def keys_to_sym!(clean: false)
-    replace(keys_to_sym(clean: clean))
+  def keys_to_sym!(clean: false, recursive: true)
+    replace(keys_to_sym(clean: clean, recursive: recursive))
   end
 
   # Converts the keys of the hash as well as any nested hashes to strings.
-  def keys_to_s
+  def keys_to_s(recursive: true)
     each_with_object({}) do |(k, v), memo|
-      memo[k.to_s] = v.respond_to?(:keys_to_sym) ? v.keys_to_s : v
+      memo[k.to_s] = recursive && v.respond_to?(:keys_to_sym) ? v.keys_to_s : v
     end
   end
 
-  def keys_to_s!
-    replace(keys_to_s)
+  def keys_to_s!(recursive: true)
+    replace(keys_to_s, recursive: recursive)
   end
 
   # Reverses the order of keys in the Hash
