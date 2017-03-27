@@ -15,6 +15,7 @@ non_opal = ['os/bbos', 'gem/bbgem']
 non_opal.each { |i| require_relative i } unless BBLib.in_opal?
 
 require 'fileutils'
+require 'time'
 
 module BBLib
   CONFIGS_PATH = 'config/'.freeze
