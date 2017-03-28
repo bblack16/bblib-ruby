@@ -53,6 +53,32 @@ module BBLib
     str = str.strip.chop while str.strip.end_with?(',')
     str
   end
+
+  # Displays a portion of an object (as a string) with an ellipse displayed
+  # if the string is over a certain size.
+  # Supported styles:
+  # => front - "for exam..."
+  # => back - "... example"
+  # => middle - "... exam..."
+  # => outter - "for e...ple"
+  # The length of the too_long string is NOT factored into the cap
+  def self.chars_up_to(str, cap, too_long = '...', style: :front)
+    return str if str.to_s.size <= cap
+    case style
+    when :back
+      "#{too_long}#{str[(str.size - cap)..-1]}"
+    when :outter
+      "#{str[0...(cap / 2).to_i + (cap.odd? ? 1 : 0)]}#{too_long}#{str[-(cap / 2).to_i..-1]}"
+    when :middle
+      "#{too_long}#{str[(str.size / 2 - cap / 2 - (cap.odd? ? 1 : 0)).to_i...(str.size / 2 + cap / 2).to_i]}#{too_long}"
+    else
+      "#{str[0...cap]}#{too_long}"
+    end
+  end
+
+  def self.pluralize(num, base, plural = 's', singular = nil)
+    num == 1 ? "#{base}#{singular}" : "#{base}#{plural}"
+  end
 end
 
 class String
