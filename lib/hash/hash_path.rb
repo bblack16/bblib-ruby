@@ -65,7 +65,7 @@ module BBLib
 
   def self.hash_path_set(hash, *paths, bridge: true)
     tree = hash.is_a?(TreeHash) ? hash : TreeHash.new(hash)
-    tree.set(*paths)
+    tree.bridge(*paths)
     hash.replace(tree.value)
   end
 
