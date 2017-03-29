@@ -127,12 +127,12 @@ module BBLib
         lines.map do |l|
           pid = l[1].extract_numbers.first
           {
-            name: l[0],
-            pid:  pid,
-            user: l[4],
-            mem:  (((l[3].delete(',').extract_numbers.first / mem_total) * 100) rescue nil),
-            cpu:  (cpu[pid][:cpu] rescue nil),
-            cmd:  cmds[pid]
+            name:   l[0],
+            pid:    pid,
+            user:   l[4],
+            memory: (((l[3].delete(',').extract_numbers.first / mem_total) * 100) rescue nil),
+            cpu:    (cpu[pid][:cpu] rescue nil),
+            cmd:    cmds[pid]
           }
         end
       else
@@ -141,12 +141,12 @@ module BBLib
         lines.map { |l| l.size == 6 ? l : [l[0], l[1], l[2], l[3], l[4], l[5..-1].join(' ')] }
         lines.map do |l|
           {
-            name: l[0],
-            pid:  l[1].to_i,
-            user: l[2],
-            cpu:  l[3].to_f,
-            mem:  l[4].to_f,
-            cmd:  l[5]
+            name:   l[0],
+            pid:    l[1].to_i,
+            user:   l[2],
+            cpu:    l[3].to_f,
+            memory: l[4].to_f,
+            cmd:    l[5]
           }
         end
       end
