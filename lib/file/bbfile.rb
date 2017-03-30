@@ -7,26 +7,32 @@ module BBLib
   end
 
   # Scan for files and directories. Can be set to be recursive and can also have filters applied.
-  def self.scan_dir(path = Dir.pwd, *filters, recursive: false, &block)
-    filters = [''] if filters.empty?
-    Dir.glob(filters.flat_map { |f| "#{path}/#{recursive ? '/**/*' : '/*'}#{f}".pathify }, &block)
+  def self.scan_dir(path, *filters, recursive: false, files: true, dirs: true, &block)
+    filters = filters.map { |f| f.is_a?(Regexp) ? f : /^#{Regexp.quote(f).gsub('\\*', '.*')}$/ }
+    Dir.foreach(path).flat_map do |item|
+      next if item =~ /^\.{1,2}$/
+      item = "#{path}/#{item}"
+      if File.file?(item)
+        (block_given? ? yield(item) : item) if files && (filters.empty? || filters.any? { |f| item =~ f })
+      elsif File.directory?(item)
+        recur = recursive ? scan_dir(item, *filters, recursive: recursive, files: files, dirs: dirs, &block) : []
+        if dirs && (filters.empty? || filters.any? { |f| item =~ f })
+          (block_given? ? yield(item) : [item] + recur)
+        elsif recursive
+          recur
+        end
+      end
+    end.compact
   end
 
   # Uses BBLib.scan_dir but returns only files
-  def self.scan_files(*args, &block)
-    [].tap do |files|
-      BBLib.scan_dir(*args) do |file|
-        if File.file?(file)
-          files << file
-          yield file if block_given?
-        end
-      end
-    end
+  def self.scan_files(path, *filters, recursive: false, &block)
+    scan_dir(path, *filters, recursive: recursive, dirs: false, &block)
   end
 
   # Uses BBLib.scan_dir but returns only directories.
-  def self.scan_dirs(*args)
-    BBLib.scan_dir(*args).select { |f| File.directory?(f) }
+  def self.scan_dirs(path, *filters, recursive: false, &block)
+    scan_dir(path, *filters, recursive: recursive, files: false, &block)
   end
 
   # Shorthand method to write a string to disk. By default the
@@ -38,7 +44,7 @@ module BBLib
   end
 
   # A file size parser for strings. Extracts any known patterns for file sizes.
-  def self.parse_file_size(str, output: :byte)
+  def self.parse_file_size(str, input: :byte, output: :byte)
     output = FILE_SIZES.keys.find { |f| f == output || FILE_SIZES[f][:exp].include?(output.to_s.downcase) } || :byte
     bytes = 0.0
     FILE_SIZES.each do |_k, v|
@@ -47,25 +53,50 @@ module BBLib
            .each { |n| bytes+= n.to_f * v[:mult] }
       end
     end
-    bytes / FILE_SIZES[output][:mult]
+    bytes / FILE_SIZES[output][:mult] / FILE_SIZES[input.to_sym][:mult]
+  end
+
+  def self.to_file_size(num, input: :byte, stop: :byte, style: :medium)
+    return nil unless num.is_a?(Numeric)
+    return '0' if num.zero?
+    style = :short unless [:long, :short].include?(style)
+    expression = []
+    n = num * FILE_SIZES[input.to_sym][:mult]
+    done = false
+    FILE_SIZES.reverse.each do |k, v|
+      next if done
+      done = true if k == stop
+      div = n / v[:mult]
+      next unless div >= 1
+      val = (done ? div.round : div.floor)
+      expression << "#{val}#{v[:styles][style]}#{val > 1 && style != :short ? 's' : nil}"
+      n -= val.to_f * v[:mult]
+    end
+    expression.join(' ')
   end
 
   FILE_SIZES = {
-    byte:      { mult: 1, exp: %w(b byt byte) },
-    kilobyte:  { mult: 1024, exp: %w(kb kilo k kbyte kilobyte) },
-    megabyte:  { mult: 1024**2, exp: %w(mb mega m mib mbyte megabyte) },
-    gigabyte:  { mult: 1024**3, exp: %w(gb giga g gbyte gigabyte) },
-    terabyte:  { mult: 1024**4, exp: %w(tb tera t tbyte terabyte) },
-    petabyte:  { mult: 1024**5, exp: %w(pb peta p pbyte petabyte) },
-    exabyte:   { mult: 1024**6, exp: %w(eb exa e ebyte exabyte) },
-    zettabyte: { mult: 1024**7, exp: %w(zb zetta z zbyte zettabyte) },
-    yottabyte: { mult: 1024**8, exp: %w(yb yotta y ybyte yottabyte) }
+    byte:      { mult: 1, exp: %w(b byt byte), styles: { short: 'B', long: ' byte' } },
+    kilobyte:  { mult: 1024, exp: %w(kb kilo k kbyte kilobyte), styles: { short: 'kB', long: ' kilobyte' } },
+    megabyte:  { mult: 1024**2, exp: %w(mb mega m mib mbyte megabyte), styles: { short: 'MB', long: ' megabyte' } },
+    gigabyte:  { mult: 1024**3, exp: %w(gb giga g gbyte gigabyte), styles: { short: 'GB', long: ' gigabyte' } },
+    terabyte:  { mult: 1024**4, exp: %w(tb tera t tbyte terabyte), styles: { short: 'TB', long: ' terabyte' } },
+    petabyte:  { mult: 1024**5, exp: %w(pb peta p pbyte petabyte), styles: { short: 'PB', long: ' petabyte' } },
+    exabyte:   { mult: 1024**6, exp: %w(eb exa e ebyte exabyte), styles: { short: 'EB', long: ' exabyte' } },
+    zettabyte: { mult: 1024**7, exp: %w(zb zetta z zbyte zettabyte), styles: { short: 'ZB', long: ' zettabyte' } },
+    yottabyte: { mult: 1024**8, exp: %w(yb yotta y ybyte yottabyte), styles: { short: 'YB', long: ' yottabyte' } }
   }.freeze
 end
 
 class File
   def dirname
     File.dirname(path)
+  end
+end
+
+class Numeric
+  def to_file_size(*args)
+    BBLib.to_file_size(self, *args)
   end
 end
 
