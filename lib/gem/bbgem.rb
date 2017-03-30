@@ -16,7 +16,7 @@ if defined? Gem
   def require_gem(gem, name = nil)
     name = gem if name.nil?
     unless BBLib.gem_installed? name
-      return false unless Gem.install gem
+      return false unless Gem.install(gem)
     end
     require name
   end
