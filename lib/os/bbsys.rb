@@ -3,9 +3,7 @@ module BBLib
   module OS
     def self.cpu_usages
       if windows?
-        {
-          total: `wmic cpu get loadpercentage /format:value`.extract_numbers.first.to_f
-        }
+        { total: `wmic cpu get loadpercentage /format:value`.extract_numbers.first.to_f }
       elsif linux? || mac?
         system_stats[:cpu]
       end
@@ -30,6 +28,15 @@ module BBLib
 
     def self.cpu_free_p
       100 - cpu_used
+    end
+
+    def self.current_memory_usage(output = :byte)
+      if windows?
+        `tasklist /FI "PID eq #{$$}" /FO list`
+          .split("\n").find { |l| l =~ /^Mem Usage:/ }&.gsub(',', '').parse_file_size(output: output)
+      else
+        processes.find { |pr| pr[:pid] == $$ }[:memory]
+      end
     end
 
     def self.mem_total
@@ -130,8 +137,8 @@ module BBLib
             name:   l[0],
             pid:    pid,
             user:   l[4],
-            memory: (((l[3].delete(',').extract_numbers.first / mem_total) * 100) rescue nil),
             cpu:    (cpu[pid][:cpu] rescue nil),
+            memory: (((l[3].delete(',').extract_numbers.first / mem_total) * 100) rescue nil),
             cmd:    cmds[pid]
           }
         end
