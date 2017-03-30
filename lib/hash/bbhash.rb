@@ -41,7 +41,7 @@ class Hash
   end
 
   def keys_to_s!(recursive: true)
-    replace(keys_to_s, recursive: recursive)
+    replace(keys_to_s(recursive: recursive))
   end
 
   # Reverses the order of keys in the Hash
