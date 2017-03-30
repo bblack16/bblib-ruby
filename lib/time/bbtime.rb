@@ -28,19 +28,14 @@ module BBLib
         end
       end
     end
-
-    msecs / (begin
-               TIME_EXPS[output][:mult]
-             rescue
-               1
-             end)
+    msecs / TIME_EXPS[output][:mult]
   end
 
   # Turns a numeric input into a time string.
   def self.to_duration(num, input: :sec, stop: :milli, style: :medium)
     return nil unless num.is_a?(Numeric)
     return '0' if num.zero?
-    style = :medium unless [:full, :medium, :short].include?(style)
+    style = :medium unless [:long, :medium, :short].include?(style)
     expression = []
     n = num * TIME_EXPS[input.to_sym][:mult]
     done = false
@@ -53,7 +48,7 @@ module BBLib
       expression << "#{val}#{v[:styles][style]}#{val > 1 && style != :short ? 's' : nil}"
       n -= val.to_f * v[:mult]
     end
-    expression.join ' '
+    expression.join(' ')
   end
 
   def self.to_nearest_duration(num, input: :sec, style: :medium)
@@ -69,77 +64,77 @@ module BBLib
   TIME_EXPS = {
     yocto: {
       mult: 0.000000000000000000001,
-      styles: { full: ' yoctosecond', medium: ' yocto', short: 'ys' },
+      styles: { long: ' yoctosecond', medium: ' yocto', short: 'ys' },
       exp: %w(yoctosecond yocto yoctoseconds yoctos ys)
     },
     zepto: {
       mult: 0.000000000000000001,
-      styles: { full: ' zeptosecond', medium: ' zepto', short: 'zs' },
+      styles: { long: ' zeptosecond', medium: ' zepto', short: 'zs' },
       exp: %w(zeptosecond zepto zeptoseconds zeptos zs)
     },
     atto: {
       mult: 0.000000000000001,
-      styles: { full: ' attosecond', medium: ' atto', short: 'as' },
+      styles: { long: ' attosecond', medium: ' atto', short: 'as' },
       exp: %w(attoseconds atto attoseconds attos as)
     },
     femto: {
       mult: 0.000000000001,
-      styles: { full: ' femtosecond', medium: ' fempto', short: 'fs' },
+      styles: { long: ' femtosecond', medium: ' fempto', short: 'fs' },
       exp: %w(femtosecond fempto femtoseconds femptos fs)
     },
     pico: {
       mult: 0.000000001,
-      styles: { full: ' picosecond', medium: ' pico', short: 'ps' },
+      styles: { long: ' picosecond', medium: ' pico', short: 'ps' },
       exp: %w(picosecond pico picoseconds picos ps)
     },
     nano: {
       mult: 0.000001,
-      styles: { full: ' nanosecond', medium: ' nano', short: 'ns' },
+      styles: { long: ' nanosecond', medium: ' nano', short: 'ns' },
       exp: %w(nanosecond nano nanoseconds nanos ns)
     },
     micro: {
       mult: 0.001,
-      styles: { full: ' microsecond', medium: ' micro', short: 'μs' },
+      styles: { long: ' microsecond', medium: ' micro', short: 'μs' },
       exp: %W(microsecond micro microseconds micros \u03BCs)
     },
     milli: {
       mult: 1,
-      styles: { full: ' millisecond', medium: ' mil', short: 'ms' },
+      styles: { long: ' millisecond', medium: ' mil', short: 'ms' },
       exp: %w(ms mil mils milli millis millisecond milliseconds milsec milsecs msec msecs msecond mseconds)
     },
     sec: {
       mult: 1000,
-      styles: { full: ' second', medium: ' sec', short: 's' },
+      styles: { long: ' second', medium: ' sec', short: 's' },
       exp: %w(s sec secs second seconds)
     },
     min: {
       mult: 60_000,
-      styles: { full: ' minute', medium: ' min', short: 'm' },
+      styles: { long: ' minute', medium: ' min', short: 'm' },
       exp: %w(m mn mns min mins minute minutes)
     },
     hour: {
       mult: 3_600_000,
-      styles: { full: ' hour', medium: ' hr', short: 'h' },
+      styles: { long: ' hour', medium: ' hr', short: 'h' },
       exp: %w(h hr hrs hour hours)
     },
     day: {
       mult: 86_400_000,
-      styles: { full: ' day', medium: ' day', short: 'd' },
+      styles: { long: ' day', medium: ' day', short: 'd' },
       exp: %w(d day days)
     },
     week: {
       mult: 604_800_000,
-      styles: { full: ' week', medium: ' wk', short: 'w' },
+      styles: { long: ' week', medium: ' wk', short: 'w' },
       exp: %w(w wk wks week weeks)
     },
     month: {
       mult: 2_592_000_000,
-      styles: { full: ' month', medium: ' mo', short: 'mo' },
+      styles: { long: ' month', medium: ' mo', short: 'mo' },
       exp: %w(mo mon mons month months mnth mnths mth mths)
     },
     year: {
       mult: 31_536_000_000,
-      styles: { full: ' year', medium: ' yr', short: 'y' },
+      styles: { long: ' year', medium: ' yr', short: 'y' },
       exp: %w(y yr yrs year years)
     }
   }.freeze
