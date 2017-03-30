@@ -44,7 +44,7 @@ module BBLib
   end
 
   # A file size parser for strings. Extracts any known patterns for file sizes.
-  def self.parse_file_size(str, input: :byte, output: :byte)
+  def self.parse_file_size(str, output: :byte)
     output = FILE_SIZES.keys.find { |f| f == output || FILE_SIZES[f][:exp].include?(output.to_s.downcase) } || :byte
     bytes = 0.0
     FILE_SIZES.each do |_k, v|
@@ -53,7 +53,7 @@ module BBLib
            .each { |n| bytes+= n.to_f * v[:mult] }
       end
     end
-    bytes / FILE_SIZES[output][:mult] / FILE_SIZES[input.to_sym][:mult]
+    bytes / FILE_SIZES[output][:mult]
   end
 
   def self.to_file_size(num, input: :byte, stop: :byte, style: :medium)
