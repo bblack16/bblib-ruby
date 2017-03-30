@@ -108,4 +108,19 @@ class Hash
   def to_tree_hash
     TreeHash.new(self)
   end
+
+  def vmap
+    return map unless block_given?
+    map { |k, v| [k, yield(v)] }.to_h
+  end
+
+  def kmap
+    return map unless block_given?
+    map { |k, v| [yield(k), v] }.to_h
+  end
+
+  def hmap
+    return map unless block_given?
+    map { |k, v| yield(k, v) }.to_h
+  end
 end
