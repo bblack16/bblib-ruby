@@ -102,7 +102,11 @@ class Hash
   end
 
   def only(*args)
-    select { |k, v| args.include?(k) }
+    select { |k, _v| args.include?(k) }
+  end
+
+  def except(*args)
+    reject { |k, _v| args.include?(k) }
   end
 
   def to_tree_hash
