@@ -73,6 +73,10 @@ module BBLib
       end
     end
 
+    def self.subclass_methods
+      instance_methods - BBLib::LazyClass.instance_methods
+    end
+
     protected
 
     def lazy_setup
