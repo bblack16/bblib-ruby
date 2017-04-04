@@ -73,8 +73,12 @@ module BBLib
       end
     end
 
-    def self.subclass_methods
-      instance_methods - BBLib::LazyClass.instance_methods
+    def self.instance_getters
+      attrs.map { |k, v| [:attr_writer].any? { |t| v[:type] == t } ? nil : k }.compact
+    end
+
+    def self.instance_setters
+      attrs.keys.map { |m| "#{m}=".to_sym }.select { |m| method_defined?(m) }
     end
 
     protected
