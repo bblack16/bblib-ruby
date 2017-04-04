@@ -10,6 +10,21 @@ module BBLib
       @_attrs ||= {}
     end
 
+    def attr_reader(*args)
+      args.each { |arg| _register_attr(arg, :attr_reader) }
+      super(*args)
+    end
+
+    def attr_writer(*args)
+      args.each { |arg| _register_attr(arg, :attr_writer) }
+      super(*args)
+    end
+
+    def attr_accessor(*args)
+      args.each { |arg| _register_attr(arg, :attr_accessor) }
+      super(*args)
+    end
+
     private
 
     def _register_attr(method, type, opts = {})
@@ -29,7 +44,7 @@ module BBLib
       nil
     end
 
-    def attr_sender(call, *methods, **opts)
+    def attr_sender(call, klass, *methods, **opts)
       methods.each do |m|
         attr_type(
           m,
@@ -37,7 +52,13 @@ module BBLib
           &attr_set(
             m,
             opts.merge(sender: true)
-          ) { |x| x.nil? && opts[:allow_nil] ? nil : x.send(call) }
+          ) do |x|
+            if x.nil? && opts[:allow_nil]
+              nil
+            else
+              klass && x.is_a?(klass) ? x : x.send(call)
+            end
+          end
         )
       end
     end
@@ -81,7 +102,7 @@ module BBLib
     alias attr_bool attr_boolean
 
     def attr_string(*methods, **opts)
-      attr_sender :to_s, *methods, opts
+      attr_sender :to_s, String, *methods, opts
       methods.each { |m| _register_attr(m, :string, opts) }
     end
 
@@ -90,7 +111,7 @@ module BBLib
 
     def attr_integer(*methods, **opts)
       opts[:pre_proc] = [proc { |x| x == '' ? nil : x }, opts[:pre_proc]].flatten.compact
-      attr_sender :to_i, *methods, opts
+      attr_sender :to_i, Fixnum, *methods, opts
       methods.each { |m| _register_attr(m, :int, opts) }
     end
 
@@ -99,7 +120,7 @@ module BBLib
 
     def attr_float(*methods, **opts)
       opts[:pre_proc] = [proc { |x| x == '' ? nil : x }, opts[:pre_proc]].flatten.compact
-      attr_sender :to_f, *methods, opts
+      attr_sender :to_f, Float, *methods, opts
       methods.each { |m| _register_attr(m, :float, opts) }
     end
 
