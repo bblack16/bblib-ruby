@@ -13,8 +13,8 @@ module BBLib::Hooks
   # This method is used to catch ALL hook methods in the event that some are inherited
   # or are defined after the hook is set. If extending from this module, CALL THIS somewhere during initialization.
   def hook_em_all
-    before_hooks.each_value { |v| v[:methods].each { |method| hook_method(method) } }
-    after_hooks.each_value { |v| v[:methods].each { |method| hook_method(method) } }
+    before_hooks.each { |h, v| v[:methods].each { |method| hook_method(method) unless h == method } }
+    after_hooks.each { |h, v| v[:methods].each { |method| hook_method(method) unless h == method } }
   end
 
   def before(hook, *methods, **opts)
@@ -45,14 +45,17 @@ module BBLib::Hooks
   # Current opts:
   # send_args - Sends the arguments of the method to the before hook.
   # modify_args - Replaces the original args with the returned value of the
+  # send_method - Sends the method name as an argument to the hooked method.
   #               before hook method.
   def add_before_hook(method, hook, opts = {})
+    return if method == hook
     before_hooked_methods[hook] ||= []
     before_hooked_methods[hook] += [method]
     original = instance_method(method)
     define_method(method) do |*args, &block|
-      if opts[:send_args] || opts[:send_arg] || opts[:modify_args]
+      if opts[:send_args] || opts[:send_arg] || opts[:modify_args] || opts[:send_method]
         margs = args
+        margs = [method] + args if opts[:send_method]
         margs = args + [opts[:add_args]].flatten(1) if opts[:add_args]
         result = method(hook).call(*margs)
         args = result if opts[:modify_args]
