@@ -4,14 +4,14 @@ require_relative 'tree_hash'
 
 class Hash
   # Merges with another hash but also merges all nested hashes and arrays/values.
-  def deep_merge(with, merge_arrays: true, overwrite: true)
+  def deep_merge(with, merge_arrays: true, overwrite: true, uniq: false)
     merger = proc do |_k, v1, v2|
       if BBLib.are_all?(Hash, v1, v2)
         v1.merge(v2, &merger)
       elsif merge_arrays && BBLib.are_all?(Array, v1, v2)
-        v1 + v2
+        uniq ? (v1 + v2).uniq : v1 + v2
       else
-        overwrite || v1 == v2 ? v2 : [v1, v2].flatten
+        overwrite || v1 == v2 ? v2 : (uniq ? [v1, v2].flatten.uniq : [v1, v2].flatten)
       end
     end
     merge(with, &merger)
