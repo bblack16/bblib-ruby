@@ -1,9 +1,20 @@
-# frozen_string_literal: true
 module BBLib
+  # Simple timer that can track tasks based on time. Also provides aggregated metrics
+  #  and history for each task run. Generally useful for benchmarking or logging.
+  #
+  # @author Brandon Black
+  # @attr [Hash] tasks The information on all running tasks and history of all tasks up to the retention.
+  # @attr [Integer] retention The number of runs to collect per task before truncation.
   class TaskTimer < LazyClass
     attr_hash :tasks, default: {}
     attr_int_between -1, nil, :retention, default: 100
 
+    # Returns an aggregated metric for a given type.
+    #
+    # @param [Symbol] task The key value of the task to retrieve
+    # @param [Symbol] type The metric to return.
+    #   Options are :avg, :min, :max, :first, :last, :sum, :all and :count.
+    # @return [Float, Integer, Array] Returns either the aggregation (Numeric) or an Array in the case of :all.
     def time(task = :default, type = :current)
       return nil unless @tasks.keys.include? task
       numbers = @tasks[task][:history].map { |v| v[:time] }
@@ -24,12 +35,20 @@ module BBLib
       end
     end
 
+    # Removes all history for a given task
+    #
+    # @param [Symbol] task The name of the task to clear history from.
+    # @return [NilClass] Returns nil
     def clear(task = :default)
       return nil unless @tasks.keys.include?(task)
       stop task
       @tasks[task][:history].clear
     end
 
+    # Start a new timer for the referenced task. If a timer is already running for that task it will be stopped first.
+    #
+    # @param [Symbol] task The name of the task to start.
+    # @return [Integer] Returns 0
     def start(task = :default)
       @tasks[task] = { history: [], current: nil } unless @tasks.keys.include?(task)
       stop task if @tasks[task][:current]
@@ -37,6 +56,10 @@ module BBLib
       0
     end
 
+    # Stop the referenced timer.
+    #
+    # @param [Symbol] task The name of the task to stop.
+    # @return [Float, NilClass] The amount of time the task had been running or nil if no matching task was found.
     def stop(task = :default)
       return nil unless @tasks.keys.include?(task) && active?(task)
       time_taken = Time.now.to_f - @tasks[task][:current].to_f
