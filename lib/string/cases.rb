@@ -52,7 +52,7 @@ module BBLib
   end
 
   def self.method_case(str)
-    str.gsub(/(?<=[^^])([A-Z])/, '_\1').gsub(/\s+/, '').snake_case.downcase
+    str.gsub(/(?<=[^^])([A-Z])/, '_\1').gsub(/\s+/, ' ').snake_case.downcase
   end
 
   def self.spinal_case(str)
