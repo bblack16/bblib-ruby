@@ -85,6 +85,7 @@ module BBLib
     tree.delete(*paths).tap do |deleted|
       hash.replace(tree.value)
     end
+    hash
   end
 
   def self.hash_path_move(hash, *paths)
