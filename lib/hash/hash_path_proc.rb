@@ -4,7 +4,7 @@ require_relative 'hash_path_processors'
 module BBLib
   class HashPathProc < BBLib::LazyClass
     attr_ary_of String, :paths, default: [''], serialize: true, uniq: true
-    attr_of [String, Symbol], :action, default: nil, allow_nil: true, serialize: true, pre_proc: proc { |a| HashPathProc.map_action(a.to_sym) }
+    attr_of [String, Symbol], :action, default: nil, allow_nil: true, serialize: true, pre_proc: proc { |arg| HashPathProc.map_action(arg.to_sym) }
     attr_ary :args, default: [], serialize: true
     attr_hash :options, default: {}, serialize: true
     attr_of [String, Proc], :condition, default: nil, allow_nil: true, serialize: true

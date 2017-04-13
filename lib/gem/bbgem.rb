@@ -14,8 +14,8 @@ if defined? Gem
   # Convenience method that will try to download and install a gem before requiring it
   # only if the gem is not already installed
   def require_gem(gem, name = nil)
-    name = gem if name.nil?
-    unless BBLib.gem_installed? name
+    name = gem unless name
+    unless BBLib.gem_installed?(name)
       return false unless Gem.install(gem)
     end
     require name

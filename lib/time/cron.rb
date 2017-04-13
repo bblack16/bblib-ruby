@@ -5,12 +5,12 @@ module BBLib
     attr_reader :parts
 
     def next(exp = @expression, count: 1, time: Time.now)
-      expression = exp unless exp == @expression
+      self.expression = exp unless exp == @expression
       closest(count: count, time: time, direction: 1)
     end
 
     def prev(exp = @expression, count: 1, time: Time.now)
-      expression = exp unless exp == @expression
+      self.expression = exp unless exp == @expression
       closest(count: count, time: time, direction: -1)
     end
 

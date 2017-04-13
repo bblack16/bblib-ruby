@@ -6,9 +6,9 @@ class HashPath < BBLib::LazyClass
 
     def parse(path)
       evl = path.scan(/\(.*\)$/).first
-      self.evaluation = evl.nil? ? nil : evl.uncapsulate('(', limit: 1)
+      self.evaluation = evl ? evl.uncapsulate('(', limit: 1) : evl
       self.recursive = path.start_with?('[[:recursive:]]')
-      self.selector = parse_selector(evl.nil? ? path : path.sub(evl, ''))
+      self.selector = parse_selector(evl ? path.sub(evl, '') : path )
     end
 
     def key_match?(key, object)
@@ -32,8 +32,8 @@ class HashPath < BBLib::LazyClass
       matches = []
       if special_selector?
         begin
-          [object.send(*selector.uncapsulate('{').split(':'))].flatten(1).compact.each do |m|
-            matches << m if evaluates?(m)
+          [object.send(*selector.uncapsulate('{').split(':'))].flatten(1).compact.each do |match|
+            matches << match if evaluates?(match)
           end
         rescue => e
           # Nothing, the special selector failed
