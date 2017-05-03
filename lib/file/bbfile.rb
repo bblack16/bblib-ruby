@@ -7,16 +7,24 @@ module BBLib
   end
 
   # Scan for files and directories. Can be set to be recursive and can also have filters applied.
+  # @param [String] path The directory to scan files from.
+  # @param [String..., Regexp...] filters A list of filters to apply. Can be regular expressions or strings.
+  #  Strings with a * are treated as regular expressions with a .*. If no filters are passed, all files/dirs are returned.
+  # @param [Boolean] recursive When true scan will recursively search directories
+  # @param [Boolean] files If true, paths to files matching the filter will be returned.
+  # @param [Boolean] dirs If true, paths to dirs matching the filter will be returned.
   def self.scan_dir(path, *filters, recursive: false, files: true, dirs: true, &block)
-    filters = filters.map { |f| f.is_a?(Regexp) ? f : /^#{Regexp.quote(f).gsub('\\*', '.*')}$/ }
+    filters = filters.map { |filter| filter.is_a?(Regexp) ? filter : /^#{Regexp.quote(filter).gsub('\\*', '.*')}$/ }
     Dir.foreach(path).flat_map do |item|
       next if item =~ /^\.{1,2}$/
       item = "#{path}/#{item}"
       if File.file?(item)
-        (block_given? ? yield(item) : item) if files && (filters.empty? || filters.any? { |f| item =~ f })
+        if files && (filters.empty? || filters.any? { |filter| item =~ filter })
+          block_given? ? yield(item) : item
+        end
       elsif File.directory?(item)
         recur = recursive ? scan_dir(item, *filters, recursive: recursive, files: files, dirs: dirs, &block) : []
-        if dirs && (filters.empty? || filters.any? { |f| item =~ f })
+        if dirs && (filters.empty? || filters.any? { |filter| item =~ filter })
           (block_given? ? yield(item) : [item] + recur)
         elsif recursive
           recur
@@ -45,18 +53,25 @@ module BBLib
 
   # A file size parser for strings. Extracts any known patterns for file sizes.
   def self.parse_file_size(str, output: :byte)
-    output = FILE_SIZES.keys.find { |f| f == output || FILE_SIZES[f][:exp].include?(output.to_s.downcase) } || :byte
+    output = FILE_SIZES.keys.find { |fs| fs == output || FILE_SIZES[fs][:exp].include?(output.to_s.downcase) } || :byte
     bytes = 0.0
     FILE_SIZES.each do |_k, v|
-      v[:exp].each do |e|
-        str.scan(/(?=\w|\D|^)\d*\.?\d+\s*#{e}s?(?=\W|\d|$)/i)
-           .each { |n| bytes+= n.to_f * v[:mult] }
+      v[:exp].each do |exp|
+        str.scan(/(?=\w|\D|^)\d*\.?\d+\s*#{exp}s?(?=\W|\d|$)/i)
+           .each { |num| bytes += num.to_f * v[:mult] }
       end
     end
     bytes / FILE_SIZES[output][:mult]
   end
 
-  def self.to_file_size(num, input: :byte, stop: :byte, style: :medium)
+  # Takes an integer or float and converts it into a string that represents
+  #   a file size (e.g. "5 MB 156 kB")
+  # @param [Integer, Float] num The number of bytes to convert to a file size string.
+  # @param [Symbol] input Sets the value of the input. Default is byte.
+  # @param [Symbol] stop Sets a minimum file size to display.
+  #   e.g. If stop is set to :megabyte, :kilobyte and below will be truncated.
+  # @param [Symbol] style The out style, Current options are :short and :long
+  def self.to_file_size(num, input: :byte, stop: :byte, style: :short)
     return nil unless num.is_a?(Numeric)
     return '0' if num.zero?
     style = :short unless [:long, :short].include?(style)
@@ -88,29 +103,25 @@ module BBLib
   }.freeze
 end
 
-class File
-  def dirname
-    File.dirname(path)
-  end
-end
-
+# Monkey patches for the Numeric class
 class Numeric
   def to_file_size(*args)
     BBLib.to_file_size(self, *args)
   end
 end
 
+# Monkey patches for the String class
 class String
   def to_file(*args)
     BBLib.string_to_file(self, *args)
   end
 
   def file_name(with_extension = true)
-    self[(include?('/') ? rindex('/').to_i+1 : 0)..(with_extension ? -1 : rindex('.').to_i-1)]
+    with_extension ? File.basename(self) : File.basename(self, File.extname(self))
   end
 
   def dirname
-    scan(/.*(?=\/)/).first
+    File.dirname(self)
   end
 
   def parse_file_size(*args)

@@ -5,8 +5,8 @@ module BBLib
   def self.interleave(ary_a, ary_b)
     ary = []
     [ary_a.size, ary_b.size].max.times do |indx|
-      ary.push(ary_a[i]) if indx < ary_a.size
-      ary.push(ary_b[i]) if indx < ary_b.size
+      ary.push(ary_a[indx]) if indx < ary_a.size
+      ary.push(ary_b[indx]) if indx < ary_b.size
     end
     ary
   end
@@ -15,7 +15,7 @@ module BBLib
   def self.most_frequent(*args)
     totals = args.each_with_object(Hash.new(0)) { |elem, hash| hash[elem] += 1 }
     max = totals.values.max
-    totals.keys.find { |k| totals[k] == max }
+    totals.keys.find { |key| totals[key] == max }
   end
 
   # Returns the most commonly occurring string in an arrray of params.

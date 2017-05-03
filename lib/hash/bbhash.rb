@@ -17,6 +17,7 @@ class Hash
     merge(with, &merger)
   end
 
+  # In place version of deep_merge
   def deep_merge!(*args)
     replace deep_merge(*args)
   end
@@ -29,6 +30,7 @@ class Hash
     end
   end
 
+  # In place version of keys_to_sym
   def keys_to_sym!(clean: false, recursive: true)
     replace(keys_to_sym(clean: clean, recursive: recursive))
   end
@@ -40,6 +42,7 @@ class Hash
     end
   end
 
+  # In place version of keys_to_s
   def keys_to_s!(recursive: true)
     replace(keys_to_s(recursive: recursive))
   end
@@ -49,15 +52,19 @@ class Hash
     to_a.reverse.to_h
   end
 
+  # In place version of reverse
   def reverse!
     replace(reverse)
   end
 
+  # Like unshift for Arrays. Adds a key to the beginning of a Hash rather than the end.
   def unshift(hash, value = nil)
     hash = { hash => value } unless hash.is_a?(Hash)
-    replace hash.merge(self).merge(hash)
+    replace(hash.merge(self).merge(hash))
   end
 
+  # Displays all of the differences between this hash and another.
+  # Checks both key and value pairs.
   def diff(hash)
     to_a.diff(hash.to_a).to_h
   end
@@ -66,19 +73,32 @@ class Hash
   def dive(*keys)
     matches = []
     each do |k, v|
-      matches << v if keys.any? { |a| (a.is_a?(Regexp) ? a =~ k : a == k) }
+      matches << v if keys.any? { |key| (key.is_a?(Regexp) ? key =~ k : key == k) }
       matches += v.dive(*keys) if v.respond_to?(:dive)
     end
     matches
   end
 
+  # Navigate a hash using a dot delimited path.
   def path_nav(obj, path = '', delimiter = '.', &block)
     case obj
     when Hash
-      obj.each { |k, v| path_nav(v, (path.nil? ? k.to_s.gsub(delimiter, "\\#{delimiter}") : [path, k.to_s.gsub(delimiter, "\\#{delimiter}")].join(delimiter)).to_s, delimiter, &block) }
+      obj.each do |k, v|
+        path_nav(
+          v,
+          (path ? [path, k.to_s.gsub(delimiter, "\\#{delimiter}")].join(delimiter) : k.to_s.gsub(delimiter, "\\#{delimiter}")).to_s,
+          delimiter,
+          &block
+        )
+      end
     when Array
-      obj.each_with_index do |o, index|
-        path_nav(o, (path.nil? ? "[#{index}]" : [path, "[#{index}]"].join(delimiter)).to_s, delimiter, &block)
+      obj.each_with_index do |ob, index|
+        path_nav(
+          ob,
+          (path ? [path, "[#{index}]"].join(delimiter) : "[#{index}]").to_s,
+          delimiter,
+          &block
+        )
       end
     else
       yield path, obj
@@ -93,7 +113,7 @@ class Hash
   end
 
   # Expands keys in a hash using a delimiter. Opposite of squish.
-  def expand(**args)
+  def expand
     {}.to_tree_hash.tap do |hash|
       each do |k, v|
         hash.bridge(k => v)
@@ -101,28 +121,35 @@ class Hash
     end.value
   end
 
+  # Returns a version of the hash not including the specified keys
   def only(*args)
     select { |k, _v| args.include?(k) }
   end
 
+  # Returns a version of the hash with the specified keys removed.
   def except(*args)
     reject { |k, _v| args.include?(k) }
   end
 
+  # Convert this hash into a TreeHash object.
   def to_tree_hash
     TreeHash.new(self)
   end
 
+  # Run a map iterator over the values in the hash without changing the keys.
   def vmap
     return map unless block_given?
     map { |k, v| [k, yield(v)] }.to_h
   end
 
+  # Run a map iterator over the keys in the hash without changing the values.
   def kmap
     return map unless block_given?
     map { |k, v| [yield(k), v] }.to_h
   end
 
+  # Map for hash that automatically converts the yield block to a hash.
+  # Each yield must produce an array with exactly two elements.
   def hmap
     return map unless block_given?
     map { |k, v| yield(k, v) }.to_h
