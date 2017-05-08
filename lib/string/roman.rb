@@ -51,15 +51,7 @@ class String
     BBLib.from_roman self
   end
 
-  def from_roman!
-    replace from_roman
-  end
-
   def to_roman
     BBLib.string_to_roman self
-  end
-
-  def to_roman!
-    replace to_roman
   end
 end
