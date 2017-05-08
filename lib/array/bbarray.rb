@@ -62,4 +62,17 @@ class Array
   def to_tree_hash
     TreeHash.new(self)
   end
+
+  # Conventient way to join an array into a comma seperated list with the last two elements
+  # seperated by a word like 'and' or 'or'.
+  # @param seperator [String] The term or phrase to seperate the last two elements by
+  # @param delimiter [String] The delimiter used in the join. This allows something other than ', ' to be used
+  # @param encapsulate [String] This will optionally encapsulate each element with a character or string. Useful to wrap all elements in quotes.
+  # @returns [String] By default returns a comma seperated list with the final elements seperated by an 'and'. Behavior can be overriden using the params.
+  def join_terms(seperator = 'and', delimiter: ', ', encapsulate: nil)
+    elements = (encapsulate ? map { |element| element.to_s.encapsulate(encapsulate) } : self)
+    return elements.join(delimiter) if size <= 1
+    return elements.join(" #{seperator} ") if size == 2
+    [elements[0..-2].join(delimiter), elements.last].join(" #{seperator} ")
+  end
 end
