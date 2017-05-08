@@ -2,6 +2,8 @@
 require_relative 'hash_path_processors'
 
 module BBLib
+  # This class wraps around a hash path or set of paths and maps a set of actions for modifying elements at the matching
+  # path.
   class HashPathProc < BBLib::LazyClass
     attr_ary_of String, :paths, default: [''], serialize: true, uniq: true
     attr_of [String, Symbol], :action, default: nil, allow_nil: true, serialize: true, pre_proc: proc { |arg| HashPathProc.map_action(arg.to_sym) }
@@ -37,7 +39,7 @@ module BBLib
 
     protected
 
-    USED_KEYWORDS = [:action, :args, :paths, :recursive, :condition]
+    USED_KEYWORDS = [:action, :args, :paths, :recursive, :condition].freeze
 
     def find_action(action)
       (HashPathProcs.respond_to?(action) ? action : :custom)
@@ -65,11 +67,12 @@ module BBLib
       elsif action && args.first.is_a?(String)
         self.paths = args.first
       end
-      self.args += args.find_all { |a| !a.is_a?(Hash) } unless args.empty?
+      self.args += args.find_all { |arg| !arg.is_a?(Hash) } unless args.empty?
     end
   end
 end
 
+# Monkey patches
 class Hash
   def hash_path_proc(*args)
     BBLib::HashPathProc.new(*args).process(self)
@@ -78,6 +81,7 @@ class Hash
   alias hpath_proc hash_path_proc
 end
 
+# Monkey patches
 class Array
   def hash_path_proc(*args)
     BBLib::HashPathProc.new(*args).process(self)
