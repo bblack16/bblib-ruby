@@ -79,6 +79,10 @@ module BBLib
   def self.pluralize(num, base, plural = 's', singular = nil)
     num == 1 ? "#{base}#{singular}" : "#{base}#{plural}"
   end
+
+  def self.plural_string(num, *args)
+    "#{num} #{pluralize(num, *args)}"
+  end
 end
 
 class String
@@ -214,6 +218,18 @@ class String
       count += 1
     end
     temp
+  end
+
+  def upper?
+    chars.all? { |letter| /[[:upper:]]|\W/.match(letter) }
+  end
+
+  def lower?
+    chars.all? { |letter| /[[:lower:]]|\W/.match(letter) }
+  end
+
+  def capital?
+    chars.first.upper?
   end
 end
 
