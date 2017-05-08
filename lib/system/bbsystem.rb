@@ -1,5 +1,5 @@
 module BBLib
-  # A useable string representation of the command line that evoked this ruby instance (platform agnostic)
+  # A string representation of the command line that evoked this ruby instance (platform agnostic)
   def self.cmd_line(*args, include_args: true, include_ruby: true, prefix: nil, suffix: nil)
     args = ARGV if args.empty?
     include_ruby = false if special_program?
