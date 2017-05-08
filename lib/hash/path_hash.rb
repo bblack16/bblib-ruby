@@ -9,6 +9,9 @@ module BBLib
     PathHash.new(hash)
   end
 
+  # Wraps a hash in a PathHash object which allows ActiveRecord-like access to hash parameters.
+  # For example, methods are treated as keys passed in to Hash's [] method and ._ can be used to
+  # indicate that the next element should be searched for recursively.
   class PathHash < BasicObject
     attr_reader :hash, :recursive
 
@@ -60,6 +63,7 @@ module BBLib
   end
 end
 
+# Monkey Patches
 class Hash
   def path_hash
     BBLib.path_hash(self)
@@ -69,6 +73,7 @@ class Hash
   alias _ph path_hash
 end
 
+# Monkey Patches
 class Array
   def path_hash
     BBLib.path_hash(self)
