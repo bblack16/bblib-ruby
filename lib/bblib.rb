@@ -9,8 +9,9 @@ require_relative 'time/bbtime'
 require_relative 'number/bbnumber'
 require_relative 'array/bbarray'
 require_relative 'system/bbsystem'
+require_relative 'class/effortless'
 
-non_opal = ['os/bbos', 'gem/bbgem']
+non_opal = ['os/bbos']
 
 non_opal.each { |i| require_relative i } unless BBLib.in_opal?
 
