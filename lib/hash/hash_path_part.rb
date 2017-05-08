@@ -1,4 +1,5 @@
 class HashPath < BBLib::LazyClass
+  # This class encapsulates a single portion of a hash path path
   class Part < BBLib::LazyClass
     attr_of [String, Regexp, Fixnum, Range], :selector, default: nil, serialize: true
     attr_str :evaluation, default: nil, allow_nil: true, serialize: true
@@ -8,7 +9,7 @@ class HashPath < BBLib::LazyClass
       evl = path.scan(/\(.*\)$/).first
       self.evaluation = evl ? evl.uncapsulate('(', limit: 1) : evl
       self.recursive = path.start_with?('[[:recursive:]]')
-      self.selector = parse_selector(evl ? path.sub(evl, '') : path )
+      self.selector = parse_selector(evl ? path.sub(evl, '') : path)
     end
 
     def key_match?(key, object)
@@ -35,7 +36,7 @@ class HashPath < BBLib::LazyClass
           [object.send(*selector.uncapsulate('{').split(':'))].flatten(1).compact.each do |match|
             matches << match if evaluates?(match)
           end
-        rescue => e
+        rescue StandardError => e
           # Nothing, the special selector failed
           # puts e
         end
