@@ -81,11 +81,9 @@ describe BBLib do
     expect('Left IV Dead'.from_roman).to eq 'Left 4 Dead'
     expect('lIVe IIn fear'.to_roman).to eq 'lIVe IIn fear'
     t = 'Donkey Kong Country 3'
-    t.to_roman!
-    expect(t).to eq 'Donkey Kong Country III'
+    expect(t.to_roman).to eq 'Donkey Kong Country III'
     t = 'Title VII'
-    t.from_roman!
-    expect(t).to eq 'Title 7'
+    expect(t.from_roman).to eq 'Title 7'
   end
 
   it 'converts a string to a regular expression' do
