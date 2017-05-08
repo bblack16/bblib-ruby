@@ -2,6 +2,8 @@
 require_relative 'hash_path_part'
 require_relative 'hash_path_proc'
 
+# This classes parses dot delimited hash path strings and wraps the corresponding parts. Then hashes or arrays can be
+# passed to the find method to find all matching elements for the path.
 class HashPath < BBLib::LazyClass
   attr_ary_of Part, :parts, default: [], serialize: true
 
@@ -15,7 +17,7 @@ class HashPath < BBLib::LazyClass
 
   def insert(path, index)
     parse_path(path).each do |part|
-      @parts[index] = part
+      parts[index] = part
       index += 1
     end
   end
@@ -28,12 +30,11 @@ class HashPath < BBLib::LazyClass
   protected
 
   def lazy_init(*args)
-    args.find_all { |a| a.is_a?(String) }.each do |path|
+    args.find_all { |arg| arg.is_a?(String) }.each do |path|
       append(path)
     end
   end
 
-  # TODO Better recursive detection
   def parse_path(path)
     path.to_s.gsub('..', '.[[:recursive:]]').scan(/(?:[\(|\[|\/].*?[\)|\]|\/]|[^\.])+/).map do |part|
       Part.new(part)
@@ -45,11 +46,11 @@ module BBLib
   def self.hash_path(hash, *paths, multi_path: false, multi_join: false, multi_join_hash: false)
     tree = TreeHash.new(hash)
     if multi_path
-      tree.find_multi(*paths).map  { |r| r.map { |sr| sr.value } }
+      tree.find_multi(*paths).map  { |result| result.map(&:value) }
     elsif multi_join
-      tree.find_join(*paths).map { |r| r.map { |sr| sr.value } }
+      tree.find_join(*paths).map { |result| result.map(&:value) }
     elsif multi_join_hash
-      tree.find_join(*paths).map { |r| r.map { |sr| sr.value } }.to_h
+      tree.find_join(*paths).map { |result| result.map(&:value) }.to_h
     else
       tree.find(paths).map(&:value)
     end
@@ -63,7 +64,7 @@ module BBLib
     hash.squish.find_all { |_k, v| value.is_a?(Regexp) ? v =~ value : v == value }.to_h.keys
   end
 
-  def self.hash_path_set(hash, *paths, bridge: true)
+  def self.hash_path_set(hash, *paths)
     tree = hash.is_a?(TreeHash) ? hash : TreeHash.new(hash)
     tree.bridge(*paths)
     hash.replace(tree.value)
@@ -75,17 +76,15 @@ module BBLib
     hash.replace(tree.value)
   end
 
-  def self.hash_path_copy_to(from, to, *paths, symbols: true, array: false, overwrite: true, skip_nil: true)
-    tree = hash.is_a?(TreeHash) ? hash : TreeHash.new(hash)
+  def self.hash_path_copy_to(from, to, *paths)
+    tree = from.is_a?(TreeHash) ? from : TreeHash.new(from)
     tree.hash_path_copy_to(to, *paths)
   end
 
   def self.hash_path_delete(hash, *paths)
     tree = hash.is_a?(TreeHash) ? hash : TreeHash.new(hash)
-    tree.delete(*paths).tap do |deleted|
-      hash.replace(tree.value)
-    end
-    hash
+    tree.delete(*paths)
+    hash.replace(tree.value)
   end
 
   def self.hash_path_move(hash, *paths)
@@ -105,6 +104,7 @@ module BBLib
 
 end
 
+# Monkey patches
 class Hash
   def hash_path(*path)
     BBLib.hash_path self, *path
@@ -151,9 +151,9 @@ class Hash
   alias hpath_copy_to hash_path_copy_to
   alias hpaths hash_paths
   alias hpath_for hash_path_for
-
 end
 
+# Monkey Patches
 class Array
   def hash_path(*path)
     BBLib.hash_path(self, *path)
