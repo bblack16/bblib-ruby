@@ -69,7 +69,7 @@ class Array
   # @param delimiter [String] The delimiter used in the join. This allows something other than ', ' to be used
   # @param encapsulate [String] This will optionally encapsulate each element with a character or string. Useful to wrap all elements in quotes.
   # @returns [String] By default returns a comma seperated list with the final elements seperated by an 'and'. Behavior can be overriden using the params.
-  def join_terms(seperator = 'and', delimiter: ', ', encapsulate: nil)
+  def join_terms(seperator = :and, delimiter: ', ', encapsulate: nil)
     elements = (encapsulate ? map { |element| element.to_s.encapsulate(encapsulate) } : self)
     return elements.join(delimiter) if size <= 1
     return elements.join(" #{seperator} ") if size == 2
