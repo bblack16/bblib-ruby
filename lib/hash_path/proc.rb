@@ -1,10 +1,12 @@
 # frozen_string_literal: true
-require_relative 'hash_path_processors'
+require_relative 'processors'
 
 module BBLib
   # This class wraps around a hash path or set of paths and maps a set of actions for modifying elements at the matching
   # path.
-  class HashPathProc < BBLib::LazyClass
+  class HashPathProc
+    include BBLib::Effortless
+
     attr_ary_of String, :paths, default: [''], serialize: true, uniq: true
     attr_of [String, Symbol], :action, default: nil, allow_nil: true, serialize: true, pre_proc: proc { |arg| HashPathProc.map_action(arg.to_sym) }
     attr_ary :args, default: [], serialize: true
@@ -56,7 +58,7 @@ module BBLib
       clean ? clean.first : action
     end
 
-    def lazy_init(*args)
+    def simple_init(*args)
       options = BBLib.named_args(*args)
       options.merge(options.delete(:options)) if options[:options]
       USED_KEYWORDS.each { |k| options.delete(k) }

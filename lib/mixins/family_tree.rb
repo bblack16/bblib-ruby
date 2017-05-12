@@ -11,11 +11,16 @@ module BBLib
       end
     end
 
+    alias subclasses descendants
+
     # Return all classes that directly inherit from this class
-    def subclasses(include_singletons = false)
+    def direct_descendants(include_singletons = false)
       ObjectSpace.each_object(Class).select do |c|
         (include_singletons || !c.singleton_class?) && c.ancestors[1] == self
       end
     end
+
+    alias direct_subclasses direct_descendants
+
   end
 end

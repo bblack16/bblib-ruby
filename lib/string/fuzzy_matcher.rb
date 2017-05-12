@@ -1,21 +1,22 @@
 module BBLib
   # Used to apply multiple string comparison algorithms to strings and
   # normalize them to determine similarity for words or phrases.
-  class FuzzyMatcher < LazyClass
+  class FuzzyMatcher
+    include Effortless
     attr_float_between 0, 100, :threshold, default: 75, serialize: true
     attr_bool :case_sensitive, default: true, serialize: true
     attr_bool :remove_symbols, :move_articles, :convert_roman, default: false, serialize: true
-    attr_reader :algorithms
+    attr_hash :algorithms, keys: [Symbol], values: [Float, Fixnum]
 
     # Calculates a percentage match between string a and string b.
     def similarity(string_a, string_b)
       string_a, string_b = prep_strings(string_a, string_b)
       return 100.0 if string_a == string_b
       score = 0
-      total_weight = algorithms.map { |_a, data| data[:weight] }.inject { |sum, weight| sum + weight }
-      algorithms.each do |_a, vals|
-        next unless vals[:weight].positive?
-        score+= string_a.send(vals[:signature], string_b) * vals[:weight]
+      total_weight = algorithms.values.inject { |sum, weight| sum + weight }
+      algorithms.each do |algorithm, weight|
+        next unless weight.positive?
+        score+= string_a.send("#{algorithm}_similarity", string_b) * weight
       end
       score / total_weight
     end
@@ -38,17 +39,17 @@ module BBLib
 
     def set_weight(algorithm, weight)
       return nil unless algorithms.include? algorithm
-      algorithms[algorithm][:weight] = BBLib.keep_between(weight, 0, nil)
+      algorithms[algorithm] = BBLib.keep_between(weight, 0, nil)
     end
 
     private
 
-    def lazy_setup
-      @algorithms = {
-        levenshtein: { weight: 10, signature: :levenshtein_similarity },
-        composition: { weight: 5, signature: :composition_similarity },
-        numeric:     { weight: 0, signature: :numeric_similarity },
-        phrase:      { weight: 0, signature: :phrase_similarity }
+    def simple_setup
+      self.algorithms = {
+        levenshtein: 10,
+        composition: 5,
+        numeric:     0,
+        phrase:      0
       }
     end
 

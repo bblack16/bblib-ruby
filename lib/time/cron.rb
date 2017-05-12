@@ -1,16 +1,17 @@
 # frozen_string_literal: true
 module BBLib
-  class Cron < BBLib::LazyClass
+  class Cron
+    include Effortless
     attr_str :expression, default: '* * * * * *'
-    attr_reader :parts
+    attr_reader :parts, serialize: false
 
-    def next(exp = @expression, count: 1, time: Time.now)
-      self.expression = exp unless exp == @expression
+    def next(exp = expression, count: 1, time: Time.now)
+      self.expression = exp unless exp == expression
       closest(count: count, time: time, direction: 1)
     end
 
-    def prev(exp = @expression, count: 1, time: Time.now)
-      self.expression = exp unless exp == @expression
+    def prev(exp = expression, count: 1, time: Time.now)
+      self.expression = exp unless exp == expression
       closest(count: count, time: time, direction: -1)
     end
 
@@ -19,6 +20,7 @@ module BBLib
       SPECIAL_EXP.each { |x, v| e = x if v.include?(e) }
       @expression = e
       parse
+      e
     end
 
     def self.next(exp, count: 1, time: Time.now)
@@ -57,7 +59,7 @@ module BBLib
 
     private
 
-    def lazy_init(*args)
+    def simple_init(*args)
       @parts = {}
       self.expression = args.first if args.first.is_a?(String)
     end

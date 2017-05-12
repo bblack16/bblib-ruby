@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-require_relative 'attr'
-require_relative 'hooks'
+# require_relative 'attr'
+# require_relative 'hooks'
 
 module BBLib
   def self.are_all?(klass, *vars)

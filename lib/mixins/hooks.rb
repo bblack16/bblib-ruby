@@ -10,12 +10,17 @@ module BBLib
         hooks = _hooks[hook_type][methods.pop] ||= { methods: [], opts: {} }
         hooks[:methods] += methods
         hooks[:opts] = hooks[:opts].deep_merge(opts)
+        methods.each { |method| _hook_method(method) }
         true
       end
     end
 
     def method_added(method)
+      _hook_method(method)
       super
+    end
+
+    def _hook_method(method)
       [:before, :after].each do |hook_type|
         _hooks[hook_type].find_all { |hook, data| data[:methods].include?(method) }.to_h.each do |hook, data|
           next if _hooked_methods[hook_type] && _hooked_methods[hook_type][hook] && _hooked_methods[hook_type][hook].include?(method)
@@ -24,8 +29,27 @@ module BBLib
       end
     end
 
+    # def _hook_all
+    #   _hooks.each do |type, hooks|
+    #     hooks.each do |hook, data|
+    #       data[:methods].each do |method|
+    #         _hook_method(method)
+    #       end
+    #     end
+    #   end
+    # end
+
+    def _superclass_hooks
+      hooks = { before: {}, after: {} }
+      ancestors.reverse.each do |ancestor|
+        next if ancestor == self
+        hooks = hooks.deep_merge(ancestor.send(:_hooks)) if ancestor.respond_to?(:_hooks)
+      end
+      hooks
+    end
+
     def _hooks
-      @_hooks ||= { before: {}, after: {} }
+      @_hooks ||= _superclass_hooks
     end
 
     def _hooked_methods

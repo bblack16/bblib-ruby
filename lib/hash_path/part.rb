@@ -1,6 +1,8 @@
-class HashPath < BBLib::LazyClass
+class HashPath
   # This class encapsulates a single portion of a hash path path
-  class Part < BBLib::LazyClass
+  class Part
+    include BBLib::Effortless
+
     attr_of [String, Regexp, Fixnum, Range], :selector, default: nil, serialize: true
     attr_str :evaluation, default: nil, allow_nil: true, serialize: true
     attr_bool :recursive, default: false, serialize: true
@@ -59,7 +61,7 @@ class HashPath < BBLib::LazyClass
 
     protected
 
-    def lazy_init(*args)
+    def simple_init(*args)
       parse(args.first) if args.first.is_a?(String)
     end
 

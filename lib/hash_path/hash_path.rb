@@ -1,11 +1,13 @@
 # frozen_string_literal: true
-require_relative 'hash_path_part'
-require_relative 'hash_path_proc'
+require_relative 'part'
+require_relative 'proc'
+require_relative 'path_hash'
 
 # This classes parses dot delimited hash path strings and wraps the corresponding parts. Then hashes or arrays can be
 # passed to the find method to find all matching elements for the path.
-class HashPath < BBLib::LazyClass
-  attr_ary_of Part, :parts, default: [], serialize: true
+class HashPath
+  include BBLib::Effortless
+  attr_ary_of Part, :parts, default: []
 
   def append(path)
     insert(path, parts.size)
@@ -29,7 +31,7 @@ class HashPath < BBLib::LazyClass
 
   protected
 
-  def lazy_init(*args)
+  def simple_init(*args)
     args.find_all { |arg| arg.is_a?(String) }.each do |path|
       append(path)
     end

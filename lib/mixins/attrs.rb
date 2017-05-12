@@ -20,24 +20,30 @@ module BBLib
       _attrs.keys.map { |m| "#{m}=".to_sym }.select { |m| method_defined?(m) }
     end
 
-    def attr_reader(*args)
-      args.each { |arg| _register_attr(arg, :attr_reader) }
+    def attr_reader(*args, **opts)
+      args.each do |arg|
+        _register_attr(arg, :attr_reader)
+        serialize_method(arg) if _attr_serialize?(opts)
+      end
       super(*args)
     end
 
-    def attr_writer(*args)
+    def attr_writer(*args, **opts)
       args.each { |arg| _register_attr(arg, :attr_writer) }
       super(*args)
     end
 
-    def attr_accessor(*args)
-      args.each { |arg| _register_attr(arg, :attr_accessor) }
+    def attr_accessor(*args, **opts)
+      args.each do |arg|
+        _register_attr(arg, :attr_accessor)
+        serialize_method(arg) if _attr_serialize?(opts)
+      end
       super(*args)
     end
 
     def attr_custom(method, opts = {}, &block)
       called_by = caller_locations(1,1)[0].label.gsub('block in ', '')
-      type      = (type =~ /^attr_/ ? called_by.sub('attr_', '').to_sym : :custom)
+      type      = (called_by =~ /^attr_/ ? called_by.to_sym : :custom)
       opts      = opts.dup
       ivar      = "@#{method}".to_sym
 
@@ -58,7 +64,17 @@ module BBLib
       protected "#{method}=".to_sym if opts[:protected] || opts[:protected_writer]
       private method if opts[:private] || opts[:private_reader]
       private "#{method}=".to_sym if opts[:private] || opts[:private_writer]
+
+      if _attr_serialize?(opts)
+        serialize_method(method, opts[:serialize_method], opts[:serialize_opts] || {})
+      end
       _register_attr(method, type, opts)
+    end
+
+    def _attr_serialize?(opts)
+      return false unless respond_to?(:serialize_method)
+      (opts[:private] || opts[:protected]) && opts[:serialize] ||
+      (opts.include?(:serialize) && opts[:serialize]) || !opts.include?(:serialize)
     end
 
     def attr_of(klasses, *methods, **opts)
@@ -80,11 +96,15 @@ module BBLib
       end
     end
 
+    alias attr_str attr_string
+
     def attr_integer(*methods, **opts)
       methods.each do |method|
         attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : arg.to_i }
       end
     end
+
+    alias attr_int attr_integer
 
     def attr_float(*methods, **opts)
       methods.each do |method|
@@ -97,6 +117,8 @@ module BBLib
         attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : arg.to_s.to_sym }
       end
     end
+
+    alias attr_sym attr_symbol
 
     def attr_boolean(*methods, **opts)
       methods.each do |method|
@@ -113,11 +135,17 @@ module BBLib
       end
     end
 
+    alias attr_int_between attr_integer_between
+    alias attr_float_between attr_integer_between
+
     def attr_integer_loop(min, max, *methods, **opts)
       methods.each do |method|
         attr_custom(method, opts) { |arg| BBLib.loop_between(arg, min, max) }
       end
     end
+
+    alias attr_int_loop attr_integer_loop
+    alias attr_float_loop attr_integer_loop
 
     def attr_element_of(list, *methods, **opts)
       methods.each do |method|
@@ -140,6 +168,8 @@ module BBLib
       end
     end
 
+    alias attr_ary attr_array
+
     def attr_array_of(klasses, *methods, **opts)
       klasses = [klasses].flatten
       methods.each do |method|
@@ -157,6 +187,8 @@ module BBLib
         attr_array_remover(method, opts[:remover_name]) if opts[:add_rem] || opts[:remover]
       end
     end
+
+    alias attr_ary_of attr_array_of
 
     def attr_array_adder(method, name = nil, &block)
       name = "add_#{method}" unless name
@@ -236,13 +268,13 @@ module BBLib
           if opts[:keys]
             arg.keys.each do |key|
               next if BBLib.is_a?(key, *opts[:keys])
-              raise ArgumentError, "Invalid key type for #{method}: #{key.class}"
+              raise ArgumentError, "Invalid key type for #{method}: #{key.class}. Must be #{opts[:keys].join_terms(:or)}."
             end
           end
           if opts[:values]
             arg.values.each do |value|
               next if BBLib.is_a?(value, *opts[:values])
-              raise ArgumentError, "Invalid value type for #{method}: #{value.class}"
+              raise ArgumentError, "Invalid value type for #{method}: #{value.class}. Must be #{opts[:values].join_terms(:or)}."
             end
           end
           arg

@@ -8,8 +8,8 @@ module BBLib
   #
   # @author Brandon Black
   class LazyClass
-    extend Hooks
-    extend Attr
+    extend BBLib::Hooks
+    extend BBLib::Attrs
     attr_reader :_serialize_fields
 
     def initialize(*args)
