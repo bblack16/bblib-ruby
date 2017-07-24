@@ -80,7 +80,7 @@ module BBLib
     end
 
     def stats(task = :default, pretty: false)
-      return nil unless @tasks.include?(task)
+      return nil unless tasks.include?(task)
       TIMER_TYPES.map do |k, _v|
         next if STATS_IGNORE.include?(k)
         [k, send(k, task, pretty: pretty)]
