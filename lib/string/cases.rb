@@ -8,16 +8,13 @@ module BBLib
       if ignoreables.include?(word.downcase)
         word.downcase
       elsif first_only
-        word[0] = word[0].to_s.upcase
-        word
+        word.to_s.slice(0,1).to_s.upcase + word.to_s[1..-1].to_s
       else
         word.capitalize
       end
     end
     # Always cap the first word
-    first = words.first.to_s
-    first[0] = first[0].to_s.upcase
-    words[0] = first
+    words[0] = words.first.to_s.slice(0,1).to_s.upcase + words.first.to_s[1..-1].to_s
     words.interleave(spacing).join
   end
 
@@ -55,6 +52,10 @@ module BBLib
     str.gsub(/(?<=[^^])([A-Z])/, '_\1').gsub(/\s+/, ' ').snake_case.downcase
   end
 
+  def self.class_case(str)
+    str.gsub(/(?<=[^^])([A-Z])/, ' \1').gsub(/\s+/, ' ').title_case.gsub(/\s+|\_/, '')
+  end
+
   def self.spinal_case(str)
     BBLib.delimited_case str, '-'
   end
@@ -87,6 +88,10 @@ class String
 
   def method_case
     BBLib.method_case(self)
+  end
+
+  def class_case
+    BBLib.class_case(self)
   end
 
   def spinal_case
