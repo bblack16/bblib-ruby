@@ -6,7 +6,7 @@ module BBLib
     attr_float_between 0, 100, :threshold, default: 75, serialize: true
     attr_bool :case_sensitive, default: true, serialize: true
     attr_bool :remove_symbols, :move_articles, :convert_roman, default: false, serialize: true
-    attr_hash :algorithms, keys: [Symbol], values: [Float, Fixnum]
+    attr_hash :algorithms, keys: [Symbol], values: [Float, Integer]
 
     # Calculates a percentage match between string a and string b.
     def similarity(string_a, string_b)
