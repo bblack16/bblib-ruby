@@ -23,7 +23,7 @@ module BBLib
     def attr_reader(*args, **opts)
       args.each do |arg|
         _register_attr(arg, :attr_reader)
-        serialize_method(arg) if _attr_serialize?(opts)
+        serialize_method(arg, opts[:serialize_method], opts[:serialize_opts] || {}) if _attr_serialize?(opts)
       end
       super(*args)
     end
@@ -36,27 +36,27 @@ module BBLib
     def attr_accessor(*args, **opts)
       args.each do |arg|
         _register_attr(arg, :attr_accessor)
-        serialize_method(arg) if _attr_serialize?(opts)
+        serialize_method(arg, opts[:serialize_method], opts[:serialize_opts] || {}) if _attr_serialize?(opts)
       end
       super(*args)
     end
 
     def attr_custom(method, opts = {}, &block)
-      called_by = caller_locations(1,1)[0].label.gsub('block in ', '')
+      called_by = caller_locations(1, 1)[0].label.gsub('block in ', '') rescue :attr_custom
       type      = (called_by =~ /^attr_/ ? called_by.to_sym : :custom)
       opts      = opts.dup
       ivar      = "@#{method}".to_sym
 
       define_method("#{method}=") do |*args|
         args = opts[:pre_proc].call(*args) if opts[:pre_proc]
-        instance_variable_set(ivar, yield(*args))
+        instance_variable_set(ivar, (args.is_a?(Array) ? yield(*args) : yield(args)))
       end
 
       define_method(method) do
         if instance_variable_defined?(ivar)
           instance_variable_get(ivar)
         elsif opts.include?(:default)
-          send("#{method}=", opts[:default])
+          send("#{method}=", opts[:default].respond_to?(:dup) ? (opts[:default].dup rescue opts[:default]) : opts[:default])
         end
       end
 
@@ -65,9 +65,7 @@ module BBLib
       private method if opts[:private] || opts[:private_reader]
       private "#{method}=".to_sym if opts[:private] || opts[:private_writer]
 
-      if _attr_serialize?(opts)
-        serialize_method(method, opts[:serialize_method], opts[:serialize_opts] || {})
-      end
+      serialize_method(method, opts[:serialize_method], (opts[:serialize_opts] || {}).merge(default: opts[:default])) if _attr_serialize?(opts)
       _register_attr(method, type, opts)
     end
 
@@ -82,6 +80,8 @@ module BBLib
       methods.each do |method|
         attr_custom(method, opts.merge(_attr_type: :of)) do |arg|
           if BBLib.is_a?(arg, *allowed) || (arg.nil? && opts[:allow_nil])
+            arg
+          elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
             arg
           else
             raise ArgumentError, "#{method} must be set to a class of #{allowed.join_terms(:or)}, NOT #{arg.class}"
@@ -131,7 +131,7 @@ module BBLib
 
     def attr_integer_between(min, max, *methods, **opts)
       methods.each do |method|
-        attr_custom(method, opts) { |arg| BBLib.keep_between(arg, min, max) }
+        attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : BBLib.keep_between(arg, min, max) }
       end
     end
 
@@ -140,7 +140,7 @@ module BBLib
 
     def attr_integer_loop(min, max, *methods, **opts)
       methods.each do |method|
-        attr_custom(method, opts) { |arg| BBLib.loop_between(arg, min, max) }
+        attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : BBLib.loop_between(arg, min, max) }
       end
     end
 
@@ -174,12 +174,25 @@ module BBLib
       klasses = [klasses].flatten
       methods.each do |method|
         attr_custom(method, opts) do |args|
-          args = [args] unless args.is_a?(Array)
           array = []
-          args.each do |arg|
-            match = BBLib.is_a?(arg, *klasses)
-            raise ArgumentError, "Invalid class passed to #{method}: #{arg.class}. Must be a #{klasses.join_terms(:or)}." unless match || opts[:raise] == false
-            array.push(arg) if match
+          if args.nil?
+            if opts[:allow_nil]
+              array = nil
+            else
+              raise ArgumentError, "#{method} cannot be set to nil."
+            end
+          else
+            args = [args] unless args.is_a?(Array)
+            args.each do |arg|
+              match = BBLib.is_a?(arg, *klasses)
+              if match
+                array.push(arg) if match
+              elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
+                array.push(arg)\
+              else
+                raise ArgumentError, "Invalid class passed to #{method}: #{arg.class}. Must be a #{klasses.join_terms(:or)}." unless opts[:raise] == false
+              end
+            end
           end
           array
         end
@@ -264,22 +277,40 @@ module BBLib
     def attr_hash(*methods, **opts)
       methods.each do |method|
         attr_custom(method, **opts) do |arg|
-          raise ArgumentError, "#{method} must be set to a hash, not a #{arg.class}." unless arg.is_a?(Hash)
-          if opts[:keys]
+          raise ArgumentError, "#{method} must be set to a hash, not a #{arg.class}." unless arg.is_a?(Hash) || arg.nil? && opts[:allow_nil]
+          if opts[:keys] && arg
             arg.keys.each do |key|
-              next if BBLib.is_a?(key, *opts[:keys])
-              raise ArgumentError, "Invalid key type for #{method}: #{key.class}. Must be #{opts[:keys].join_terms(:or)}."
+              if BBLib.is_a?(key, *opts[:keys])
+                next
+              elsif (opts.include?(:pack_key) && opts[:pack_key]) && new_key = _attr_pack(key, klasses, opts)
+                arg[new_key] = arg.delete(key)
+              else
+                raise ArgumentError, "Invalid key type for #{method}: #{key.class}. Must be #{opts[:keys].join_terms(:or)}."
+              end
             end
           end
-          if opts[:values]
-            arg.values.each do |value|
-              next if BBLib.is_a?(value, *opts[:values])
-              raise ArgumentError, "Invalid value type for #{method}: #{value.class}. Must be #{opts[:values].join_terms(:or)}."
+          if opts[:values] && arg
+            arg.each do |key, value|
+              if BBLib.is_a?(value, *opts[:values])
+                next
+              elsif (!opts.include?(:pack_value) || opts[:pack_value]) && value = _attr_pack(value, klasses, opts)
+                arg[key] = arg.delete(value)
+              else
+                raise ArgumentError, "Invalid value type for #{method}: #{value.class}. Must be #{opts[:values].join_terms(:or)}."
+              end
             end
           end
           arg
         end
       end
+    end
+
+    def _attr_pack(arg, klasses, opts = {})
+      klasses = [klasses].flatten
+      unless BBLib.is_a?(arg, *klasses)
+        return klasses.first.new(*[arg].flatten(1))
+      end
+      nil
     end
 
     protected
