@@ -10,14 +10,14 @@ module BBLib
         hooks = _hooks[hook_type][methods.pop] ||= { methods: [], opts: {} }
         hooks[:methods] += methods
         hooks[:opts] = hooks[:opts].deep_merge(opts)
-        methods.each { |method| _hook_method(method) }
+        methods.each { |method| _hook_method(method) if method_defined?(method) }
         true
       end
     end
 
     def method_added(method)
       _hook_method(method)
-      super
+      # super
     end
 
     def _hook_method(method)
