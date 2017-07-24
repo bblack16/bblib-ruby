@@ -3,7 +3,7 @@ class HashPath
   class Part
     include BBLib::Effortless
 
-    attr_of [String, Regexp, Fixnum, Range], :selector, default: nil, serialize: true
+    attr_of [String, Regexp, Integer, Range], :selector, default: nil, allow_nil: true, serialize: true
     attr_str :evaluation, default: nil, allow_nil: true, serialize: true
     attr_bool :recursive, default: false, serialize: true
 
