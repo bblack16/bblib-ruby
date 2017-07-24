@@ -86,5 +86,16 @@ module BBLib
       end
 
     end
+
+    # Mostly platform agnost way to find the full path of an executable in the current env path.
+    def self.which(cmd)
+      ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+        (ENV['PATHEXT']&.split(';') || ['']).each do |ext|
+          executable = File.join(path, "#{cmd}#{ext.downcase}").pathify
+          return executable if File.executable?(executable) && !File.directory?(executable)
+        end
+      end
+      nil
+    end
   end
 end
