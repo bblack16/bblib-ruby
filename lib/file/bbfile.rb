@@ -14,10 +14,11 @@ module BBLib
   # @param [Boolean] files If true, paths to files matching the filter will be returned.
   # @param [Boolean] dirs If true, paths to dirs matching the filter will be returned.
   def self.scan_dir(path, *filters, recursive: false, files: true, dirs: true, &block)
+    return [] unless Dir.exist?(path)
     filters = filters.map { |filter| filter.is_a?(Regexp) ? filter : /^#{Regexp.quote(filter).gsub('\\*', '.*')}$/ }
     Dir.foreach(path).flat_map do |item|
       next if item =~ /^\.{1,2}$/
-      item = "#{path}/#{item}"
+      item = "#{path}/#{item}".gsub('\\', '/')
       if File.file?(item)
         if files && (filters.empty? || filters.any? { |filter| item =~ filter })
           block_given? ? yield(item) : item
