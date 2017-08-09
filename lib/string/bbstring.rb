@@ -5,6 +5,7 @@ require_relative 'roman'
 require_relative 'fuzzy_matcher'
 require_relative 'cases'
 require_relative 'regexp'
+require_relative 'pluralization'
 
 module BBLib
   # Quickly remove any symbols from a string leaving only alpha-numeric characters and white space.
@@ -76,12 +77,16 @@ module BBLib
     end
   end
 
-  def self.pluralize(num, base, plural = 's', singular = nil)
-    num == 1 ? "#{base}#{singular}" : "#{base}#{plural}"
-  end
-
-  def self.plural_string(num, *args)
-    "#{num} #{pluralize(num, *args)}"
+  def self.copy_capitalization(str_a, str_b)
+    if str_a.upper?
+      str_b.upcase
+    elsif str_a.lower?
+      str_b.downcase
+    elsif str_a.capital?
+      str_b.capitalize
+    else
+      str_b
+    end
   end
 end
 
