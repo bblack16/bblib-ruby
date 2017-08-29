@@ -4,9 +4,15 @@ module BBLib
     def self.included(base)
       base.extend(BBLib::Attrs)
       base.extend(BBLib::Hooks)
+      base.singleton_class.extend(BBLib::Hooks)
       base.extend(BBLib::FamilyTree)
       base.send(:include, BBLib::Serializer)
       base.send(:include, BBLib::SimpleInit)
+      base.send(:include, BBLib::Logger)
+    end
+
+    def _attrs
+      self.class._attrs
     end
   end
 
