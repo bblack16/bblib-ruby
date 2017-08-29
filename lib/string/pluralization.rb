@@ -108,8 +108,8 @@ module BBLib
     def self.singularize(string)
       string = string.to_s
       sym = string.to_s.downcase.to_sym
-      if singular = SPECIAL_PLURALS.find { |k, v| v == sym }&.first
-        result = singular
+      if singular = SPECIAL_PLURALS.find { |k, v| v == sym }
+        result = singular.first
       elsif string.downcase.end_with?(*%w{oes ches zes ses xes})
         result = string.sub(/es$/i, '')
       elsif string =~ /ies$/i
