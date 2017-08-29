@@ -7,7 +7,16 @@ module BBLib
   module Attrs
 
     def _attrs
-      @_attrs ||= {}
+      @_attrs ||= _ancestor_attrs
+    end
+
+    def _ancestor_attrs
+      hash = {}
+      ancestors.reverse.each do |ancestor|
+        next if ancestor == self
+        hash = hash.merge(ancestor._attrs) if ancestor.respond_to?(:_attrs)
+      end
+      hash
     end
 
     # Lists all attr_* getter methods that were created on this class.
@@ -46,27 +55,30 @@ module BBLib
       type      = (called_by =~ /^attr_/ ? called_by.to_sym : :custom)
       opts      = opts.dup
       ivar      = "@#{method}".to_sym
+      mthd_type = opts[:singleton] ? :define_singleton_method : :define_method
 
-      define_method("#{method}=") do |*args|
+      self.send(mthd_type, "#{method}=") do |*args|
         args = opts[:pre_proc].call(*args) if opts[:pre_proc]
         instance_variable_set(ivar, (args.is_a?(Array) ? yield(*args) : yield(args)))
       end
 
-      define_method(method) do
+      self.send(mthd_type, method) do
         if instance_variable_defined?(ivar)
           instance_variable_get(ivar)
         elsif opts.include?(:default)
-          send("#{method}=", opts[:default].respond_to?(:dup) ? (opts[:default].dup rescue opts[:default]) : opts[:default])
+          send("#{method}=", opts[:default].respond_to?(:dup) && BBLib.is_a?(opts[:default], Array, Hash) ? (opts[:default].dup rescue opts[:default]) : opts[:default])
         end
       end
 
-      protected method if opts[:protected] || opts[:protected_reader]
-      protected "#{method}=".to_sym if opts[:protected] || opts[:protected_writer]
-      private method if opts[:private] || opts[:private_reader]
-      private "#{method}=".to_sym if opts[:private] || opts[:private_writer]
+      unless opts[:singleton]
+        protected method if opts[:protected] || opts[:protected_reader]
+        protected "#{method}=".to_sym if opts[:protected] || opts[:protected_writer]
+        private method if opts[:private] || opts[:private_reader]
+        private "#{method}=".to_sym if opts[:private] || opts[:private_writer]
 
-      serialize_method(method, opts[:serialize_method], (opts[:serialize_opts] || {}).merge(default: opts[:default])) if _attr_serialize?(opts)
-      _register_attr(method, type, opts)
+        serialize_method(method, opts[:serialize_method], (opts[:serialize_opts] || {}).merge(default: opts[:default])) if _attr_serialize?(opts)
+        _register_attr(method, type, opts)
+      end
     end
 
     def _attr_serialize?(opts)
@@ -78,13 +90,13 @@ module BBLib
     def attr_of(klasses, *methods, **opts)
       allowed = [klasses].flatten
       methods.each do |method|
-        attr_custom(method, opts.merge(_attr_type: :of)) do |arg|
+        attr_custom(method, opts.merge(_attr_type: :of, classes: klasses)) do |arg|
           if BBLib.is_a?(arg, *allowed) || (arg.nil? && opts[:allow_nil])
             arg
           elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
             arg
           else
-            raise ArgumentError, "#{method} must be set to a class of #{allowed.join_terms(:or)}, NOT #{arg.class}"
+            raise ArgumentError, "#{method} must be set to a class of #{allowed.join_terms(:or)}, NOT #{arg.class}" unless opts[:suppress]
           end
         end
       end
@@ -123,7 +135,12 @@ module BBLib
     def attr_boolean(*methods, **opts)
       methods.each do |method|
         attr_custom(method, opts) { |arg| arg ? true : false }
-        alias_method "#{method}?", method unless opts[:no_?]
+        next if opts[:no_?]
+        if opts[:singleton]
+          singleton_class.send(:alias_method, "#{method}?", method)
+        else
+          alias_method "#{method}?", method
+        end
       end
     end
 
@@ -173,7 +190,7 @@ module BBLib
     def attr_array_of(klasses, *methods, **opts)
       klasses = [klasses].flatten
       methods.each do |method|
-        attr_custom(method, opts) do |args|
+        attr_custom(method, opts.merge(classes: klasses)) do |args|
           array = []
           if args.nil?
             if opts[:allow_nil]
@@ -268,7 +285,35 @@ module BBLib
           elsif arg.is_a?(Numeric)
             Time.at(arg)
           else
-            Time.parse(arg.to_s)
+            begin
+              Time.parse(arg.to_s)
+            rescue => e
+              nil
+            end
+          end
+        end
+      end
+    end
+
+    def attr_date(*methods, **opts)
+      methods.each do |method|
+        attr_custom(method, **opts) do |arg|
+          if opts[:formats]
+            arg = arg.to_s
+            opts[:format].each do |format|
+              arg = Date.strftime(arg, format) rescue arg
+            end
+          end
+          if arg.is_a?(Date) || arg.nil? && opts[:allow_nil]
+            arg
+          elsif arg.is_a?(Numeric)
+            Date.parse(Time.at(arg).to_s)
+          else
+            begin
+              Date.parse(arg.to_s)
+            rescue => e
+              nil
+            end
           end
         end
       end
@@ -277,7 +322,7 @@ module BBLib
     def attr_hash(*methods, **opts)
       methods.each do |method|
         attr_custom(method, **opts) do |arg|
-          raise ArgumentError, "#{method} must be set to a hash, not a #{arg.class}." unless arg.is_a?(Hash) || arg.nil? && opts[:allow_nil]
+          raise ArgumentError, "#{method} must be set to a hash, not a #{arg.class} (for #{self})." unless arg.is_a?(Hash) || arg.nil? && opts[:allow_nil]
           if opts[:keys] && arg
             arg.keys.each do |key|
               if BBLib.is_a?(key, *opts[:keys])
@@ -300,6 +345,7 @@ module BBLib
               end
             end
           end
+          arg = arg.keys_to_sym if opts[:symbol_keys] && arg
           arg
         end
       end
@@ -316,7 +362,7 @@ module BBLib
     protected
 
     def _register_attr(method, type, opts = {})
-      _attrs[method] = { type: type, options: opts }
+      _attrs[method] = { type: type.to_s.sub(/^attr_/, '').to_sym, options: opts }
       method
     end
 
