@@ -77,7 +77,12 @@ module BBLib
     end
   end
 
+  # Takes two strings and tries to apply the same capitalization from
+  # the first string to the second.
+  # Supports lower case, upper case and capital case
   def self.copy_capitalization(str_a, str_b)
+    str_a = str_a.to_s
+    str_b = str_b.to_s
     if str_a.upper?
       str_b.upcase
     elsif str_a.lower?
