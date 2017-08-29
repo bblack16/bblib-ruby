@@ -20,6 +20,14 @@ module BBLib
       end
     end
 
+    def namespace
+      BBLib.namespace_of(self)
+    end
+
+    def root_namespace
+      BBLib.root_namespace_of(self)
+    end
+
     alias direct_subclasses direct_descendants
 
   end
