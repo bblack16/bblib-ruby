@@ -6,8 +6,8 @@ module BBLib
   end
 
   def self.default_logger
-    log = Logger.new(STDOUT)
-    log.level = Logger::INFO
+    log = ::Logger.new(STDOUT)
+    log.level = ::Logger::INFO
     log.formatter = proc do |severity, datetime, progname, msg|
       "[#{datetime}] #{severity} - #{msg}\n"
     end
