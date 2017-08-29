@@ -57,6 +57,7 @@ module BBLib
     offspring: :offspring,
     paralysis: :paralyses,
     parenthesis: :parentheses,
+    person: :people,
     photo: :photos,
     piano: :pianos,
     pimento: :pimentos,
@@ -88,6 +89,7 @@ module BBLib
   }
 
     def self.pluralize(string, num = 2)
+      string = string.to_s
       sym = string.to_s.downcase.to_sym
       if plural = SPECIAL_PLURALS[sym]
         result = num == 1 ? string : plural
@@ -100,10 +102,11 @@ module BBLib
           result = num == 1 ? string : (string + 's')
         end
       end
-      copy_capitalization(string, result)
+      copy_capitalization(string, result).to_s
     end
 
     def self.singularize(string)
+      string = string.to_s
       sym = string.to_s.downcase.to_sym
       if singular = SPECIAL_PLURALS.find { |k, v| v == sym }&.first
         result = singular
@@ -111,12 +114,12 @@ module BBLib
         result = string.sub(/es$/i, '')
       elsif string =~ /ies$/i
         result = string.sub(/ies$/i, 'y')
-      elsif string =~ /s$/i && !string =~ /s{2}$/i
+      elsif string =~ /s$/i && !(string =~ /s{2}$/i)
         result = string.sub(/s$/i, '')
       else
         result = string
       end
-      copy_capitalization(string, result)
+      copy_capitalization(string, result).to_s
     end
 
     def self.custom_pluralize(num, base, plural = 's', singular = nil)
