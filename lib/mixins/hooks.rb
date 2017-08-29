@@ -16,14 +16,26 @@ module BBLib
     end
 
     def method_added(method)
-      _hook_method(method)
-      # super
+      if _defining_hook?
+        @_defining_hook = false
+      else
+        _hook_method(method)
+      end
     end
 
-    def _hook_method(method)
+    def singleton_method_added(method)
+      if _defining_hook?
+        @_defining_hook = false
+      else
+        self.singleton_class.send(:_hook_method, method, force: true) if self.singleton_class.respond_to?(:_hook_method)
+      end
+    end
+
+    def _hook_method(method, force: false)
+      return false if _defining_hook?
       [:before, :after].each do |hook_type|
         _hooks[hook_type].find_all { |hook, data| data[:methods].include?(method) }.to_h.each do |hook, data|
-          next if _hooked_methods[hook_type] && _hooked_methods[hook_type][hook] && _hooked_methods[hook_type][hook].include?(method)
+          next if !force && _hooked_methods[hook_type] && _hooked_methods[hook_type][hook] && _hooked_methods[hook_type][hook].include?(method)
           send("_hook_#{hook_type}_method", method, hook, data[:opts])
         end
       end
@@ -58,8 +70,12 @@ module BBLib
 
     def _add_hooked_method(type, hook, method)
       history = _hooked_methods[type]
-      history[hook] = [] unless history[hook]
-      history[hook].push(method)
+      history[hook] = {} unless history[hook]
+      history[hook][method] = instance_method(method)
+    end
+
+    def _defining_hook?
+      @_defining_hook ||= false
     end
 
     # Current opts:
@@ -71,6 +87,7 @@ module BBLib
       return false if method == hook
       _add_hooked_method(:before, hook, method)
       original = instance_method(method)
+      @_defining_hook = true
       define_method(method) do |*args, &block|
         if opts[:send_args] || opts[:send_arg] || opts[:modify_args] || opts[:send_method]
           margs = args
@@ -83,6 +100,8 @@ module BBLib
         end
         original.bind(self).call(*args, &block)
       end
+      @_defining_hook = false
+      true
     end
 
     # Current opts:
@@ -97,6 +116,7 @@ module BBLib
       return false if method == hook
       _add_hooked_method(:after, hook, method)
       original = instance_method(method)
+      @_defining_hook = true
       define_method(method) do |*args, &block|
         rtr = original.bind(self).call(*args, &block)
         if opts[:send_args]
@@ -112,6 +132,8 @@ module BBLib
         end
         rtr
       end
+      @_defining_hook = false
+      true
     end
   end
 end
