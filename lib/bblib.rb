@@ -12,6 +12,7 @@ require_relative 'number/bbnumber'
 require_relative 'array/bbarray'
 require_relative 'system/bbsystem'
 require_relative 'logging/bblogging'
+require_relative 'error/abstract'
 
 non_opal = ['os/bbos']
 
