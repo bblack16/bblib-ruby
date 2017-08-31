@@ -88,56 +88,66 @@ module BBLib
     zoo: :zoos
   }
 
-    def self.pluralize(string, num = 2)
-      string = string.to_s
-      sym = string.to_s.downcase.to_sym
-      if plural = SPECIAL_PLURALS[sym]
-        result = num == 1 ? string : plural
+  def self.pluralize(string, num = 2)
+    string = string.to_s
+    sym = string.to_s.downcase.to_sym
+    if plural = SPECIAL_PLURALS[sym]
+      result = num == 1 ? string : plural
+    else
+      if string.end_with?(*%w{ch z s x o})
+        result = num == 1 ? string : (string + 'es')
+      elsif string =~ /[^aeiou]y$/i
+        result = num == 1 ? string : string.sub(/y$/i, 'ies')
       else
-        if string.end_with?(*%w{ch z s x o})
-          result = num == 1 ? string : (string + 'es')
-        elsif string =~ /[^aeiou]y$/i
-          result = num == 1 ? string : string.sub(/y$/i, 'ies')
-        else
-          result = num == 1 ? string : (string + 's')
-        end
+        result = num == 1 ? string : (string + 's')
       end
-      copy_capitalization(string, result).to_s
     end
-
-    def self.singularize(string)
-      string = string.to_s
-      sym = string.to_s.downcase.to_sym
-      if singular = SPECIAL_PLURALS.find { |k, v| v == sym }&.first
-        result = singular
-      elsif string.downcase.end_with?(*%w{oes ches zes ses xes})
-        result = string.sub(/es$/i, '')
-      elsif string =~ /ies$/i
-        result = string.sub(/ies$/i, 'y')
-      elsif string =~ /s$/i && !(string =~ /s{2}$/i)
-        result = string.sub(/s$/i, '')
-      else
-        result = string
-      end
-      copy_capitalization(string, result).to_s
-    end
-
-    def self.custom_pluralize(num, base, plural = 's', singular = nil)
-      num == 1 ? "#{base}#{singular}" : "#{base}#{plural}"
-    end
-
-    def self.plural_string(num, *args)
-      "#{num} #{pluralize(num, *args)}"
-    end
-
+    copy_capitalization(string, result).to_s
   end
 
-  class String
-    def pluralize(num = 2)
-      BBLib.pluralize(self, num)
+  def self.singularize(string)
+    string = string.to_s
+    sym = string.to_s.downcase.to_sym
+    if singular = SPECIAL_PLURALS.find { |k, v| v == sym }&.first
+      result = singular
+    elsif string.downcase.end_with?(*%w{oes ches zes ses xes})
+      result = string.sub(/es$/i, '')
+    elsif string =~ /ies$/i
+      result = string.sub(/ies$/i, 'y')
+    elsif string =~ /s$/i && !(string =~ /s{2}$/i)
+      result = string.sub(/s$/i, '')
+    else
+      result = string
     end
-
-    def singularize
-      BBLib.singularize(self)
-    end
+    copy_capitalization(string, result).to_s
   end
+
+  def self.custom_pluralize(num, base, plural = 's', singular = nil)
+    num == 1 ? "#{base}#{singular}" : "#{base}#{plural}"
+  end
+
+  def self.plural_string(num, *args)
+    "#{num} #{pluralize(num, *args)}"
+  end
+
+end
+
+class String
+  def pluralize(num = 2)
+    BBLib.pluralize(self, num)
+  end
+
+  def singularize
+    BBLib.singularize(self)
+  end
+end
+
+class Symbol
+  def pluralize(num = 2)
+    BBLib.pluralize(self.to_s, num).to_sym
+  end
+
+  def singularize
+    BBLib.singularize(self.to_s).to_sym
+  end
+end
