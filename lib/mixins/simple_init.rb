@@ -85,17 +85,6 @@ module BBLib
           Object.const_get(parent)
         end
       end
-
-      # Returns the lowest level namespace for this class. If this class does
-      # not have a namespace, Object is returned.
-      def root_namespace
-        parent = self.to_s.split('::').first
-        if parent.empty?
-          return Object
-        else
-          Object.const_get(parent)
-        end
-      end
     end
 
     protected
