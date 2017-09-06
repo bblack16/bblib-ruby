@@ -129,8 +129,8 @@ module BBLib
     num == 1 ? "#{base}#{singular}" : "#{base}#{plural}"
   end
 
-  def self.plural_string(num, *args)
-    "#{num} #{pluralize(num, *args)}"
+  def self.plural_string(num, string)
+    "#{num} #{pluralize(string, num)}"
   end
 
 end
