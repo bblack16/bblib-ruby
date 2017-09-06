@@ -89,7 +89,8 @@ module BBLib
   }
 
   def self.pluralize(string, num = 2)
-    string = string.to_s
+    full_string = string.to_s
+    string = string.split(/\s+/).last
     sym = string.to_s.downcase.to_sym
     if plural = SPECIAL_PLURALS[sym]
       result = num == 1 ? string : plural
@@ -102,11 +103,13 @@ module BBLib
         result = num == 1 ? string : (string + 's')
       end
     end
-    copy_capitalization(string, result).to_s
+    full_string.sub(/#{Regexp.escape(string)}$/, copy_capitalization(string, result).to_s)
   end
 
   def self.singularize(string)
-    string = string.to_s
+    full_string = string.to_s
+    string = string.split(/\s+/).last
+    sym = string.to_s.downcase.to_sym
     sym = string.to_s.downcase.to_sym
     if singular = SPECIAL_PLURALS.find { |k, v| v == sym }&.first
       result = singular
@@ -119,7 +122,7 @@ module BBLib
     else
       result = string
     end
-    copy_capitalization(string, result).to_s
+    full_string.sub(/#{Regexp.escape(string)}$/, copy_capitalization(string, result).to_s)
   end
 
   def self.custom_pluralize(num, base, plural = 's', singular = nil)
