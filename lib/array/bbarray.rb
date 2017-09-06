@@ -25,6 +25,15 @@ module BBLib
   def self.most_frequent_str(*args, case_insensitive: false)
     most_frequent(*args.map { |arg| case_insensitive ? arg.to_s.downcase : arg.to_s })
   end
+
+  # Takes an array and averages all of the floats and integers within it.
+  # Non numeric values are ignored.
+  def self.average(ary)
+    numbers = ary.select { |v| BBLib.is_a?(v, Integer, Float) }
+    numbers.inject(0) do |sum, x|
+      sum += x
+    end / numbers.size.to_f
+  end
 end
 
 # Monkey Patches for the Array class
