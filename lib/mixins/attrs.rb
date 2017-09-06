@@ -52,7 +52,7 @@ module BBLib
 
     def attr_custom(method, opts = {}, &block)
       called_by = caller_locations(1, 1)[0].label.gsub('block in ', '') rescue :attr_custom
-      type      = (called_by =~ /^attr_/ ? called_by.to_sym : :custom)
+      type      = (called_by =~ /^attr_/ ? called_by.to_sym : (opts[:attr_type] || :custom))
       opts      = opts.dup
       ivar      = "@#{method}".to_sym
       mthd_type = opts[:singleton] ? :define_singleton_method : :define_method
@@ -63,10 +63,20 @@ module BBLib
       end
 
       self.send(mthd_type, method) do
-        if instance_variable_defined?(ivar)
-          instance_variable_get(ivar)
-        elsif opts.include?(:default)
-          send("#{method}=", opts[:default].respond_to?(:dup) && BBLib.is_a?(opts[:default], Array, Hash) ? (opts[:default].dup rescue opts[:default]) : opts[:default])
+        if instance_variable_defined?(ivar) && var = instance_variable_get(ivar)
+          var
+        elsif opts.include?(:default) || opts.include?(:default_proc)
+          default_value = if opts[:default].respond_to?(:dup) && BBLib.is_a?(opts[:default], Array, Hash)
+            opts[:default].dup rescue opts[:default]
+          elsif opts[:default_proc].is_a?(Proc)
+            prc = opts[:default_proc]
+            prc.arity == 0 ? prc.call : prc.call(self)
+          elsif opts[:default_proc].is_a?(Symbol)
+            send(opts[:default_proc])
+          else
+            opts[:default]
+          end
+          send("#{method}=", default_value)
         end
       end
 
@@ -126,7 +136,13 @@ module BBLib
 
     def attr_symbol(*methods, **opts)
       methods.each do |method|
-        attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : arg.to_s.to_sym }
+        attr_custom(method, opts) do |arg|
+          if arg.nil?
+            opts[:allow_nil] ? arg : raise(ArgumentError, "#{method} cannot be set to nil.")
+          else
+            arg.to_s.to_sym
+          end
+        end
       end
     end
 
