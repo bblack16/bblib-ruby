@@ -99,6 +99,7 @@ module BBLib
         raise ArgumentError, "You are missing the following required #{BBLib.pluralize('argument', missing.size)}: #{missing.join_terms}" unless missing.empty?
       end
       named.each do |method, value|
+        next if method == :_class
         setter = "#{method}="
         exists = respond_to?(setter)
         raise ArgumentError, "Undefined attribute #{setter} for class #{self.class}." if !exists && self.class.init_type == :strict
