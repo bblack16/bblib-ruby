@@ -19,6 +19,13 @@ module BBLib
       hash
     end
 
+    def attr_set(name, opts = {})
+      return false unless _attrs[name]
+      opts.each do |k, v|
+        _attrs[name][:options][k] = v
+      end
+    end
+
     # Lists all attr_* getter methods that were created on this class.
     def instance_readers
       _attrs.map { |k, v| [:attr_writer].any? { |t| v[:type] == t } ? nil : k }.compact
