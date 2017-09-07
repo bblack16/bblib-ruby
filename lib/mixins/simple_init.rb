@@ -27,9 +27,9 @@ module BBLib
       # :_class needs to be the fully qualified name of the descendant.
       def new(*args, &block)
         named = BBLib.named_args(*args)
-        if init_foundation && named[:_class] && named[:_class].to_s != self.to_s
-          klass = descendants.find { |k| k.to_s == named[:_class] }
-          raise ArgumentError, "Unknown class type #{named[:_class]}" unless klass
+        if init_foundation && named[init_foundation_method] && ((named[init_foundation_method] != self.send(init_foundation_method)) rescue false)
+          klass = descendants.find { |k| k.send(init_foundation_method).to_s == named[init_foundation_method].to_s }
+          raise ArgumentError, "Unknown class type #{named[init_foundation_method]}" unless klass
           klass.new(*args, &block)
         else
           super
@@ -47,6 +47,19 @@ module BBLib
       # child classes using the :_class named parameter.
       def init_foundation=(toggle)
         @init_foundation = toggle
+      end
+
+      def init_foundation_method(method = nil)
+        @init_foundation_method = method if method
+        @init_foundation_method ||= ancestor_init_foundation_method
+      end
+
+      def ancestor_init_foundation_method
+        anc = ancestors.find do |a|
+          next if a == self
+          a.respond_to?(:init_foundation_method)
+        end
+        anc ? anc.init_foundation_method : :_class
       end
 
       # Sets or returns the current init type for this class.
@@ -85,6 +98,10 @@ module BBLib
           Object.const_get(parent)
         end
       end
+
+      def _class
+        self.to_s
+      end
     end
 
     protected
@@ -99,7 +116,7 @@ module BBLib
         raise ArgumentError, "You are missing the following required #{BBLib.pluralize('argument', missing.size)}: #{missing.join_terms}" unless missing.empty?
       end
       named.each do |method, value|
-        next if method == :_class
+        next if method == self.class.init_foundation_method
         setter = "#{method}="
         exists = respond_to?(setter)
         raise ArgumentError, "Undefined attribute #{setter} for class #{self.class}." if !exists && self.class.init_type == :strict
