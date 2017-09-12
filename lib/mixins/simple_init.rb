@@ -28,7 +28,13 @@ module BBLib
       def new(*args, &block)
         named = BBLib.named_args(*args)
         if init_foundation && named[init_foundation_method] && ((named[init_foundation_method] != self.send(init_foundation_method)) rescue false)
-          klass = descendants.find { |k| k.send(init_foundation_method).to_s == named[init_foundation_method].to_s }
+          klass = descendants.find do |k|
+            if init_foundation_compare
+              init_foundation_compare.call(k.send(init_foundation_method), named[init_foundation_method])
+            else
+              k.send(init_foundation_method).to_s == named[init_foundation_method].to_s
+            end
+          end
           raise ArgumentError, "Unknown class type #{named[init_foundation_method]}" unless klass
           klass.new(*args, &block)
         else
@@ -39,7 +45,7 @@ module BBLib
       # If true, this allows the overriden new method to generate descendants from
       # its constructors.
       def init_foundation
-        @init_foundation ||= true
+        @init_foundation ||= false
       end
 
       # Sets the init_foundation variable to true of false. When false, the new
@@ -52,6 +58,17 @@ module BBLib
       def init_foundation_method(method = nil)
         @init_foundation_method = method if method
         @init_foundation_method ||= ancestor_init_foundation_method
+      end
+
+      def init_foundation_compare(&block)
+        @init_foundation_compare = block if block_given?
+        @init_foundation_compare
+      end
+
+      def setup_init_foundation(method, &block)
+        self.init_foundation = true
+        self.init_foundation_method(method)
+        self.init_foundation_compare(&block) if block_given?
       end
 
       def ancestor_init_foundation_method
