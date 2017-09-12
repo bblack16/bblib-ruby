@@ -73,16 +73,17 @@ module BBLib
         if instance_variable_defined?(ivar) && var = instance_variable_get(ivar)
           var
         elsif opts.include?(:default) || opts.include?(:default_proc)
-          default_value = if opts[:default].respond_to?(:dup) && BBLib.is_a?(opts[:default], Array, Hash)
-            opts[:default].dup rescue opts[:default]
-          elsif opts[:default_proc].is_a?(Proc)
-            prc = opts[:default_proc]
-            prc.arity == 0 ? prc.call : prc.call(self)
-          elsif opts[:default_proc].is_a?(Symbol)
-            send(opts[:default_proc])
-          else
-            opts[:default]
-          end
+          default_value =
+            if opts[:default].respond_to?(:dup) && BBLib.is_a?(opts[:default], Array, Hash)
+              opts[:default].dup rescue opts[:default]
+            elsif opts[:default_proc].is_a?(Proc)
+              prc = opts[:default_proc]
+              prc.arity == 0 ? prc.call : prc.call(self)
+            elsif opts[:default_proc].is_a?(Symbol)
+              send(opts[:default_proc])
+            else
+              opts[:default]
+            end
           send("#{method}=", default_value)
         end
       end
@@ -189,9 +190,22 @@ module BBLib
 
     def attr_element_of(list, *methods, **opts)
       methods.each do |method|
-        attr_custom(method, opts) do |arg|
+        attr_custom(method, opts.merge(list: list)) do |arg|
+          list = list.call if list.is_a?(Proc)
           raise ArgumentError, "Invalid option '#{arg}' for #{method}." unless list.include?(arg) || (opts[:allow_nil] && arg.nil?)
           arg
+        end
+      end
+    end
+
+    def attr_elements_of(list, *methods, **opts)
+      methods.each do |method|
+        attr_custom(method, opts.merge(list: list)) do |args|
+          list = list.call if list.is_a?(Proc)
+          [args].flatten(1).map do |arg|
+            raise ArgumentError, "Invalid option '#{arg}' for #{method}." unless list.include?(arg) || (opts[:allow_nil] && arg.nil?)
+            arg
+          end
         end
       end
     end
