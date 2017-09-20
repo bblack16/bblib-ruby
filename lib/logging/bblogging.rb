@@ -9,6 +9,9 @@ module BBLib
     log = ::Logger.new(STDOUT)
     log.level = ::Logger::INFO
     log.formatter = proc do |severity, datetime, progname, msg|
+      if msg.is_a?(Exception)
+        msg = msg.inspect + "\n\t" + msg.backtrace.join("\n\t")
+      end
       "[#{datetime}] #{severity} - #{msg}\n"
     end
     log.datetime_format = '%Y-%m-%d %H:%M:%S'

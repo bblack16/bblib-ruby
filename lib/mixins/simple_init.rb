@@ -127,8 +127,8 @@ module BBLib
       named = BBLib.named_args(*args)
       if self.class.respond_to?(:_attrs)
         missing = self.class._attrs.map do |method, details|
-          next if send(method)
-          details[:options][:required] && !named.include?(method) ? method : nil
+          next unless details[:options][:required] && !named.include?(method) && !send(method)
+          method
         end.compact
         raise ArgumentError, "You are missing the following required #{BBLib.pluralize('argument', missing.size)}: #{missing.join_terms}" unless missing.empty?
       end

@@ -16,7 +16,11 @@ module BBLib
         next if ancestor == self
         hash = hash.merge(ancestor._attrs) if ancestor.respond_to?(:_attrs)
       end
-      hash
+      # Need to dup to avoid subclasses modifying parents
+      hash.hmap do |k, v|
+        v[:options] = v[:options].dup
+        [k, v.dup]
+      end
     end
 
     def attr_set(name, opts = {})
@@ -70,7 +74,9 @@ module BBLib
       end
 
       self.send(mthd_type, method) do
-        if instance_variable_defined?(ivar) && var = instance_variable_get(ivar)
+        if opts[:getter] && opts[:getter].is_a?(Proc)
+          opts[:getter].arity == 0 ? opts[:getter].call : opts[:getter].call(self)
+        elsif instance_variable_defined?(ivar) && var = instance_variable_get(ivar)
           var
         elsif opts.include?(:default) || opts.include?(:default_proc)
           default_value =
@@ -242,7 +248,7 @@ module BBLib
               if match
                 array.push(arg) if match
               elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
-                array.push(arg)\
+                array.push(arg)
               else
                 raise ArgumentError, "Invalid class passed to #{method}: #{arg.class}. Must be a #{klasses.join_terms(:or)}." unless opts[:raise] == false
               end
