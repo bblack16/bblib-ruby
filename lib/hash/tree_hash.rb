@@ -239,9 +239,15 @@ class TreeHash
     parent.children.values.index(self)
   end
 
-  def delete(path)
-    find(path).map do |child|
-      child.parent.delete_child(child.key)
+  def delete(*paths)
+    paths.flat_map do |path|
+      find(path).map do |child|
+        if child.root?
+          delete_child(path)
+        else
+          child.parent.delete_child(child.key)
+        end
+      end
     end
   end
 
