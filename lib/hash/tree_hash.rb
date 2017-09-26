@@ -159,7 +159,7 @@ class TreeHash
     paths.each do |from, to|
       value = find(from).first
       bridge(to => value)
-      value.kill
+      value.kill if value
     end
     self
   end
@@ -186,7 +186,7 @@ class TreeHash
     paths.each do |path|
       value = find(path).first
       hash.bridge(path => value)
-      value.kill
+      value.kill if value
     end
     hash
   end
