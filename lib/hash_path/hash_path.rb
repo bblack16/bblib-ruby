@@ -32,8 +32,8 @@ class HashPath
   protected
 
   def simple_init(*args)
-    args.find_all { |arg| arg.is_a?(String) }.each do |path|
-      append(path)
+    args.find_all { |arg| arg.is_a?(String) || arg.is_a?(Symbol) }.each do |path|
+      append(path.to_s)
     end
   end
 
