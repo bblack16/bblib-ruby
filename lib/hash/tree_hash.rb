@@ -157,7 +157,9 @@ class TreeHash
 
   def move(paths)
     paths.each do |from, to|
-      value = find(from).first
+      values = find(from)
+      next if values.empty?
+      value = values.first
       bridge(to => value)
       value.kill if value
     end
