@@ -38,7 +38,7 @@ class HashPath
   end
 
   def parse_path(path)
-    path.to_s.gsub('..', '.[[:recursive:]]').scan(/(?:[\(|\[|\/].*?[\)|\]|\/]|[^\.])+/).map do |part|
+    path.to_s.gsub('..', '.[[:recursive:]]').scan(/(?:[\(|\[|\/].*?[\)|\]|\/]|\\\.|[^\.])+/).map do |part|
       Part.new(part)
     end
   end

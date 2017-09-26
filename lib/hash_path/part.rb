@@ -76,7 +76,7 @@ class HashPath
         Range.new(*str.scan(/\-?\d+/).map(&:to_i))
       else
         str
-      end
+      end.gsub('\\.', '.')
     end
 
   end

@@ -279,7 +279,7 @@ class TreeHash
   end
 
   def path
-    parent.node_class == Array ? "[#{key}]" : key
+    parent.node_class == Array ? "[#{key}]" : key.to_s.gsub('.', '\\.')
   end
 
   def absolute_paths
