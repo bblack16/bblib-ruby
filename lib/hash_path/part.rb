@@ -18,7 +18,7 @@ class HashPath
       case selector
       when String
         key.to_s == selector
-      when Fixnum
+      when Integer
         key.to_i == selector
       when Range
         selector === key || object.size.times.to_a.include?(key)

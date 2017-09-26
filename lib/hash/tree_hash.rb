@@ -116,9 +116,9 @@ class TreeHash
         part      = next_part || process_bridge_part(parts.shift)
         next_part = process_bridge_part(parts.shift)
         if node.child_exists?(part)
-          if next_part.is_a?(Fixnum)
+          if next_part.is_a?(Integer)
             next_next = process_bridge_part(parts.first)
-            if next_next.is_a?(Fixnum)
+            if next_next.is_a?(Integer)
               node[part][next_part] = [] unless node[part][next_part] && node[part][next_part].node_class == Array
             else
               node[part][next_part] = {} unless node[part][next_part] && node[part][next_part].node_class == Hash
@@ -129,9 +129,9 @@ class TreeHash
           if next_part.nil?
             node[part] = value
           else
-            node[part] = next_part.is_a?(Fixnum) ? Array.new(next_part) : {}
+            node[part] = next_part.is_a?(Integer) ? Array.new(next_part) : {}
           end
-          node[part][next_part] = process_bridge_part(parts.first).is_a?(Fixnum) ? [] : {} if next_part.is_a?(Fixnum)
+          node[part][next_part] = process_bridge_part(parts.first).is_a?(Integer) ? [] : {} if next_part.is_a?(Integer)
           node = node[part]
         end
       end
