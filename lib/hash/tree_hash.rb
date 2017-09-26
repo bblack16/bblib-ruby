@@ -109,7 +109,7 @@ class TreeHash
   def bridge(paths)
     paths = paths.map { |a| [a, nil] }.to_h if paths.is_a?(Array)
     paths.each do |path, value|
-      parts     = path.split(/(?<=[^\\])\./)
+      parts     = path.to_s.split(/(?<=[^\\])\./)
       node      = self
       next_part = false
       until next_part.nil?
