@@ -20,6 +20,13 @@ module BBLib
       end
     end
 
+    # Return all live instances of the class
+    # Passing false will not include instances of sub classes
+    def instances(descendants = true)
+      inst = ObjectSpace.each_object(self).to_a
+      descendants ? inst : inst.select { |i| i.class == self }
+    end
+
     def namespace
       BBLib.namespace_of(self)
     end
