@@ -5,7 +5,7 @@ module BBLib
       base.extend(BBLib::Attrs)
       base.extend(BBLib::Hooks)
       base.singleton_class.extend(BBLib::Hooks)
-      base.extend(BBLib::FamilyTree)
+      base.extend(BBLib::FamilyTree) unless BBLib.in_opal?
       base.send(:include, BBLib::Serializer)
       base.send(:include, BBLib::SimpleInit)
       base.send(:include, BBLib::Logger)
