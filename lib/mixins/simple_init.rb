@@ -16,29 +16,33 @@ module BBLib
           send(:simple_preinit, *args, &block) if respond_to?(:simple_preinit, true)
           _initialize(*args)
           send(:simple_init, *args, &block) if respond_to?(:simple_init, true)
-          block.call(self) if block
+          instance_eval(&block) if block
         end
       end
     end
 
     module ClassMethods
-      # Overriden new method that allows parent classes to dynamically generate
-      # instantiations of descendants by using the named :_class argument.
-      # :_class needs to be the fully qualified name of the descendant.
-      def new(*args, &block)
-        named = BBLib.named_args(*args)
-        if init_foundation && named[init_foundation_method] && ((named[init_foundation_method] != self.send(init_foundation_method)) rescue false)
-          klass = descendants.find do |k|
-            if init_foundation_compare
-              init_foundation_compare.call(k.send(init_foundation_method), named[init_foundation_method])
-            else
-              k.send(init_foundation_method).to_s == named[init_foundation_method].to_s
+
+      # TODO: Currently init foundation breaks when running in opal.
+      unless BBLib.in_opal?
+        # Overriden new method that allows parent classes to dynamically generate
+        # instantiations of descendants by using the named :_class argument.
+        # :_class needs to be the fully qualified name of the descendant.
+        def new(*args, &block)
+          named = BBLib.named_args(*args)
+          if init_foundation && named[init_foundation_method] && ((named[init_foundation_method] != self.send(init_foundation_method)) rescue false)
+            klass = descendants.find do |k|
+              if init_foundation_compare
+                init_foundation_compare.call(k.send(init_foundation_method), named[init_foundation_method])
+              else
+                k.send(init_foundation_method).to_s == named[init_foundation_method].to_s
+              end
             end
+            raise ArgumentError, "Unknown class type #{named[init_foundation_method]}" unless klass
+            klass.new(*args, &block)
+          else
+            super
           end
-          raise ArgumentError, "Unknown class type #{named[init_foundation_method]}" unless klass
-          klass.new(*args, &block)
-        else
-          super
         end
       end
 
@@ -126,8 +130,19 @@ module BBLib
     def _initialize(*args)
       named = BBLib.named_args(*args)
       if self.class.respond_to?(:_attrs)
+        set_v_arg = self.class._attrs.map do |method, details|
+          next unless details[:options][:arg_at] && details[:options][:arg_at].is_a?(Integer)
+          index = details[:options][:arg_at]
+          if args.size > index
+            accept = details[:options][:arg_at_accept]
+            if accept.nil? || [accept].flatten.any? { |a| a >= args[index].class }
+              send("#{method}=", args[index])
+              method
+            end
+          end
+        end.compact
         missing = self.class._attrs.map do |method, details|
-          next unless details[:options][:required] && !named.include?(method) && !send(method)
+          next unless !set_v_arg.include?(method) && details[:options][:required] && !named.include?(method) && !send(method)
           method
         end.compact
         raise ArgumentError, "You are missing the following required #{BBLib.pluralize('argument', missing.size)}: #{missing.join_terms}" unless missing.empty?
