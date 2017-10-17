@@ -76,7 +76,7 @@ module BBLib
       self.send(mthd_type, method) do
         if opts[:getter] && opts[:getter].is_a?(Proc)
           opts[:getter].arity == 0 ? opts[:getter].call : opts[:getter].call(self)
-        elsif instance_variable_defined?(ivar) && var = instance_variable_get(ivar)
+        elsif instance_variable_defined?(ivar) && !(var = instance_variable_get(ivar)).nil?
           var
         elsif opts.include?(:default) || opts.include?(:default_proc)
           default_value =
