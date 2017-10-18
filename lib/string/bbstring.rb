@@ -65,6 +65,7 @@ module BBLib
   # The length of the too_long string is NOT factored into the cap
   def self.chars_up_to(str, cap, too_long = '...', style: :front)
     return str if str.to_s.size <= cap
+    str = str.to_s
     case style
     when :back
       "#{too_long}#{str[(str.size - cap)..-1]}"
