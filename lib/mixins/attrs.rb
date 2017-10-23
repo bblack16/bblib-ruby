@@ -198,8 +198,11 @@ module BBLib
       methods.each do |method|
         attr_custom(method, opts.merge(list: list)) do |arg|
           ls = list.is_a?(Proc) ? list.call : list
-          raise ArgumentError, "Invalid option '#{arg}' for #{method}." unless ls.include?(arg) || (opts[:allow_nil] && arg.nil?)
-          arg
+          if ls.include?(arg) || (opts[:allow_nil] && arg.nil?)
+            arg
+          else
+            raise ArgumentError, "Invalid option '#{arg}' for #{method}." unless opts.include?(:raise) && !opts[:raise]
+          end
         end
       end
     end
@@ -208,9 +211,14 @@ module BBLib
       methods.each do |method|
         attr_custom(method, opts.merge(list: list)) do |args|
           ls = list.is_a?(Proc) ? list.call : list
-          [args].flatten(1).map do |arg|
-            raise ArgumentError, "Invalid option '#{arg}' for #{method}." unless ls.include?(arg) || (opts[:allow_nil] && arg.nil?)
-            arg
+          [].tap do |final|
+            [args].flatten(1).each do |arg|
+              if ls.include?(arg) || (opts[:allow_nil] && arg.nil?)
+                final << arg
+              else
+                raise ArgumentError, "Invalid option '#{arg}' for #{method}." unless opts.include?(:raise) && !opts[:raise]
+              end
+            end
           end
         end
       end
