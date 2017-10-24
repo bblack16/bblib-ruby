@@ -84,4 +84,9 @@ class Array
     return elements.join(" #{seperator} ") if size == 2
     [elements[0..-2].join(delimiter), elements.last].join(" #{seperator} ")
   end
+
+  def hmap
+    return map unless block_given?
+    map { |v| yield(v) }.to_h
+  end
 end
