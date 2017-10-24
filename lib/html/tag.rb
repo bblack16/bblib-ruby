@@ -31,8 +31,8 @@ module BBLib
 
       def render_attributes
         return nil if attributes.empty?
-        styles = attributes[:style] ? { style: attributes[:style].map { |k, v| "#{k}: #{v}" }.join('; ') } : {}
-        ' ' + attributes.merge(styles).map { | k, v| "#{k}=\"#{v.to_s.gsub('"', '&#34;')}\"" }.join(' ')
+        attributes[:style] = attributes[:style].map { |k, v| "#{k}: #{v}" }.join('; ') if attributes[:style] && attributes[:style].is_a?(Hash)
+        ' ' + attributes.map { | k, v| "#{k}=\"#{v.to_s.gsub('"', '&#34;')}\"" }.join(' ')
       end
 
       def render_content(pretty: false, tabs: 0)
