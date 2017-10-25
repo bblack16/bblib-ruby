@@ -1,44 +1,42 @@
 
+# frozen_string_literal: true
 require_relative 'matching'
 require_relative 'roman'
 require_relative 'fuzzy_matcher'
 require_relative 'cases'
+require_relative 'regexp'
+require_relative 'pluralization'
 
 module BBLib
-
-  ##############################################
-  # General Functions
-  ##############################################
-
   # Quickly remove any symbols from a string leaving only alpha-numeric characters and white space.
-  def self.drop_symbols str
+  def self.drop_symbols(str)
     str.gsub(/[^\w\s\d]|_/, '')
   end
 
   # Extract all integers from a string. Use extract_floats if numbers may contain decimal places.
-  def self.extract_integers str, convert: true
-    BBLib.extract_numbers(str, convert:false).reject{ |r| r.include?('.') }
-      .map{ |m| convert ? m.to_i : m }
+  def self.extract_integers(str, convert: true)
+    BBLib.extract_numbers(str, convert: false).reject { |r| r.include?('.') }
+         .map { |m| convert ? m.to_i : m }
   end
 
   # Extracts all integers or decimals from a string into an array.
-  def self.extract_floats str, convert: true
-    BBLib.extract_numbers(str, convert:false).reject{ |r| !r.include?('.') }
-      .map{ |m| convert ? m.to_f : m }
+  def self.extract_floats(str, convert: true)
+    BBLib.extract_numbers(str, convert: false).reject { |r| !r.include?('.') }
+         .map { |m| convert ? m.to_f : m }
   end
 
   # Extracts any correctly formed integers or floats from a string
-  def self.extract_numbers str, convert: true
+  def self.extract_numbers(str, convert: true)
     str.scan(/\d+\.\d+(?<=[^\.])|\d+(?<=[^\.])|\d+\.\d+$|\d+$/)
-      .map{ |f| convert ? (f.include?('.') ? f.to_f : f.to_i) : f }
+       .map { |f| convert ? (f.include?('.') ? f.to_f : f.to_i) : f }
   end
 
   # Used to move the position of the articles 'the', 'a' and 'an' in strings for normalization.
-  def self.move_articles str, position = :front, capitalize: true
+  def self.move_articles(str, position = :front, capitalize: true)
     return str unless [:front, :back, :none].include?(position)
-    articles = ["the", "a", "an"]
-    articles.each do |a|
-      starts, ends = str.downcase.start_with?(a + ' '), str.downcase.end_with?(' ' + a)
+    %w(the a an).each do |a|
+      starts = str.downcase.start_with?(a + ' ')
+      ends = str.downcase.end_with?(' ' + a)
       if starts && position != :front
         if position == :none
           str = str[(a.length + 1)..str.length]
@@ -46,41 +44,104 @@ module BBLib
           str = str[(a.length + 1)..str.length] + (!ends ? ", #{capitalize ? a.capitalize : a}" : '')
         end
       end
-      if ends && position != :back
-        if position == :none
-          str = str[0..-(a.length + 2)]
-        elsif position == :front
-          str = (!starts ? "#{capitalize ? a.capitalize : a} " : '') + str[0..-(a.length + 2)]
-        end
+      next unless ends && position != :back
+      if position == :none
+        str = str[0..-(a.length + 2)]
+      elsif position == :front
+        str = (!starts ? "#{capitalize ? a.capitalize : a} " : '') + str[0..-(a.length + 2)]
       end
     end
-    while str.strip.end_with?(',')
-      str = str.strip
-      str = str.chop
-    end
+    str = str.strip.chop while str.strip.end_with?(',')
     str
   end
 
+  # Displays a portion of an object (as a string) with an ellipse displayed
+  # if the string is over a certain size.
+  # Supported styles:
+  # => front - "for exam..."
+  # => back - "... example"
+  # => middle - "... exam..."
+  # => outter - "for e...ple"
+  # The length of the too_long string is NOT factored into the cap
+  def self.chars_up_to(str, cap, too_long = '...', style: :front)
+    return str if str.to_s.size <= cap
+    str = str.to_s
+    case style
+    when :back
+      "#{too_long}#{str[(str.size - cap)..-1]}"
+    when :outter
+      "#{str[0...(cap / 2).to_i + (cap.odd? ? 1 : 0)]}#{too_long}#{str[-(cap / 2).to_i..-1]}"
+    when :middle
+      "#{too_long}#{str[(str.size / 2 - cap / 2 - (cap.odd? ? 1 : 0)).to_i...(str.size / 2 + cap / 2).to_i]}#{too_long}"
+    else
+      "#{str[0...cap]}#{too_long}"
+    end
+  end
+
+  # Takes two strings and tries to apply the same capitalization from
+  # the first string to the second.
+  # Supports lower case, upper case and capital case
+  def self.copy_capitalization(str_a, str_b)
+    str_a = str_a.to_s
+    str_b = str_b.to_s
+    if str_a.upper?
+      str_b.upcase
+    elsif str_a.lower?
+      str_b.downcase
+    elsif str_a.capital?
+      str_b.capitalize
+    else
+      str_b
+    end
+  end
 end
 
 class String
   # Multi-split. Similar to split, but can be passed an array of delimiters to split on.
-  def msplit *delims, keep_empty: false
-    return [self] unless !delims.nil? && !delims.empty?
-    ar = [self]
-    [delims].flatten.each do |d|
-      ar.map!{ |a| a.split d }
-      ar.flatten!
+  def msplit(*delims)
+    ary = [self]
+    return ary if delims.empty?
+    delims.flatten.each do |d|
+      ary = ary.flat_map { |a| a.split d }
     end
-    keep_empty ? ar : ar.reject{ |l| l.empty? }
+    ary
   end
 
-  def move_articles position = :front, capitalize = true
-    BBLib.move_articles self, position, capitalize:capitalize
+  # Split on delimiters
+  def quote_split(*delimiters)
+    encap_split('"\'', *delimiters)
   end
 
-  def move_articles! position = :front, capitalize = true
-    replace BBLib.move_articles(self, position, capitalize:capitalize)
+  alias qsplit quote_split
+
+  # Split on only delimiters not between specific encapsulators
+  # Various characters are special and automatically recognized such as parens
+  # which automatically match anything between a begin and end character.
+  def encap_split(encapsulator, *delimiters)
+    pattern = case encapsulator
+              when '('
+                '\\(\\)'
+              when '['
+                '\\[\\]'
+              when '{'
+                '\\{\\}'
+              when '<'
+                '\\<\\>'
+              else
+                encapsulator
+              end
+    patterns = delimiters.map { |d| /#{d}(?=(?:[^#{pattern}]|[#{pattern}][^#{pattern}]*[#{pattern}])*$)/}
+    msplit(*patterns)
+  end
+
+  alias esplit encap_split
+
+  def move_articles(position = :front, capitalize = true)
+    BBLib.move_articles self, position, capitalize: capitalize
+  end
+
+  def move_articles!(position = :front, capitalize = true)
+    replace BBLib.move_articles(self, position, capitalize: capitalize)
   end
 
   def drop_symbols
@@ -91,20 +152,20 @@ class String
     replace BBLib.drop_symbols(self)
   end
 
-  def extract_integers convert: true
-    BBLib.extract_integers self, convert:convert
+  def extract_integers(convert: true)
+    BBLib.extract_integers self, convert: convert
   end
 
-  def extract_floats convert: true
-    BBLib.extract_floats self, convert:convert
+  def extract_floats(convert: true)
+    BBLib.extract_floats self, convert: convert
   end
 
-  def extract_numbers convert: true
-    BBLib.extract_numbers self, convert:convert
+  def extract_numbers(convert: true)
+    BBLib.extract_numbers self, convert: convert
   end
 
   def to_clean_sym
-    self.snake_case.to_sym
+    snake_case.to_sym
   end
 
   # Simple method to convert a string into an array containing only itself
@@ -112,44 +173,79 @@ class String
     [self]
   end
 
-  def encap_by? str
+  def encap_by?(str)
     case str
     when '('
-      self.start_with?(str) && self.end_with?(')')
+      start_with?(str) && end_with?(')')
     when '['
-      self.start_with?(str) && self.end_with?(']')
+      start_with?(str) && end_with?(']')
     when '{'
-      self.start_with?(str) && self.end_with?('}')
+      start_with?(str) && end_with?('}')
     when '<'
-      self.start_with?(str) && self.end_with?('>')
+      start_with?(str) && end_with?('>')
     else
-      self.start_with?(str) && self.end_with?(str)
+      start_with?(str) && end_with?(str)
     end
   end
 
-  def uncapsulate char = '"'
-    case char
-    when '('
-      back = ')'
-    when '['
-      back = ']'
-    when '{'
-      back = '}'
-    when '<'
-      back = '>'
-    else
-      back = char
+  def encapsulate(char = '"')
+    back = case char
+           when '('
+             ')'
+           when '['
+             ']'
+           when '{'
+             '}'
+           when '<'
+             '>'
+           else
+             char
+           end
+     "#{char}#{self}#{back}"
+  end
+
+  def uncapsulate(char = '"', limit: nil)
+    back = case char
+           when '('
+             ')'
+           when '['
+             ']'
+           when '{'
+             '}'
+           when '<'
+             '>'
+           else
+             char
+           end
+    temp = dup
+    count = 0
+    while temp.start_with?(char) && temp != char && (limit.nil? || count < limit)
+      temp = temp[(char.size)..-1]
+      count += 1
     end
-    temp = self.dup
-    temp = temp[(char.size)..-1] while temp.start_with?(char) && temp != char
-    temp = temp[0..-(char.size + 1)] while temp.end_with?(back) && temp != char
+    count = 0
+    while temp.end_with?(back) && temp != char && (limit.nil? || count < limit)
+      temp = temp[0..-(char.size + 1)]
+      count += 1
+    end
     temp
   end
 
+  def upper?
+    chars.all? { |letter| /[[:upper:]]|\W/.match(letter) }
+  end
+
+  def lower?
+    chars.all? { |letter| /[[:lower:]]|\W/.match(letter) }
+  end
+
+  def capital?
+    chars.first.upper?
+  end
 end
 
 class Symbol
   def to_clean_sym
-    self.to_s.to_clean_sym
+    to_s.to_clean_sym
   end
 end
