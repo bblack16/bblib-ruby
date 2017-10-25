@@ -231,8 +231,8 @@ module BBLib
           args = args.uniq if opts[:uniq]
           args
         end
-        attr_array_adder(method, opts[:adder_name]) if opts[:add_rem] || opts[:adder]
-        attr_array_remover(method, opts[:remover_name]) if opts[:add_rem] || opts[:remover]
+        attr_array_adder(method, opts[:adder_name], singleton: opts[:singleton]) if opts[:add_rem] || opts[:adder]
+        attr_array_remover(method, opts[:remover_name], singleton: opts[:singleton]) if opts[:add_rem] || opts[:remover]
       end
     end
 
@@ -264,16 +264,17 @@ module BBLib
           end
           array
         end
-        attr_array_adder(method, opts[:adder_name]) if opts[:add_rem] || opts[:adder]
-        attr_array_remover(method, opts[:remover_name]) if opts[:add_rem] || opts[:remover]
+        attr_array_adder(method, opts[:adder_name], singleton: opts[:singleton]) if opts[:add_rem] || opts[:adder]
+        attr_array_remover(method, opts[:remover_name], singleton: opts[:singleton]) if opts[:add_rem] || opts[:remover]
       end
     end
 
     alias attr_ary_of attr_array_of
 
-    def attr_array_adder(method, name = nil, &block)
+    def attr_array_adder(method, name = nil, singleton: false, &block)
       name = "add_#{method}" unless name
-      define_method(name) do |*args|
+      mthd_type = singleton ? :define_singleton_method : :define_method
+      send(mthd_type, name) do |*args|
         array = send(method)
         args.each do |arg|
           arg = yield(arg) if block_given?
@@ -283,7 +284,7 @@ module BBLib
       end
     end
 
-    def attr_array_remover(method, name = nil)
+    def attr_array_remover(method, name = nil, singleton: false)
       name = "remove_#{method}" unless name
       define_method(name) do |*args|
         array = instance_variable_get("@#{method}")
