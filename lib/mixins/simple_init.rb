@@ -31,15 +31,15 @@ module BBLib
         def new(*args, &block)
           named = BBLib.named_args(*args)
           if init_foundation && named[init_foundation_method] && ((named[init_foundation_method] != self.send(init_foundation_method)) rescue false)
-            klass = descendants.find do |k|
+            klass = [self, descendants].flatten.find do |k|
               if init_foundation_compare
                 init_foundation_compare.call(k.send(init_foundation_method), named[init_foundation_method])
               else
                 k.send(init_foundation_method).to_s == named[init_foundation_method].to_s
               end
             end
-            raise ArgumentError, "Unknown class type #{named[init_foundation_method]}" unless klass
-            klass.new(*args, &block)
+            raise ArgumentError, "Unknown #{init_foundation_method} \"#{named[init_foundation_method]}\"" unless klass
+            klass == self ? super : klass.new(*args, &block)
           else
             super
           end
@@ -65,14 +65,14 @@ module BBLib
       end
 
       def init_foundation_compare(&block)
-        @init_foundation_compare = block if block_given?
+        @init_foundation_compare = block if block
         @init_foundation_compare
       end
 
       def setup_init_foundation(method, &block)
         self.init_foundation = true
         self.init_foundation_method(method)
-        self.init_foundation_compare(&block) if block_given?
+        self.init_foundation_compare(&block) if block
       end
 
       def ancestor_init_foundation_method
