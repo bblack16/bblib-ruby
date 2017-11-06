@@ -8,6 +8,10 @@ module BBLib
       SELF_CLOSING_TAGS.include?(tag.to_s.downcase)
     end
 
+    def self.build(*args, &block)
+      Builder.build(*args, &block)
+    end
+
     module Builder
 
       BBLib::HTML::TAGS.each do |tag|
