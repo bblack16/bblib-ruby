@@ -21,6 +21,10 @@ module BBLib
         end
       end
 
+      def add(*childs)
+        [childs].flatten.map { |child| children.push(child) }
+      end
+
       def to_s
         render
       end
