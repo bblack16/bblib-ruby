@@ -25,8 +25,8 @@ module BBLib
         [childs].flatten.map { |child| children.push(child) }
       end
 
-      def to_s
-        render
+      def to_s(*args)
+        render(*args)
       end
 
       def to_str
@@ -36,7 +36,10 @@ module BBLib
       def render_attributes
         return nil if attributes.empty?
         attributes[:style] = attributes[:style].map { |k, v| "#{k}: #{v}" }.join('; ') if attributes[:style] && attributes[:style].is_a?(Hash)
-        ' ' + attributes.map { | k, v| "#{k}=\"#{v.to_s.gsub('"', '&#34;')}\"" }.join(' ')
+        ' ' + attributes.map do | k, v|
+          v = v.join(' ') if v.is_a?(Array)
+          "#{k}=\"#{v.to_s.gsub('"', '&#34;')}\""
+        end.join(' ')
       end
 
       def render_content(pretty: false, tabs: 0)
@@ -47,6 +50,20 @@ module BBLib
         end
         html = children.map { |tag| tag.render(pretty: pretty, tabs: tabs + 1) }.join
         [text, html].compact.join
+      end
+
+      protected
+
+      def method_missing(method, *args, &block)
+        if context && context.respond_to?(method)
+          context.send(method, *args, &block)
+        else
+          super
+        end
+      end
+
+      def respond_to_missing?(method, include_private = false)
+        super || context && context.respond_to?(method)
       end
     end
   end
