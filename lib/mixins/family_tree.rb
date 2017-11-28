@@ -6,6 +6,7 @@ module BBLib
   module FamilyTree
     # Return all classes that inherit from this class
     def descendants(include_singletons = false)
+      return _inherited_by.map { |c| [c, c.descendants] }.flatten.uniq if BBLib.in_opal?
       ObjectSpace.each_object(Class).select do |c|
         (include_singletons || !c.singleton_class?) && c < self
       end
@@ -15,6 +16,7 @@ module BBLib
 
     # Return all classes that directly inherit from this class
     def direct_descendants(include_singletons = false)
+      return _inherited_by if BBLib.in_opal?
       ObjectSpace.each_object(Class).select do |c|
         (include_singletons || !c.singleton_class?) && c.ancestors[1] == self
       end
@@ -37,5 +39,15 @@ module BBLib
 
     alias direct_subclasses direct_descendants
 
+    # If we are in Opal we need to track descendants a bit differently
+    if BBLib.in_opal?
+      def _inherited_by
+        @_inherited_by ||= []
+      end
+
+      def inherited(klass)
+        _inherited_by.push(klass)
+      end
+    end
   end
 end
