@@ -21,7 +21,7 @@ non_opal.each { |i| require_relative i } unless BBLib.in_opal?
 
 require 'fileutils'
 require 'time'
-require 'logger'
+# require 'logger'
 
 module BBLib
   CONFIGS_PATH = 'config/'.freeze
