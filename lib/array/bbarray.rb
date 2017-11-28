@@ -87,6 +87,6 @@ class Array
 
   def hmap
     return map unless block_given?
-    map { |v| yield(v) }.to_h
+    map { |v| yield(v) }.compact.to_h
   end
 end
