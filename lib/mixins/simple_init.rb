@@ -19,15 +19,36 @@ module BBLib
           instance_eval(&block) if block
         end
       end
+
+      if BBLib.in_opal?
+        base.singleton_class.class_eval do
+          alias __new new
+
+          def new(*args, &block)
+            named = BBLib.named_args(*args)
+            if init_foundation && named[init_foundation_method] && ((named[init_foundation_method] != self.send(init_foundation_method)) rescue false)
+              klass = [self, descendants].flatten.find do |k|
+                if init_foundation_compare
+                  init_foundation_compare.call(k.send(init_foundation_method), named[init_foundation_method])
+                else
+                  k.send(init_foundation_method).to_s == named[init_foundation_method].to_s
+                end
+              end
+              raise ArgumentError, "Unknown #{init_foundation_method} \"#{named[init_foundation_method]}\"" unless klass
+              klass == self ? __new(*args, &block) : klass.new(*args, &block)
+            else
+              __new(*args, &block)
+            end
+          end
+        end
+      end
     end
 
     module ClassMethods
 
-      # TODO: Currently init foundation breaks when running in opal.
       unless BBLib.in_opal?
         # Overriden new method that allows parent classes to dynamically generate
-        # instantiations of descendants by using the named :_class argument.
-        # :_class needs to be the fully qualified name of the descendant.
+        # instantiations of descendants by using the named init_foundation_method argument.
         def new(*args, &block)
           named = BBLib.named_args(*args)
           if init_foundation && named[init_foundation_method] && ((named[init_foundation_method] != self.send(init_foundation_method)) rescue false)
@@ -135,6 +156,7 @@ module BBLib
           index = details[:options][:arg_at]
           if args.size > index
             accept = details[:options][:arg_at_accept]
+            next if args[index].is_a?(Hash) && (accept.nil? || ![accept].flatten.include?(Hash))
             if accept.nil? || [accept].flatten.any? { |a| a >= args[index].class }
               send("#{method}=", args[index])
               method
