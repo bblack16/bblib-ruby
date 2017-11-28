@@ -152,6 +152,6 @@ class Hash
   # Each yield must produce an array with exactly two elements.
   def hmap
     return map unless block_given?
-    map { |k, v| yield(k, v) }.to_h
+    map { |k, v| yield(k, v) }.compact.to_h
   end
 end
