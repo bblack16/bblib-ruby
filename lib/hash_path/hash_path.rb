@@ -48,11 +48,11 @@ module BBLib
   def self.hash_path(hash, *paths, multi_path: false, multi_join: false, multi_join_hash: false)
     tree = TreeHash.new(hash)
     if multi_path
-      tree.find_multi(*paths).map  { |r| r.map { |sr| sr&.value } }
+      tree.find_multi(*paths).map  { |r| r.map { |sr| sr.value } }
     elsif multi_join
-      tree.find_join(*paths).map { |r| r.map { |sr| sr&.value } }
+      tree.find_join(*paths).map { |r| r.map { |sr| sr.value } }
     elsif multi_join_hash
-      tree.find_join(*paths).map { |r| r.map { |sr| sr&.value } }.to_h
+      tree.find_join(*paths).map { |r| r.map { |sr| sr.value } }.to_h
     else
       tree.find(paths).map(&:value)
     end
