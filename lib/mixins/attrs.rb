@@ -68,9 +68,15 @@ module BBLib
       ivar      = "@#{method}".to_sym
       mthd_type = opts[:singleton] ? :define_singleton_method : :define_method
 
-      self.send(mthd_type, "#{method}=") do |*args|
-        args = opts[:pre_proc].call(*args) if opts[:pre_proc]
-        instance_variable_set(ivar, (args.is_a?(Array) ? yield(*args) : yield(args)))
+      self.send(mthd_type, "#{method}=") do |args|
+        if opts[:pre_proc]
+          if opts[:pre_proc].is_a?(Proc)
+            args = opts[:pre_proc].call(args)
+          else
+            args = send(opts[:pre_proc], args)
+          end
+        end
+        instance_variable_set(ivar, yield(args))
       end
 
       self.send(mthd_type, method) do
@@ -254,7 +260,7 @@ module BBLib
             args.each do |arg|
               match = BBLib.is_a?(arg, *klasses)
               if match
-                array.push(arg) if match
+                array.push(arg)
               elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
                 array.push(arg)
               else
@@ -274,9 +280,9 @@ module BBLib
     def attr_array_adder(method, name = nil, singleton: false, &block)
       name = "add_#{method}" unless name
       mthd_type = singleton ? :define_singleton_method : :define_method
-      send(mthd_type, name) do |*args|
+      send(mthd_type, name) do |args|
         array = send(method)
-        args.each do |arg|
+        [args].flatten(1).each do |arg|
           arg = yield(arg) if block_given?
           array.push(arg)
         end
@@ -286,9 +292,9 @@ module BBLib
 
     def attr_array_remover(method, name = nil, singleton: false)
       name = "remove_#{method}" unless name
-      define_method(name) do |*args|
+      define_method(name) do |args|
         array = instance_variable_get("@#{method}")
-        args.map do |arg|
+        [args].flatten(1).map do |arg|
           next unless array && !array.empty?
           array.delete(arg)
         end
@@ -408,6 +414,8 @@ module BBLib
       unless BBLib.is_a?(arg, *klasses)
         return klasses.first.new(*[arg].flatten(1))
       end
+      nil
+    rescue => e
       nil
     end
 
