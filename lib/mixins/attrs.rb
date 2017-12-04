@@ -126,7 +126,7 @@ module BBLib
           elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
             arg
           else
-            raise ArgumentError, "#{method} must be set to a class of #{allowed.join_terms(:or)}, NOT #{arg.class}" unless opts[:suppress]
+            raise TypeError, "#{method} must be set to a class of #{allowed.join_terms(:or)}, not #{arg.class}" unless opts[:suppress]
           end
         end
       end
@@ -214,6 +214,7 @@ module BBLib
     end
 
     def attr_elements_of(list, *methods, **opts)
+      opts[:default] = [] unless opts.include?(:default) || opts.include?(:default_proc)
       methods.each do |method|
         attr_custom(method, opts.merge(list: list)) do |args|
           ls = list.is_a?(Proc) ? list.call : list
@@ -231,6 +232,7 @@ module BBLib
     end
 
     def attr_array(*methods, **opts)
+      opts[:default] = [] unless opts.include?(:default) || opts.include?(:default_proc)
       methods.each do |method|
         attr_custom(method, opts) do |arg|
           args = arg.is_a?(Array) ? arg : [arg]
@@ -245,6 +247,7 @@ module BBLib
     alias attr_ary attr_array
 
     def attr_array_of(klasses, *methods, **opts)
+      opts[:default] = [] unless opts.include?(:default) || opts.include?(:default_proc)
       klasses = [klasses].flatten
       methods.each do |method|
         attr_custom(method, opts.merge(classes: klasses)) do |args|
@@ -264,11 +267,11 @@ module BBLib
               elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
                 array.push(arg)
               else
-                raise ArgumentError, "Invalid class passed to #{method}: #{arg.class}. Must be a #{klasses.join_terms(:or)}." unless opts[:raise] == false
+                raise TypeError, "Invalid class passed to #{method} on #{self}: #{arg.class}. Must be a #{klasses.join_terms(:or)}." unless opts[:raise] == false
               end
             end
           end
-          array
+          opts[:uniq] ? array.uniq : array
         end
         attr_array_adder(method, opts[:adder_name], singleton: opts[:singleton]) if opts[:add_rem] || opts[:adder]
         attr_array_remover(method, opts[:remover_name], singleton: opts[:singleton]) if opts[:add_rem] || opts[:remover]
@@ -280,7 +283,7 @@ module BBLib
     def attr_array_adder(method, name = nil, singleton: false, &block)
       name = "add_#{method}" unless name
       mthd_type = singleton ? :define_singleton_method : :define_method
-      send(mthd_type, name) do |args|
+      send(mthd_type, name) do |*args|
         array = send(method)
         [args].flatten(1).each do |arg|
           arg = yield(arg) if block_given?
@@ -292,7 +295,7 @@ module BBLib
 
     def attr_array_remover(method, name = nil, singleton: false)
       name = "remove_#{method}" unless name
-      define_method(name) do |args|
+      define_method(name) do |*args|
         array = instance_variable_get("@#{method}")
         [args].flatten(1).map do |arg|
           next unless array && !array.empty?
@@ -378,6 +381,7 @@ module BBLib
     end
 
     def attr_hash(*methods, **opts)
+      opts[:default] = {} unless opts.include?(:default) || opts.include?(:default_proc)
       methods.each do |method|
         attr_custom(method, **opts) do |arg|
           raise ArgumentError, "#{method} must be set to a hash, not a #{arg.class} (for #{self})." unless arg.is_a?(Hash) || arg.nil? && opts[:allow_nil]
@@ -399,7 +403,7 @@ module BBLib
               elsif (!opts.include?(:pack_value) || opts[:pack_value]) && value = _attr_pack(value, klasses, opts)
                 arg[key] = arg.delete(value)
               else
-                raise ArgumentError, "Invalid value type for #{method}: #{value.class}. Must be #{opts[:values].join_terms(:or)}."
+                raise TypeError, "Invalid value type for #{method}: #{value.class}. Must be #{opts[:values].join_terms(:or)}."
               end
             end
           end
