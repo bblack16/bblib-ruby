@@ -419,8 +419,10 @@ module BBLib
         return klasses.first.new(*[arg].flatten(1))
       end
       nil
-    rescue => e
-      nil
+    # TODO Commented out on 12-6-2017
+    # I believe this is not needed but leaving until testing is complete
+    # rescue => e
+      # nil
     end
 
     protected
