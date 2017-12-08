@@ -14,9 +14,9 @@ module BBLib
         define_method(:initialize) do |*args, &block|
           send(:simple_setup) if respond_to?(:simple_setup, true)
           send(:simple_preinit, *args, &block) if respond_to?(:simple_preinit, true)
-          _initialize(*args)
+          _initialize(*args, &block)
           send(:simple_init, *args, &block) if respond_to?(:simple_init, true)
-          instance_eval(&block) if block
+          instance_eval(&block) if block && !_attrs.any? { |k, v| v[:options][:arg_at] == :block }
         end
       end
 
@@ -148,18 +148,23 @@ module BBLib
 
     protected
 
-    def _initialize(*args)
+    def _initialize(*args, &block)
       named = BBLib.named_args(*args)
       if self.class.respond_to?(:_attrs)
         set_v_arg = self.class._attrs.map do |method, details|
-          next unless details[:options][:arg_at] && details[:options][:arg_at].is_a?(Integer)
+          next unless details[:options][:arg_at] && (details[:options][:arg_at].is_a?(Integer) || details[:options][:arg_at] == :block)
+          if details[:options][:arg_at] == :block
+            send("#{method}=", block) if block
+            method
+          else
           index = details[:options][:arg_at]
-          if args.size > index
-            accept = details[:options][:arg_at_accept]
-            next if args[index].is_a?(Hash) && (accept.nil? || ![accept].flatten.include?(Hash))
-            if accept.nil? || [accept].flatten.any? { |a| a >= args[index].class }
-              send("#{method}=", args[index])
-              method
+            if args.size > index
+              accept = details[:options][:arg_at_accept]
+              next if args[index].is_a?(Hash) && (accept.nil? || ![accept].flatten.include?(Hash))
+              if accept.nil? || [accept].flatten.any? { |a| a >= args[index].class }
+                send("#{method}=", args[index])
+                method
+              end
             end
           end
         end.compact
