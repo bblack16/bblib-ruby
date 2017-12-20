@@ -21,6 +21,8 @@ module BBLib
         end
       end
 
+      alias to_html render
+
       def add(*childs)
         [childs].flatten.map { |child| children.push(child) }
       end

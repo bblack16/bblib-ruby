@@ -28,10 +28,14 @@ module BBLib
         self
       end
 
-      def self.build(type, content = nil, **attributes, &block)
-        raise ArgumentError, "Unknown element type '#{type}'." unless TAGS.include?(type.to_s.downcase)
+      def self.build(type = nil, content = nil, **attributes, &block)
+        raise ArgumentError, "Unknown element type '#{type}'." unless TAGS.include?(type.to_s.downcase) || type == nil
         context = attributes.delete(:context)
-        Tag.new(type: type, content: content, attributes: attributes, context: context, &block)
+        if type
+          Tag.new(type: type, attributes: attributes, content: content, context: context, &block)
+        else
+          TagSet.new(attributes: attributes, context: context, &block)
+        end
       end
     end
   end
