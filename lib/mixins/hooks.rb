@@ -83,17 +83,21 @@ module BBLib
     # modify_args - Replaces the original args with the returned value of the
     # send_method - Sends the method name as an argument to the hooked method.
     #               before hook method.
+    # try_first   - Sends the args to the desired hook first and if the result
+    #               is non-nil, the result is sent instead of calling the hooked
+    #               method.
     def _hook_before_method(method, hook, opts = {})
       return false if method == hook
       _add_hooked_method(:before, hook, method)
       original = instance_method(method)
       @_defining_hook = true
       define_method(method) do |*args, &block|
-        if opts[:send_args] || opts[:send_arg] || opts[:modify_args] || opts[:send_method]
+        if opts[:send_args] || opts[:send_arg] || opts[:modify_args] || opts[:send_method] || opts[:try_first]
           margs = args
           margs = [method] + args if opts[:send_method]
           margs = args + [opts[:add_args]].flatten(1) if opts[:add_args]
           result = method(hook).call(*margs)
+          return result if result && opts[:try_first]
           args = result if opts[:modify_args]
         else
           method(hook).call
@@ -112,6 +116,7 @@ module BBLib
     # modify_value - Opts must also include one of the two above. Passes the returned
     # =>              value of the method to the hook and returns the hooks value
     # =>              rather than the original methods value.
+    # send_all     - Sends a hash containing the args, method and value (return).
     def _hook_after_method(method, hook, opts = {})
       return false if method == hook
       _add_hooked_method(:after, hook, method)
@@ -127,6 +132,8 @@ module BBLib
         elsif opts[:send_return_ary] || opts[:send_value_ary]
           result = method(hook).call(*rtr)
           rtr = result if opts[:modify_value] || opts[:modify_return]
+        elsif opts[:send_all]
+          result = method(hook).call(args: args, value: rtr, method: method)
         else
           method(hook).call
         end
