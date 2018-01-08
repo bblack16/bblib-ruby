@@ -22,7 +22,7 @@ end
 class Integer
   # Convert this integer into a string with every three digits separated by a delimiter
   def to_delimited_s(delim = ',')
-    self.to_s.reverse.gsub(/(\d{3})/, "\\1#{delim}").reverse
+    self.to_s.reverse.gsub(/(\d{3})/, "\\1#{delim}").reverse.uncapsulate(',')
   end
 end
 
@@ -32,6 +32,6 @@ class Float
   def to_delimited_s(delim = ',')
     split = self.to_s.split('.')
     split[0] = split.first.reverse.gsub(/(\d{3})/, "\\1#{delim}").reverse
-    split.join('.')
+    split.join('.').uncapsulate(',')
   end
 end
