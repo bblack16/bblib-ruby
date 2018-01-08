@@ -6,7 +6,7 @@ module BBLib
     protected
 
     def method_missing(method, *args, &block)
-      if args.empty?
+      if args.empty? && ![:to_ary].include?(method)
         define_singleton_method(method) do
           self[method]
         end
