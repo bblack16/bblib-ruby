@@ -1,3 +1,4 @@
+require 'logger' unless BBLib::in_opal?
 
 module BBLib
 
