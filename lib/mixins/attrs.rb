@@ -184,12 +184,17 @@ module BBLib
 
     def attr_integer_between(min, max, *methods, **opts)
       methods.each do |method|
-        attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : BBLib.keep_between(arg, min, max) }
+        attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : BBLib.keep_between(arg, min, max).to_i }
       end
     end
 
     alias attr_int_between attr_integer_between
-    alias attr_float_between attr_integer_between
+
+    def attr_float_between(min, max, *methods, **opts)
+      methods.each do |method|
+        attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : BBLib.keep_between(arg, min, max).to_f }
+      end
+    end
 
     def attr_integer_loop(min, max, *methods, **opts)
       methods.each do |method|
@@ -337,8 +342,8 @@ module BBLib
         attr_custom(method, **opts) do |arg|
           if opts[:formats]
             arg = arg.to_s
-            opts[:format].each do |format|
-              arg = Time.strftime(arg, format) rescue arg
+            [opts[:formats]].flatten.each do |format|
+              arg = Time.strptime(arg, format) rescue arg
             end
           end
           if arg.is_a?(Time) || arg.nil? && opts[:allow_nil]
@@ -361,8 +366,8 @@ module BBLib
         attr_custom(method, **opts) do |arg|
           if opts[:formats]
             arg = arg.to_s
-            opts[:format].each do |format|
-              arg = Date.strftime(arg, format) rescue arg
+            [opts[:formats]].flatten.each do |format|
+              arg = Date.strptime(arg, format) rescue arg
             end
           end
           if arg.is_a?(Date) || arg.nil? && opts[:allow_nil]
