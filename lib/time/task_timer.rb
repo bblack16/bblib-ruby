@@ -7,6 +7,8 @@ module BBLib
   # @attr [Integer] retention The number of runs to collect per task before truncation.
   class TaskTimer
     include Effortless
+    include Prototype
+    
     attr_hash :tasks, default: {}, serialize: false
     attr_int_between -1, nil, :retention, default: 100
 
