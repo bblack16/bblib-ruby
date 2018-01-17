@@ -34,7 +34,7 @@ module BBLib
                   k.send(init_foundation_method).to_s == named[init_foundation_method].to_s
                 end
               end
-              raise ArgumentError, "Unknown #{init_foundation_method} \"#{named[init_foundation_method]}\"" unless klass
+              raise ArgumentError, "Unknown #{init_foundation_method} \"#{named[init_foundation_method]}\" for #{self}" unless klass
               klass == self ? __new(*args, &block) : klass.new(*args, &block)
             else
               __new(*args, &block)

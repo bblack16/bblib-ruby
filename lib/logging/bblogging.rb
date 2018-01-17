@@ -1,4 +1,4 @@
-require 'logger' unless BBLib::in_opal?
+require :logger.to_s unless BBLib::in_opal?
 
 module BBLib
 
