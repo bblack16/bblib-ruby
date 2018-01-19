@@ -10,6 +10,8 @@ module BBLib
       attr_ary_of Tag, :children, default: []
       attr_of Object, :context, default: nil, allow_nil: true
 
+      init_type :loose
+
       def render(pretty: false, tabs: 0)
         cont = render_content(pretty: pretty, tabs: tabs)
         tabbing = pretty ? ("\n" + ("\t" * tabs)) : ''
@@ -55,6 +57,13 @@ module BBLib
       end
 
       protected
+
+      def simple_init(*args)
+        BBLib.named_args(*args).each do |k, v|
+          next if _attrs.include?(k)
+          self.attributes[k] = v
+        end
+      end
 
       def method_missing(method, *args, &block)
         if context && context.respond_to?(method)
