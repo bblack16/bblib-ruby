@@ -184,7 +184,7 @@ module BBLib
 
     def attr_integer_between(min, max, *methods, **opts)
       methods.each do |method|
-        attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : BBLib.keep_between(arg, min, max).to_i }
+        attr_custom(method, opts.merge(min: min, max: max)) { |arg| arg.nil? && opts[:allow_nil] ? arg : BBLib.keep_between(arg, min, max).to_i }
       end
     end
 
@@ -192,7 +192,7 @@ module BBLib
 
     def attr_float_between(min, max, *methods, **opts)
       methods.each do |method|
-        attr_custom(method, opts) { |arg| arg.nil? && opts[:allow_nil] ? arg : BBLib.keep_between(arg, min, max).to_f }
+        attr_custom(method, opts.merge(min: min, max: max)) { |arg| arg.nil? && opts[:allow_nil] ? arg : BBLib.keep_between(arg, min, max).to_f }
       end
     end
 
