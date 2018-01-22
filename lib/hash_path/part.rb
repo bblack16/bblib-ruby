@@ -75,8 +75,8 @@ class HashPath
       elsif str =~ /\[\-?\d+\.{2,3}\-?\d+\]/
         Range.new(*str.scan(/\-?\d+/).map(&:to_i))
       else
-        str
-      end.gsub('\\.', '.')
+        str.gsub('\\.', '.')
+      end
     end
 
   end
