@@ -40,16 +40,16 @@ module BBLib
   end
 
   def self.delimited_case(str, delimiter = '_')
-    regx = /[[:space:]]+|[^[[:alnum:]]]+|\#{delimiter}+/
+    regx = /\s+|[[:space:]]+|[^[[:alnum:]]]+|\#{delimiter}+/
     str.split(regx).join(delimiter)
   end
 
   def self.snake_case(str)
-    BBLib.delimited_case str, '_'
+    BBLib.delimited_case(str, '_')
   end
 
   def self.method_case(str)
-    str.gsub(/(?<=[^^])([A-Z])(?=[^A-Z\s])/, '_\1').gsub(/\s+|_+/, ' ').snake_case.downcase
+    str.gsub(/(?<=[^^])([A-Z])(?=[^A-Z\s])/, '_\1').gsub(/\s+|_+/, '_').snake_case.downcase
   end
 
   def self.class_case(str)
