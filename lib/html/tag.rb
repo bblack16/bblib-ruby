@@ -50,7 +50,7 @@ module BBLib
         return nil if (content.nil? || content.empty?) && children.empty?
         tabbing = pretty ? ("\n" + ("\t" * (tabs + 1))) : ''
         text = if content && !content.empty?
-          "#{tabbing}#{content.gsub("\n", tabbing)}"
+          "#{tabbing}#{content.gsub("\n", pretty ? tabbing : "\n")}"
         end
         html = children.map { |tag| tag.render(pretty: pretty, tabs: tabs + 1) }.join
         [text, html].compact.join
