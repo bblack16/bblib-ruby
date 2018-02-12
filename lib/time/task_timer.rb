@@ -10,7 +10,7 @@ module BBLib
     include Prototype unless BBLib.in_opal?
 
     attr_hash :tasks, default: {}, serialize: false
-    attr_int_between -1, nil, :retention, default: 100
+    attr_int_between(-1, nil, :retention, default: 100)
 
     # Returns an aggregated metric for a given type.
     #
