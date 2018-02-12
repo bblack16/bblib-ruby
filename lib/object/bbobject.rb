@@ -1,13 +1,9 @@
-# frozen_string_literal: true
-# require_relative 'attr'
-# require_relative 'hooks'
-
 module BBLib
   def self.are_all?(klass, *vars)
     vars.all? { |var| var.is_a?(klass) }
   end
 
-  def self.is_a?(obj, *klasses)
+  def self.is_any?(obj, *klasses)
     klasses.any? { |klass| obj.is_a?(klass) }
   end
 
