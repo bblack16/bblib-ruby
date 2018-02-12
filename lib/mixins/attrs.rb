@@ -86,7 +86,7 @@ module BBLib
           var
         elsif opts.include?(:default) || opts.include?(:default_proc)
           default_value =
-            if opts[:default].respond_to?(:dup) && BBLib.is_a?(opts[:default], Array, Hash)
+            if opts[:default].respond_to?(:dup) && BBLib.is_any?(opts[:default], Array, Hash)
               opts[:default].dup rescue opts[:default]
             elsif opts[:default_proc].is_a?(Proc)
               prc = opts[:default_proc]
@@ -121,7 +121,7 @@ module BBLib
       allowed = [klasses].flatten
       methods.each do |method|
         attr_custom(method, opts.merge(_attr_type: :of, classes: klasses)) do |arg|
-          if BBLib.is_a?(arg, *allowed) || (arg.nil? && opts[:allow_nil])
+          if BBLib.is_any?(arg, *allowed) || (arg.nil? && opts[:allow_nil])
             arg
           elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
             arg
@@ -266,7 +266,7 @@ module BBLib
           else
             args = [args] unless args.is_a?(Array)
             args.each do |arg|
-              match = BBLib.is_a?(arg, *klasses)
+              match = BBLib.is_any?(arg, *klasses)
               if match
                 array.push(arg)
               elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
@@ -353,7 +353,7 @@ module BBLib
           else
             begin
               Time.parse(arg.to_s)
-            rescue => e
+            rescue => _e
               nil
             end
           end
@@ -377,7 +377,7 @@ module BBLib
           else
             begin
               Date.parse(arg.to_s)
-            rescue => e
+            rescue => _e
               nil
             end
           end
@@ -392,7 +392,7 @@ module BBLib
           raise ArgumentError, "#{method} must be set to a hash, not a #{arg.class} (for #{self})." unless arg.is_a?(Hash) || arg.nil? && opts[:allow_nil]
           if opts[:keys] && arg
             arg.keys.each do |key|
-              if BBLib.is_a?(key, *opts[:keys])
+              if BBLib.is_any?(key, *opts[:keys])
                 next
               elsif (opts.include?(:pack_key) && opts[:pack_key]) && new_key = _attr_pack(key, klasses, opts)
                 arg[new_key] = arg.delete(key)
@@ -403,7 +403,7 @@ module BBLib
           end
           if opts[:values] && arg
             arg.each do |key, value|
-              if BBLib.is_a?(value, *opts[:values])
+              if BBLib.is_any?(value, *opts[:values])
                 next
               elsif (!opts.include?(:pack_value) || opts[:pack_value]) && value = _attr_pack(value, klasses, opts)
                 arg[key] = arg.delete(value)
@@ -420,14 +420,10 @@ module BBLib
 
     def _attr_pack(arg, klasses, opts = {})
       klasses = [klasses].flatten
-      unless BBLib.is_a?(arg, *klasses)
+      unless BBLib.is_any?(arg, *klasses)
         return klasses.first.new(*[arg].flatten(1))
       end
       nil
-    # TODO Commented out on 12-6-2017
-    # I believe this is not needed but leaving until testing is complete
-    # rescue => e
-      # nil
     end
 
     protected
