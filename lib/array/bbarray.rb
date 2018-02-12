@@ -29,7 +29,7 @@ module BBLib
   # Takes an array and averages all of the floats and integers within it.
   # Non numeric values are ignored.
   def self.average(ary)
-    numbers = ary.select { |v| BBLib.is_a?(v, Integer, Float) }
+    numbers = ary.select { |v| BBLib.is_any?(v, Integer, Float) }
     numbers.inject(0) do |sum, x|
       sum += x
     end / numbers.size.to_f
