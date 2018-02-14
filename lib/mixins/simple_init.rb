@@ -16,7 +16,10 @@ module BBLib
           send(:simple_preinit, *args, &block) if respond_to?(:simple_preinit, true)
           _initialize(*args, &block)
           send(:simple_init, *args, &block) if respond_to?(:simple_init, true)
-          instance_eval(&block) if block && !_attrs.any? { |k, v| v[:options][:arg_at] == :block }
+          if block && !_attrs.any? { |k, v| v[:options][:arg_at] == :block }
+            result = instance_eval(&block)
+            simple_init_block_result(result) if respond_to?(:simple_init_block_result, true)
+          end
         end
       end
 
