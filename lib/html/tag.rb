@@ -5,7 +5,7 @@ module BBLib
       include Builder
 
       attr_str :type, required: true, arg_at: 0, arg_at_accept: [String, Symbol]
-      attr_str :content, arg_at: 1, arg_at_accept: [String, Symbol]
+      attr_str :content, default: nil, allow_nil: true, arg_at: 1, arg_at_accept: [String, Symbol]
       attr_hash :attributes, default: {}
       attr_ary_of Tag, :children, default: []
       attr_of Object, :context, default: nil, allow_nil: true
@@ -75,6 +75,11 @@ module BBLib
 
       def respond_to_missing?(method, include_private = false)
         super || context && context.respond_to?(method)
+      end
+
+      def simple_init_block_result(value)
+        return false unless value && content.nil?
+        self.content = value.to_s
       end
     end
   end
