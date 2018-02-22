@@ -130,7 +130,7 @@ class String
               else
                 encapsulator
               end
-    patterns = delimiters.map { |d| /#{d}(?=(?:[^#{pattern}]|[#{pattern}][^#{pattern}]*[#{pattern}])*$)/}
+    patterns = delimiters.map { |d| /#{Regexp.escape(d)}(?=(?:[^#{pattern}]|[#{pattern}][^#{pattern}]*[#{pattern}])*$)/}
     msplit(*patterns)
   end
 
