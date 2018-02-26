@@ -37,6 +37,10 @@ module BBLib
         to_s
       end
 
+      def append_attribute(attribute, value)
+        attributes[:attribute] = [attributes[:attribute], value.to_s].compact.join(' ')
+      end
+
       def render_attributes
         return nil if attributes.empty?
         attributes[:style] = attributes[:style].map { |k, v| "#{k}: #{v}" }.join('; ') if attributes[:style] && attributes[:style].is_a?(Hash)
