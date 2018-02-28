@@ -421,7 +421,7 @@ module BBLib
     def _attr_pack(arg, klasses, opts = {})
       klasses = [klasses].flatten
       unless BBLib.is_any?(arg, *klasses)
-        return klasses.first.new(*[arg].flatten(1))
+        return klasses.first.new(*[arg].flatten(1)) if klasses.first.respond_to?(:new)
       end
       nil
     end
