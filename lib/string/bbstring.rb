@@ -94,6 +94,27 @@ module BBLib
       str_b
     end
   end
+
+  # Pattern render takes (by default) a mustache style template and then uses
+  # a context (either a Hash or Object) to then interpolate in placeholders.
+  # The default pattern looks for {{method_name}} within the string but can be
+  # customized to a different pattern by setting the pattern named argument.
+  def self.pattern_render(text, context = {}, pattern: /\{{2}.*?\}{2}/, field_pattern: /(?<=^\{{2}).*(?=\}{2})/)
+    raise ArgumentError, "Expected text argument to be a String, got a #{text.class}" unless text.is_a?(String)
+    txt = text.dup
+    txt.scan(pattern).each do |match|
+      field = match.scan(field_pattern).first
+      next unless field
+      value = case context
+      when Hash
+        context[field.to_sym] || context[field]
+      else
+        context.send(field) if context.respond_to?(field)
+      end.to_s
+      txt.sub!(match, value)
+    end
+    txt
+  end
 end
 
 class String
