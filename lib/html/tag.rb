@@ -4,6 +4,8 @@ module BBLib
       include BBLib::Effortless
       include Builder
 
+      APPEND_ATTRIBUTES = [:class, :style].freeze
+
       attr_str :type, required: true, arg_at: 0, arg_at_accept: [String, Symbol]
       attr_str :content, default: nil, allow_nil: true, arg_at: 1, arg_at_accept: [String, Symbol]
       attr_hash :attributes, default: {}
@@ -37,8 +39,12 @@ module BBLib
         to_s
       end
 
+      def set_attribute(attribute, value)
+        attributes[attribute] = value
+      end
+
       def append_attribute(attribute, value)
-        attributes[:attribute] = [attributes[:attribute], value.to_s].compact.join(' ')
+        attributes[attribute] = [attributes[attribute], value.to_s].compact.join(' ')
       end
 
       def render_attributes
@@ -58,6 +64,18 @@ module BBLib
         end
         html = children.map { |tag| tag.render(pretty: pretty, tabs: tabs + 1) }.join
         [text, html].compact.join
+      end
+
+      def merge(attributes)
+        raise ArgumentError, "Expected a Hash, got a #{attributes.class}" unless attributes.is_a?(Hash)
+        attributes.each do |k, v|
+          if APPEND_ATTRIBUTES.include?(k.to_sym)
+            append_attribute(k, v)
+          else
+            set_attribute(k, v)
+          end
+        end
+        self
       end
 
       protected
