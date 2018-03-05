@@ -2,7 +2,7 @@ module BBLib
   def self.title_case(str, first_only: true)
     str = str.to_s unless str.is_a?(String)
     ignoreables = %w(a an the on upon and but or in with to)
-    regx = /[[:space:]]+|\-|\_|\"|\'|\(|\)|\[|\]|\{|\}|\#/
+    regx = /\s+|\-|\_|(?<=\W|^)\"(?=\w|$)|(?<=\W|^)\'(?=\w|$)|\(|\)|\[|\]|\{|\}|\#/
     spacing = str.scan(regx).to_a
     words = str.split(regx).map do |word|
       if ignoreables.include?(word.downcase)
