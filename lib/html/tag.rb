@@ -91,6 +91,15 @@ module BBLib
       def method_missing(method, *args, &block)
         if context && context.respond_to?(method)
           context.send(method, *args, &block)
+        elsif method != :to_ary
+          if method.to_s.encap_by?('_')
+            self.set_attribute(:id, method.to_s.uncapsulate('_'))
+          else
+            klass = method.to_s.gsub(/(?<=[^\_])\_(?=[^\_])/, '-').gsub('__', '_')
+            self.append_attribute(:class, klass)
+          end
+          self._initialize(type, *args, &block)
+          self
         else
           super
         end
@@ -101,7 +110,7 @@ module BBLib
       end
 
       def simple_init_block_result(value)
-        return false unless value && content.nil?
+        return false unless value && content.nil? && !value.is_a?(Tag)
         self.content = value.to_s
       end
     end
