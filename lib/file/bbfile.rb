@@ -13,18 +13,20 @@ module BBLib
   # @param [Boolean] recursive When true scan will recursively search directories
   # @param [Boolean] files If true, paths to files matching the filter will be returned.
   # @param [Boolean] dirs If true, paths to dirs matching the filter will be returned.
-  def self.scan_dir(path, *filters, recursive: false, files: true, dirs: true, &block)
+  # @param [Array] exclude Can be an array of regular expressions or strings that should be ignored when scanning. * in a string is expanded into .*, but all other characters are literal.
+  def self.scan_dir(path, *filters, recursive: false, files: true, dirs: true, exclude: [], &block)
     return [] unless Dir.exist?(path)
     filters = filters.map { |filter| filter.is_a?(Regexp) ? filter : /^#{Regexp.quote(filter).gsub('\\*', '.*')}$/ }
+    exclude = exclude ? [exclude].flatten.map { |exp| exp.is_a?(Regexp) ? exp : /^#{Regexp.quote(exp).gsub('\\*', '.*')}$/ } : []
     Dir.foreach(path).flat_map do |item|
-      next if item =~ /^\.{1,2}$/
+      next if item =~ /^\.{1,2}$/ || (!exclude.empty? && exclude.any? { |exp| item =~ exp })
       item = "#{path}/#{item}".gsub('\\', '/')
       if File.file?(item)
         if files && (filters.empty? || filters.any? { |filter| item =~ filter })
           block_given? ? yield(item) : item
         end
       elsif File.directory?(item)
-        recur = recursive ? scan_dir(item, *filters, recursive: recursive, files: files, dirs: dirs, &block) : []
+        recur = recursive ? scan_dir(item, *filters, recursive: recursive, exclude: exclude, files: files, dirs: dirs, &block) : []
         if dirs && (filters.empty? || filters.any? { |filter| item =~ filter })
           (block_given? ? yield(item) : [item] + recur)
         elsif recursive
@@ -35,13 +37,13 @@ module BBLib
   end
 
   # Uses BBLib.scan_dir but returns only files
-  def self.scan_files(path, *filters, recursive: false, &block)
-    scan_dir(path, *filters, recursive: recursive, dirs: false, &block)
+  def self.scan_files(path, *filters, recursive: false, exclude: [], &block)
+    scan_dir(path, *filters, recursive: recursive, dirs: false, exclude: exclude, &block)
   end
 
   # Uses BBLib.scan_dir but returns only directories.
-  def self.scan_dirs(path, *filters, recursive: false, &block)
-    scan_dir(path, *filters, recursive: recursive, files: false, &block)
+  def self.scan_dirs(path, *filters, recursive: false, exclude: [], &block)
+    scan_dir(path, *filters, recursive: recursive, files: false, exclude: exclude, &block)
   end
 
   # Shorthand method to write a string to disk. By default the
