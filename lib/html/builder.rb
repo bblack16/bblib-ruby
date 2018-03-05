@@ -17,9 +17,10 @@ module BBLib
       BBLib::HTML::TAGS.each do |tag|
         define_method(tag) do |content = nil, **attributes, &block|
           context = attributes.delete(:context) || self.context
-          t = Tag.new(type: tag, attributes: attributes, content: content, context: context)
-          children << t
-          t.instance_eval(&block) if block
+          Tag.new(type: tag, attributes: attributes, content: content, context: context).tap do |t|
+            children << t
+            t.instance_eval(&block) if block
+          end
         end
       end
 
