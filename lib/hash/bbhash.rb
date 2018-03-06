@@ -83,22 +83,30 @@ class Hash
   def path_nav(obj, path = '', delimiter = '.', &block)
     case obj
     when Hash
-      obj.each do |k, v|
-        path_nav(
-          v,
-          (path ? [path, k.to_s.gsub(delimiter, "\\#{delimiter}")].join(delimiter) : k.to_s.gsub(delimiter, "\\#{delimiter}")).to_s,
-          delimiter,
-          &block
-        )
+      if obj.empty?
+        yield path, obj
+      else
+        obj.each do |k, v|
+          path_nav(
+            v,
+            (path ? [path, k.to_s.gsub(delimiter, "\\#{delimiter}")].join(delimiter) : k.to_s.gsub(delimiter, "\\#{delimiter}")).to_s,
+            delimiter,
+            &block
+          )
+        end
       end
     when Array
-      obj.each_with_index do |ob, index|
-        path_nav(
-          ob,
-          (path ? [path, "[#{index}]"].join(delimiter) : "[#{index}]").to_s,
-          delimiter,
-          &block
-        )
+      if obj.empty?
+        yield path, obj
+      else
+        obj.each_with_index do |ob, index|
+          path_nav(
+            ob,
+            (path ? [path, "[#{index}]"].join(delimiter) : "[#{index}]").to_s,
+            delimiter,
+            &block
+          )
+        end
       end
     else
       yield path, obj
