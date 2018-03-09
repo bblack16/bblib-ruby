@@ -40,7 +40,7 @@ module BBLib
   end
 
   def self.delimited_case(str, delimiter = '_')
-    regx = /\s+|[[:space:]]+|[^[[:alnum:]]]+|\#{delimiter}+/
+    regx = /[[:space:]]+|\s+|[^\w\d]+|\#{delimiter}+/
     str.split(regx).join(delimiter)
   end
 
