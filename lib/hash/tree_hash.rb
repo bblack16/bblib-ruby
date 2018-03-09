@@ -358,7 +358,7 @@ class TreeHash
 
   def process_bridge_part(part)
     return unless part
-    part =~ /^\[\d+\]$/ ? part.uncapsulate('[').to_i : part.to_sym
+    part =~ /^\[\d+\]$/ ? part.uncapsulate('[').to_i : part.gsub('\\.', '.').to_sym
   end
 
 end
