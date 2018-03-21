@@ -13,7 +13,7 @@ module BBLib
       if msg.is_a?(Exception)
         msg = msg.inspect + "\n\t" + msg.backtrace.join("\n\t")
       end
-      "[#{datetime}] #{severity} - #{msg}\n"
+      "[#{datetime}] #{severity} - #{msg.to_s.chomp}\n"
     end
     log.datetime_format = '%Y-%m-%d %H:%M:%S'
     log
