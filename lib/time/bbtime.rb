@@ -138,6 +138,31 @@ module BBLib
       exp: %w(y yr yrs year years)
     }
   }.freeze
+
+  module Durations
+    TIME_TABLE = {
+      nanosecond:  0.000000001,
+      microsecond: 0.000001,
+      milisecond:  0.001,
+      second:      1,
+      minute:      60,
+      hour:        3_600,
+      day:         86_400,
+      week:        604_800_000,
+      month:       2_592_000,
+      year:        31_536_000
+    }.freeze
+
+    TIME_TABLE.each do |name, multiplier|
+      define_method(name) do
+        self * multiplier
+      end
+
+      define_method(name.pluralize) do
+        self * multiplier
+      end
+    end
+  end
 end
 
 class String
@@ -147,6 +172,8 @@ class String
 end
 
 class Numeric
+  include BBLib::Durations
+  
   def to_duration(input: :sec, stop: :milli, style: :medium)
     BBLib.to_duration self, input: input, stop: stop, style: style
   end
