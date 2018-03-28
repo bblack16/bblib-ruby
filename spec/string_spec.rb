@@ -46,7 +46,7 @@ describe BBLib do
     expect(sent.spinal_case).to eq 'This-is-a-casing-test-OK'
     expect(sent.train_case).to eq 'This-Is-A-Casing-Test-Ok'
     expect(sent.camel_case).to eq 'thisIsACasingTestOk'
-    expect(sent.method_case).to eq 'this_is_a_casing_test_o_k'
+    expect(sent.method_case).to eq 'this_is_a_casing_test__o_k'
     expect(sent.camel_case(:upper)).to eq 'ThisIsACasingTestOk'
     expect(sent.delimited_case('=')).to eq 'This=is=a=casing=test=OK'
   end
