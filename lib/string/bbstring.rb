@@ -99,9 +99,12 @@ module BBLib
   # a context (either a Hash or Object) to then interpolate in placeholders.
   # The default pattern looks for {{method_name}} within the string but can be
   # customized to a different pattern by setting the pattern named argument.
-  def self.pattern_render(text, context = {}, pattern: /\{{2}.*?\}{2}/, field_pattern: /(?<=^\{{2}).*(?=\}{2})/)
+  def self.pattern_render(text, context = {})
     raise ArgumentError, "Expected text argument to be a String, got a #{text.class}" unless text.is_a?(String)
-    txt = text.dup
+    # TODO Make patterns customizable
+    pattern       = /\{{2}.*?\}{2}/
+    field_pattern = /(?<=^\{{2}).*(?=\}{2})/
+    txt           = text.dup
     txt.scan(pattern).each do |match|
       field = match.scan(field_pattern).first
       next unless field
