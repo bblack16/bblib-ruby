@@ -211,6 +211,8 @@ module BBLib
           ls = list.is_a?(Proc) ? list.call : list
           if ls.include?(arg) || (opts[:allow_nil] && arg.nil?)
             arg
+          elsif opts[:fallback]
+            opts[:fallback]
           else
             raise ArgumentError, "Invalid option '#{arg}' for #{method}." unless opts.include?(:raise) && !opts[:raise]
           end
