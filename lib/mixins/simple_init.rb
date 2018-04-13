@@ -175,7 +175,7 @@ module BBLib
           next unless !set_v_arg.include?(method) && details[:options][:required] && !named.include?(method) && !send(method)
           method
         end.compact
-        raise ArgumentError, "You are missing the following required #{BBLib.pluralize('argument', missing.size)}: #{missing.join_terms}" unless missing.empty?
+        raise ArgumentError, "You are missing the following required #{BBLib.pluralize('argument', missing.size)} for #{self.class}: #{missing.join_terms}" unless missing.empty?
       end
       named.each do |method, value|
         next if method == self.class.init_foundation_method
