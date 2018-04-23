@@ -100,6 +100,14 @@ module BBLib
         end
       end
 
+      if opts[:aliases]
+        [opts[:aliases]].flatten.each do |als|
+          obj = opts[:singleton] ? self.singleton_class : self
+          obj.send(:alias_method, als, method)
+          obj.send(:alias_method, "#{als}=", "#{method}=")
+        end
+      end
+
       unless opts[:singleton]
         protected method if opts[:protected] || opts[:protected_reader]
         protected "#{method}=".to_sym if opts[:protected] || opts[:protected_writer]
