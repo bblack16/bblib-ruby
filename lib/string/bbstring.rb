@@ -6,6 +6,7 @@ require_relative 'fuzzy_matcher'
 require_relative 'cases'
 require_relative 'regexp'
 require_relative 'pluralization'
+require_relative 'splitter'
 
 module BBLib
   # Quickly remove any symbols from a string leaving only alpha-numeric characters and white space.
@@ -110,7 +111,7 @@ module BBLib
       next unless field
       value = case context
       when Hash
-        context[field.to_sym] || context[field]
+        context.hpath(field).first
       else
         context.send(field) if context.respond_to?(field)
       end.to_s
@@ -133,7 +134,7 @@ class String
 
   # Split on delimiters
   def quote_split(*delimiters)
-    encap_split('"\'', *delimiters)
+    encap_split(%w{" '}, *delimiters)
   end
 
   alias qsplit quote_split
@@ -141,21 +142,12 @@ class String
   # Split on only delimiters not between specific encapsulators
   # Various characters are special and automatically recognized such as parens
   # which automatically match anything between a begin and end character.
-  def encap_split(encapsulator, *delimiters)
-    pattern = case encapsulator
-              when '('
-                '\\(\\)'
-              when '['
-                '\\[\\]'
-              when '{'
-                '\\{\\}'
-              when '<'
-                '\\<\\>'
-              else
-                encapsulator
-              end
-    patterns = delimiters.map { |d| /#{Regexp.escape(d)}(?=(?:[^#{pattern}]|[#{pattern}][^#{pattern}]*[#{pattern}])*$)/}
-    msplit(*patterns)
+  #
+  # Regex below is no longer used because of how inefficient it is.
+  # Comment is left in case it is ever useful again
+  # /(?<group>\((?:[^\(\)]*|\g<group>)*\)[^\(\)]*?),|,(?<=[^\(\)|$])/
+  def encap_split(expressions, *delimiters, **opts)
+    BBLib::Splitter.split(self, *delimiters, **opts.merge(expressions: expressions))
   end
 
   alias esplit encap_split

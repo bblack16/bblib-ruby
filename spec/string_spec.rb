@@ -36,6 +36,14 @@ describe BBLib do
     expect(['Test|test', 'test.test'].msplit(',', '.', '|')).to eq %w(Test test test test)
   end
 
+  it 'splits strings ignore delimiters within encapsulators' do
+    str = 'apples,oranges,"bananas,cherries",coconuts,\'strawberries,peaches\',blueberries'
+    str2 = 'cats,dogs,(mice,rabbits,(goats,horses)),eagles'
+    expect(str.qsplit(',')).to eq ['apples', 'oranges', '"bananas,cherries"', 'coconuts', "'strawberries,peaches'", 'blueberries']
+    expect(str2.esplit({ '(': ')' }, ',')).to eq ['cats', 'dogs', '(mice,rabbits,(goats,horses))', 'eagles']
+    expect(str2.esplit('"', ',')).to eq ['cats', 'dogs', '(mice', 'rabbits', '(goats', 'horses))', 'eagles']
+  end
+
   it 'converts a sentence to casings' do
     sent = 'This is a casing-test. OK?'
     expect(sent.title_case).to eq 'This Is a Casing-Test. Ok?'
