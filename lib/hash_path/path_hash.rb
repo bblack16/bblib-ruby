@@ -9,7 +9,7 @@ module BBLib
     PathHash.new(hash)
   end
 
-  # Wraps a hash in a PathHash object which allows ActiveRecord-like access to hash parameters.
+  # Wraps a hash in a PathHash object which allows method based access to hash parameters.
   # For example, methods are treated as keys passed in to Hash's [] method and ._ can be used to
   # indicate that the next element should be searched for recursively.
   class PathHash < BasicObject
