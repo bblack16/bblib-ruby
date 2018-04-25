@@ -38,6 +38,7 @@ class Cat
 
   GENDER = [:unknown, :male, :female].freeze
 
+  # Now create getters/setters for our cat attributes
   attr_str :name, arg_at: 0, required: true
   attr_date :birthday
   attr_element_of GENDER, :gender, default: :unknown
