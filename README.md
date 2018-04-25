@@ -1,10 +1,6 @@
 # BBLib
 
-BBLib is a collection of various methods and classes that aim to extend the Ruby language. One of the primary goals with the BBLib is to keep it as lightweight as possible. This means you will not find dependencies outside of the Ruby core libraries.
-
-Good news! BBLib is now compatible with Opal! Well, like 90% compatible (some portions are excluded when running in Opal), but it can be 100% compiled into Javascript. Only very small tweaks were made to support this, so base functionality for the BBLib outside of Opal remains the same. But now it can coexist as both a Ruby gem, and an Opal library.
-
-BBLib contains A LOT of functionality, but is a very small, lightweight library. As such, it can be hard to document everything that is included (and even harder to make a TL:DR version). The usage section below contains most of the highlights and important features. The source code contains the rest.
+BBLib is a collection of reusable methods and classes that are helpful to have in most Ruby applications or scripts. There is a lot of content here and you should be warned that BBLib does MonkeyPatch several Ruby classes (Hash, Array, String, Integer, Float). The Usage section below covers some of the highlights but for complete coverage of everything included, take a look at the YARD documentation.
 
 ## Installation
 
@@ -23,6 +19,109 @@ Or install it yourself as:
     $ gem install bblib
 
 ## Usage
+
+### Effortless
+
+BBLib provides a collection of mixins meant to DRY up Ruby as much as possible. The collection of these mixins are brought together in Effortless. There are many things that classes that implement effortless can benefit from. Here is a quick breakdown of some of what it adds:
+
+- New attr methods to store specific object types (like attr_string or attr_bool)
+- Automatic creation of initialize method based on attr methods (never write an initialize again!)
+- Automatic serialization (to Hash) based on attr methods (or other methods). Plus you can then instantiate Effortless classes from these serializations.
+- Hooks for methods. Create simple before and after hooks to ensure certain methods are called before or after any others.
+- Ability to find all subclasses of a class or all instantiations of a class.
+
+How about an example?
+```ruby
+# All we have to do is include the BBLib::Effortless module in a class
+class Cat
+  include BBLib::Effortless
+
+  GENDER = [:unknown, :male, :female].freeze
+
+  attr_str :name, arg_at: 0, required: true
+  attr_date :birthday
+  attr_element_of GENDER, :gender, default: :unknown
+  attr_int :age
+
+  # Create after hook to calculate the cat's age everytime the birthday setter is called
+  after :birthday=, :calculate_age
+
+  def calculate_age
+    self.age = Time.now.year - birthday.year
+  end
+
+end
+
+# Now we can create cat objects using our attr methods
+my_cat = Cat.new(name: 'Jackson', birthday: '2014-05-20', gender: :male)
+puts my_cat
+# => #<Cat:0x0000000005b4b310>
+
+# Since name has the arg_at option set to element 0, we can also create a Cat like this:
+your_cat = Cat.new('Nehra', birthday: '2017-02-14', gender: :female)
+p your_cat
+# => #<Cat:0x0000000005bc5ed0 @name="Nehra", @birthday=#<Date: 2017-02-14 ((2457799j,0s,0n),+0s,2299161j)>, @age=1, @gender=:female>
+
+# We can then serialize the class into a hash
+puts my_cat.serialize
+# => {:name=>"Jackson", :birthday=>#<Date: 2014-05-20 ((2456798j,0s,0n),+0s,2299161j)>, :gender=>:male, :age=>4}
+```
+
+#### attr_ Methods
+
+As shown in the example above, once BBLib::Effortless is included into a class a new set of attr methods become available within it to automatically build getters/setters. Here is a break down of the available attr methods, what they do and what options are available to them.
+
+##### General
+
+First, here are the global options available to all attr methods. Options are passed to the attr methods as named parameters. The object/value types in the square brackets indicate the type of value each argument expects.
+
+- __required__: [true/false] Used by the SimpleInit module. If set to true, an exception will be raised when this class is instantiated unless this variable is passed to the constructor.
+- __allow_nil__: [true/false] Most attr methods have type casting that occurs or will throw errors when being set to nil (or any unexpected object type). If you wish to allow nil to be set to your instance variable, set allow_nil to true.
+- __serialize__: [true/false] When set to false this method will not be returned in the .serialize method.
+- __default__: [Object] Sets the default value for this attr method if nothing is passed in.
+- __default_proc__: [Proc, Symbol] A proc or symbol can be passed in. This works similarly to default but instead calls the Proc or method (Symbol) and sets the default to the result. This is useful when the default is based on an external source that is dynamic.
+- __aliases__: [Array of Symbols] Creates an alias to the method for each alias passed in.
+- __singleton__: [true/false] When set to true the method is placed on the singleton class as a class method rather than an instance method.
+- __private__: [true/false] When set to true the getter and setter are set to private. To specifically make the getter or setter private you can instead use :private_reader or :private_writer
+- __protected__: [true/false] Same as private, but the methods will be protected.
+- __pre_proc__: [Proc, Symbol] When provided, the Proc or method (Symbol) will be called and passed the value being sent to the setter for pre processing. For example, this can be used to downcase a string being set in an attr_str setter.
+
+##### attr_string
+
+__attr_string__ or __attr_str__ can be used to create a getter/setter pair that will store a string. Any argument being passed to the setter will have to_s called on it (unless it is nil and allow_nil is set to true).
+
+```ruby
+# Usage: attr_str <method_name>, [options]
+attr_str :first_name, default: 'Unknown'
+```
+- *There are no special options for attr_string*
+
+##### attr_symbol
+
+__attr_symbol__ or __attr_sym__ creates a getter and setter that will store a symbol. Any value being passed in will have to_sym called on it.
+
+```ruby
+# Usage: attr_sym <method_name>, [options]
+attr_sym :http_method, default: :get, serialize: false
+```
+- *There are no special options for attr_symbol*
+
+##### attr_of
+
+__attr_of__ creates a getter and setter that will allow only the specified class types to get set to it. If the class type is a BBLib::Effortless class, hashes (serializations) may be passed in to the setter and they will automatically be instantiatedas the object type (if able).
+
+```ruby
+# Usage: attr_of <class>, <method_name>, [options]
+#        attr_of [<class1>, <class2>], <method_name>, [options]
+attr_of Regexp, :expression, required: true
+attr_of [String, Symbol], :attribute, default: :general
+```
+
+The following special options are available to attr_of:
+- __pack__: [true/false] When set to false the behavior that allows hases to be used as constructor arguments for a Effortless class will be disabled and allowed classes will have to already be instantiated before being passed to the setter.
+- __suppress__: [true/false] By default if an object is passed to the setter that is not an object matching any of the allowed classes an exception is raised. Setting suppress to true will disable this behavior and instead the invalid object will simply be ignored (not set).
+
+#### MORE TO COME...
 
 ### Hash Path
 
