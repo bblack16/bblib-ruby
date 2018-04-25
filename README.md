@@ -44,7 +44,7 @@ class Cat
   attr_element_of GENDER, :gender, default: :unknown
   attr_int :age
 
-  # Create after hook to calculate the cat's age everytime the birthday setter is called
+  # Create after hook to calculate the cat's age every time the birthday setter is called
   after :birthday=, :calculate_age
 
   def calculate_age
@@ -58,7 +58,8 @@ my_cat = Cat.new(name: 'Jackson', birthday: '2014-05-20', gender: :male)
 puts my_cat
 # => #<Cat:0x0000000005b4b310>
 
-# Since name has the arg_at option set to element 0, we can also create a Cat like this:
+# Since name has the arg_at option set to element 0, we can also create a Cat like this
+# (where the cat's name is the first unnamed argument)
 your_cat = Cat.new('Nehra', birthday: '2017-02-14', gender: :female)
 p your_cat
 # => #<Cat:0x0000000005bc5ed0 @name="Nehra", @birthday=#<Date: 2017-02-14 ((2457799j,0s,0n),+0s,2299161j)>, @age=1, @gender=:female>
