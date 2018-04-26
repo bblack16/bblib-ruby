@@ -131,7 +131,7 @@ attr_str :first_name, :last_name, required: true
 attr_str :address
 ```
 
-The attr methods can be added without including all of Effortless by including only the BBLib::Attrs module.
+NOTE: The attr methods can be added without including all of Effortless by including only the BBLib::Attrs module.
 
 ##### Disclaimer
 
@@ -201,7 +201,13 @@ attr_sym :http_method, default: :get, serialize: false
 __attr_integer__ or __attr_int__ creates a getter and setter that will store an Integer. __attr_float__ is similar but stores floats. to_i and to_f will be called respectively on any value passed in to the setter.
 
 ```ruby
-# Usage: attr_int <method_name>
+# Usage: attr_int <method_name>, [options]
+#        attr_float <method_name>, [options]
+attr_int :size, default: 0
+
+# Below we create a percent attribute and use a pre_proc to ensure
+# percentage values greater than 1 are divided by 100.
+attr_float :percent, pre_proc: proc { |x| x > 1.0 ? x / 100.0 : x }
 ```
 
 - *There are no special options for attr_symbol*
@@ -331,7 +337,7 @@ attr_element_of METHODS, :http_method, default: METHODS.first
 attr_element_of proc { File.read('states.txt').split("\n") }, :state
 ```
 
-- *There are no special options for __attr_integer_between__*
+- *There are no special options for __attr_element_of__*
 
 ##### attr_elements_of
 
@@ -345,7 +351,7 @@ FOODS = %w{apple orange banana pizza hamburger burrito donut}
 attr_elements_of FOODS, :favorite_foods
 ```
 
-- *There are no special options for __attr_integer_between__*
+- *There are no special options for __attr_elements_of__*
 
 ##### attr_file
 
@@ -474,7 +480,7 @@ NOTE: Family Tree can be added to classes without using Effortless by extending 
 
 TODO
 
-#### Hooks
+#### Hooks (before and after)
 
 TODO
 
@@ -484,7 +490,7 @@ TODO
 
 ### Hash Path
 
-HashPath is a set of functions, classes and extensions to the native ruby hash and array classes. It allows to items to be retrieved from a hash using a dot delimited syntax, similar to XPath for XML. It also provides methods for moving, copying and deleting paths within hashes as well as modifying the contents of nested paths with hashes.
+HashPath is a set of functions, classes and extensions to the native ruby hash and array classes. It allows items to be retrieved from a hash using a dot delimited syntax. It serves a similar function as XPath does for XML. It also provides methods for moving, copying and deleting paths within hashes as well as modifying the contents of nested paths with hashes.
 
 Below are several examples.
 
