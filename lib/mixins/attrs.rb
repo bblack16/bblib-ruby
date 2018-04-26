@@ -282,7 +282,7 @@ module BBLib
               elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
                 array.push(arg)
               else
-                raise TypeError, "Invalid class passed to #{method} on #{self}: #{arg.class}. Must be a #{klasses.join_terms(:or)}." unless opts[:raise] == false
+                raise TypeError, "Invalid class passed to #{method} on #{self}: #{arg.class}. Must be a #{klasses.join_terms(:or)}." unless opts[:suppress]
               end
             end
           end
