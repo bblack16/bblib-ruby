@@ -7,7 +7,7 @@ BBLib is a collection of reusable methods and classes that are helpful to have i
 - [Installation](#installation)
 - [Usage](#usage)
   - [Effortless](#effortless)
-    - [Attrs](#attr_-methods)
+    - [Attrs](#attrs)
       - [Disclaimer](#disclaimer)
       - [General](#general)
       - [attr_string](#attr_string)
@@ -33,13 +33,19 @@ BBLib is a collection of reusable methods and classes that are helpful to have i
   - [Hash Path](#hash-path)
     - [Path options](#path-options)
   - [TreeHash](#treehash)
-  - [String](#string)
+  - [String Methods](#string-methods)
   - [FuzzyMatcher](#fuzzymatcher)
-  - [File](#file)
+  - [Numeric Methods](#numeric-methods)
+  - [OS / System Methods](#os-system-methods)
+  - [Time Methods](#time-methods)
+  - [Hash Methods](#hash-methods)
+  - [Array Methods](#array-methods)
+  - [File Methods](#file-methods)
+  - [HTML Methods](#html-methods)
+  - [Logging](#logging)
 - [Development](#development)
 - [Contributing](#contributing)
 - [License](#license)
-
 
 ## Installation
 
