@@ -7,6 +7,8 @@ module BBLib
     klasses.any? { |klass| obj.is_a?(klass) }
   end
 
+  # Takes any type of object and converts it into a hash based on its instance
+  # variables.
   def self.to_hash(obj)
     return { obj => nil } if obj.instance_variables.empty?
     hash = {}
