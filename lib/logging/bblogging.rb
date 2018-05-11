@@ -35,7 +35,7 @@ module BBLib
   class << self
     [:fatal, :error, :warn, :info, :debug].each do |sev|
       define_method(sev) do |*args|
-        logger.send(sev, *args)
+        logger.send(sev, *args) if logger
       end
     end
   end
