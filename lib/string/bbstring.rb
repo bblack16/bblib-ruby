@@ -28,7 +28,7 @@ module BBLib
 
   # Extracts any correctly formed integers or floats from a string
   def self.extract_numbers(str, convert: true)
-    str.scan(/\d+\.\d+(?<=[^\.])|\d+(?<=[^\.])|\d+\.\d+$|\d+$/)
+    str.scan(/(?<=[^\.]|^)\d+\.\d+(?=[^\.]|$)|(?<=[^\.\d\w]|^)\d+(?=[^\.\d\w]|$)/)
        .map { |f| convert ? (f.include?('.') ? f.to_f : f.to_i) : f }
   end
 
