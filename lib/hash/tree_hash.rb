@@ -22,10 +22,10 @@ class TreeHash
   end
 
   def child(key, symbol_sensitive = false)
-    case [node_class]
-    when [Hash]
+    case
+    when Hash >= node_class
       children[key] || (symbol_sensitive ? nil : children[key.to_s.to_sym])
-    when [Array]
+    when Array >= node_class
       children[key.to_i]
     else
       nil
@@ -33,14 +33,14 @@ class TreeHash
   end
 
   def child_exists?(key, symbol_sensitive = false)
-    !case [node_class]
-    when [Hash]
-      children[key] || (!symbol_sensitive && children[key.to_s.to_sym])
-    when [Array]
+    case
+    when Hash >= node_class
+      children.include?(key) || (!symbol_sensitive && children.include?(key.to_s.to_sym))
+    when Array >= node_class
       [0...children.size] === key.to_i
     else
       false
-    end.nil?
+    end
   end
 
   def children?
@@ -197,8 +197,8 @@ class TreeHash
     self
   end
 
-  def process(processor)
-
+  def process(processor, &block)
+    # TODO Add ability to process values or keys in tree hashes
   end
 
   def size
@@ -206,8 +206,8 @@ class TreeHash
   end
 
   def paths
-    case [node_class]
-    when [Array], [Hash]
+    case
+    when Array >= node_class, Hash >= node_class
       value.squish.keys
     else
       []
@@ -258,10 +258,10 @@ class TreeHash
   end
 
   def value
-    case [node_class]
-    when [Hash]
-      children.map { |k, v| [k, v.value] }.to_h
-    when [Array]
+    case
+    when Hash >= node_class
+      children.hmap { |k, v| [k, v.value] }
+    when Array >= node_class
       children.values.map(&:value)
     else
       children
@@ -270,10 +270,10 @@ class TreeHash
 
   def key
     return nil if root?
-    case [parent.node_class]
-    when [Hash]
+    case
+    when Hash >= parent.node_class
       parent.keys[index]
-    when [Array]
+    when Array >= parent.node_class
       index
     else
       nil
@@ -327,11 +327,11 @@ class TreeHash
   end
 
   def delete_child(key, symbol_sensitive = false)
-    case [node_class]
-    when [Hash]
+    case
+    when Hash >= node_class
       child = symbol_sensitive ? nil : children.delete(key.to_s.to_sym)
       child = children.delete(key) unless child
-    when [Array]
+    when Array >= node_class
       children.delete(key.to_i)
     else
       nil
