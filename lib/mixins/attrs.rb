@@ -134,7 +134,7 @@ module BBLib
           elsif arg && (!opts.include?(:pack) || opts[:pack]) && arg = _attr_pack(arg, klasses, opts)
             arg
           else
-            raise TypeError, "#{method} must be set to a class of #{allowed.join_terms(:or)}, not #{arg.class}" unless opts[:suppress]
+            raise TypeError, "#{method} must be set to a class of #{allowed.join_terms(:or)}, not #{arg.class} (#{self})" unless opts[:suppress]
           end
         end
       end
