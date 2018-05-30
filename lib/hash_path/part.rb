@@ -7,7 +7,7 @@ class HashPath
     attr_str :evaluation, default: nil, allow_nil: true, serialize: true
     attr_bool :recursive, default: false, serialize: true
 
-    def parse(path)
+    def parse(path, test)
       evl = path.scan(/\(.*\)$/).first
       self.evaluation = evl ? evl.uncapsulate('(', limit: 1) : evl
       self.recursive = path.start_with?('[[:recursive:]]')
