@@ -14,6 +14,7 @@ require_relative 'system/bbsystem'
 require_relative 'logging/bblogging'
 require_relative 'error/abstract'
 require_relative 'html/bbhtml'
+require_relative 'cli/color'
 
 non_opal = ['os/bbos']
 
