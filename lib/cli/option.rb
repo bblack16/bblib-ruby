@@ -5,7 +5,7 @@ module BBLib
       include BBLib::TypeInit
 
       attr_sym :name, default_proc: :determine_name
-      attr_str :description
+      attr_str :description, aliases: :desc
       attr_of Object, :default, allow_nil: true, default: nil
       attr_str :placeholder, default_proc: proc { |x| x.name.upcase }
       attr_ary_of String, :flags, arg_at: 1
