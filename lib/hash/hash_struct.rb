@@ -7,10 +7,17 @@ module BBLib
 
     def method_missing(method, *args, &block)
       if args.empty? && ![:to_ary].include?(method)
-        define_singleton_method(method) do
+        if method.to_s.end_with?('?')
+          define_singleton_method(method) do
+            self[method[0..-2]] ? true : false
+          end
+          send(method)
+        else
+          define_singleton_method(method) do
+            self[method]
+          end
           self[method]
         end
-        self[method]
       elsif method.to_s.end_with?('=')
         define_singleton_method(method) do |arg|
           self[method[0..-2].to_sym] = arg
