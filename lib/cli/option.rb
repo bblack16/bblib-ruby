@@ -49,7 +49,8 @@ module BBLib
             raise e if raise_errors?
           end
         end
-        result = processor.call(result) if processor
+        raise MissingArgumentException, "A required argument is missing: #{name}" if required? && result.nil?
+        result = processor.call(result) if !result.nil? && processor
         result.nil? ? default : result
       end
 
@@ -58,7 +59,9 @@ module BBLib
       end
 
       def flag_match?(str, index = 0)
-        text_match = if argument_delimiter == ' '
+        text_match = if flags.empty? && position
+          true
+        elsif argument_delimiter == ' '
           flags.include?(str)
         else
           flags.any? do |flag|

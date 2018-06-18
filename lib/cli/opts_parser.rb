@@ -18,19 +18,21 @@ module BBLib
       @usage
     end
 
-    def on(flag, *args, **opts, &block)
-      flags = [flag] + args
+    def on(*flags, **opts, &block)
       opts[:type] = :string unless opts[:type]
       add_options(opts.merge(flags: flags, processor: block))
     end
 
-    def parse(*args)
-      copy = [args].flatten.dup
+    def parse(args = ARGV)
+      parse!(args.dup)
+    end
+
+    def parse!(args = ARGV)
       HashStruct.new.tap do |hash|
         options.each do |option|
-          hash.deep_merge!(option.name => option.retrieve(copy))
+          hash.deep_merge!(option.name => option.retrieve(args))
         end
-      end.merge(arguments: copy)
+      end.merge(arguments: args)
     end
 
     def help
@@ -46,8 +48,8 @@ module BBLib
 
     def method_missing(method, *args, &block)
       if Option.types.include?(method)
-        define_singleton_method(method) do |flag, *args, **opts, &block|
-          on(flag, *args, **opts.merge(type: method), &block)
+        define_singleton_method(method) do |*flags, **opts, &block|
+          on(*flags, **opts.merge(type: method), &block)
         end
         send(method, *args, &block)
       else
