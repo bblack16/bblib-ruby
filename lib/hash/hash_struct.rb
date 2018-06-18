@@ -9,7 +9,7 @@ module BBLib
       if args.empty? && ![:to_ary].include?(method)
         if method.to_s.end_with?('?')
           define_singleton_method(method) do
-            self[method[0..-2]] ? true : false
+            self[method[0..-2].to_sym] ? true : false
           end
           send(method)
         else
