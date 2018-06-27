@@ -18,7 +18,7 @@ module BBLib
     def direct_descendants(include_singletons = false)
       return _inherited_by if BBLib.in_opal?
       ObjectSpace.each_object(Class).select do |c|
-        (include_singletons || !c.singleton_class?) && c.ancestors[1] == self
+        (include_singletons || !c.singleton_class?) && c.ancestors[1..-1].find { |k| k.is_a?(Class) } == self
       end
     end
 
