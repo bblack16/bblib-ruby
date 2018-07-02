@@ -30,7 +30,7 @@ module BBLib
     def parse!(args = ARGV)
       HashStruct.new.tap do |hash|
         options.each do |option|
-          hash.deep_merge!(option.name => option.retrieve(args))
+          option.retrieve(args, hash)
         end
       end.merge(arguments: args)
     end

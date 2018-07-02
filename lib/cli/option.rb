@@ -17,6 +17,8 @@ module BBLib
       attr_ary_of Proc, :validators
       attr_bool :singular, default: true
       attr_of [Integer, Range], :position, default: nil, allow_nil: true
+      attr_hash :sub_commands, keys: String, values: OptsParser, aliases: [:sub_cmds, :subcommands], default: nil, allow_nil: true, pre_proc: proc { |hash| hash.is_a?(Hash) ? hash.keys_to_s : hash }
+
 
       def to_s
         (flags.sort_by(&:size).join(', ') + " #{placeholder}").ljust(40, ' ') + "\t#{description}"
@@ -26,7 +28,7 @@ module BBLib
         descendants.map(&:type)
       end
 
-      def retrieve(args)
+      def retrieve(args, parsed)
         result = singular? ? nil : []
         index = 0
         until index >= args.size
@@ -51,7 +53,7 @@ module BBLib
         end
         raise MissingArgumentException, "A required argument is missing: #{name}" if required? && result.nil?
         result = processor.call(result) if !result.nil? && processor
-        result.nil? ? default : result
+        process_result(result.nil? ? default : result, args, parsed)
       end
 
       def singular?
@@ -90,6 +92,13 @@ module BBLib
         flag = flags.find { |f| f.start_with?('--') }
         flag = flags.first unless flag
         flag.to_s.sub(/^-{1,2}/, '').snake_case
+      end
+
+      def process_result(result, args, parsed)
+        parsed.deep_merge!(name => result)
+        if sub_commands && sub_commands[result]
+          parsed.deep_merge!(sub_commands[result].parse!(args))
+        end
       end
 
     end
