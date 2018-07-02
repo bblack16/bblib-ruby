@@ -407,7 +407,7 @@ module BBLib
               elsif (opts.include?(:pack_key) && opts[:pack_key]) && new_key = _attr_pack(key, klasses, opts)
                 arg[new_key] = arg.delete(key)
               else
-                raise ArgumentError, "Invalid key type for #{method}: #{key.class}. Must be #{opts[:keys].join_terms(:or)}."
+                raise ArgumentError, "Invalid key type for #{method}: #{key.class}. Must be #{[opts[:keys]].flatten.join_terms(:or)}."
               end
             end
           end
