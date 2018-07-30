@@ -24,6 +24,7 @@ module BBLib
             result = instance_eval(&block)
             simple_init_block_result(result) if respond_to?(:simple_init_block_result, true)
           end
+          self
         end
       end
 
@@ -70,7 +71,7 @@ module BBLib
             end
             raise ArgumentError, "Unknown #{init_foundation_method} \"#{named[init_foundation_method]}\"" unless klass
             klass == self ? super : klass.new(*args, &block)
-          elsif named[init_foundation_method].nil? && init_foundation_default_class != self
+          elsif named[init_foundation_method].nil? && init_foundation_default_class != self && init_foundation_default_class < self
             init_foundation_default_class.new(*args, &block)
           else
             super
