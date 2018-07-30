@@ -6,7 +6,11 @@ module BBLib
   module SimpleInit
     attr_reader :_init_type
 
-    INIT_TYPES = [:strict, :loose].freeze
+    # strict - Raise exceptions for unknown named attributes
+    # loose - Ignore unknown named attributes
+    # collect - Put unknown named attributes into the attribute
+    #           configured by collect_attribute
+    INIT_TYPES = [:strict, :loose, :collect].freeze
 
     def self.included(base)
       base.extend ClassMethods
@@ -20,6 +24,7 @@ module BBLib
             result = instance_eval(&block)
             simple_init_block_result(result) if respond_to?(:simple_init_block_result, true)
           end
+          self
         end
       end
 
@@ -39,6 +44,8 @@ module BBLib
               end
               raise ArgumentError, "Unknown #{init_foundation_method} \"#{named[init_foundation_method]}\" for #{self}" unless klass
               klass == self ? __new(*args, &block) : klass.new(*args, &block)
+            elsif named[init_foundation_method].nil? && init_foundation_default_class != self
+              init_foundation_default_class.new(*args, &block)
             else
               __new(*args, &block)
             end
@@ -64,6 +71,8 @@ module BBLib
             end
             raise ArgumentError, "Unknown #{init_foundation_method} \"#{named[init_foundation_method]}\"" unless klass
             klass == self ? super : klass.new(*args, &block)
+          elsif named[init_foundation_method].nil? && init_foundation_default_class != self && init_foundation_default_class < self
+            init_foundation_default_class.new(*args, &block)
           else
             super
           end
@@ -97,6 +106,23 @@ module BBLib
         self.init_foundation = true
         self.init_foundation_method(method)
         self.init_foundation_compare(&block) if block
+      end
+
+      def init_foundation_default_class
+        self
+      end
+
+      def collect_method(name = nil)
+        @collect_method = name if name
+        @collect_method ||= _super_collect_method
+      end
+
+      def _super_collect_method
+          ancestors.each do |ancestor|
+            next if ancestor == self
+            return ancestor.collect_method if ancestor.respond_to?(:collect_method)
+          end
+          :attributes
       end
 
       def ancestor_init_foundation_method
@@ -181,10 +207,21 @@ module BBLib
         next if method == self.class.init_foundation_method
         setter = "#{method}="
         exists = respond_to?(setter)
-        raise ArgumentError, "Undefined attribute #{setter} for class #{self.class}." if !exists && self.class.init_type == :strict
+        if !exists && self.class.init_type == :strict
+          raise ArgumentError, "Undefined attribute #{setter} for class #{self.class}."
+        elsif !exists && self.class.init_type == :collect
+          _collect_attribute(method, value)
+        end
         next unless exists
         send(setter, value)
       end
+    end
+
+    def _collect_attribute(method, value)
+      inst_name = "@#{self.class.collect_method}"
+      hash = instance_variable_get(inst_name)
+      hash = instance_variable_set(inst_name, {}) unless hash.is_a?(Hash)
+      hash[method] = value
     end
   end
 end

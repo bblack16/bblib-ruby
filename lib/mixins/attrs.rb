@@ -216,7 +216,7 @@ module BBLib
     def attr_element_of(list, *methods, **opts)
       methods.each do |method|
         attr_custom(method, opts.merge(list: list)) do |arg|
-          ls = list.is_a?(Proc) ? list.call : list
+          ls = list.is_a?(Proc) ? list.call(self) : list
           if ls.include?(arg) || (opts[:allow_nil] && arg.nil?)
             arg
           elsif opts[:fallback]
@@ -232,7 +232,7 @@ module BBLib
       opts[:default] = [] unless opts.include?(:default) || opts.include?(:default_proc)
       methods.each do |method|
         attr_custom(method, opts.merge(list: list)) do |args|
-          ls = list.is_a?(Proc) ? list.call : list
+          ls = list.is_a?(Proc) ? list.call(self) : list
           [].tap do |final|
             [args].flatten(1).each do |arg|
               if ls.include?(arg) || (opts[:allow_nil] && arg.nil?)
@@ -428,10 +428,10 @@ module BBLib
       end
     end
 
-    def _attr_pack(arg, klasses, opts = {})
+    def _attr_pack(arg, klasses, opts = {}, &block)
       klasses = [klasses].flatten
       unless BBLib.is_any?(arg, *klasses)
-        return klasses.first.new(*[arg].flatten(1)) if klasses.first.respond_to?(:new)
+        return klasses.first.new(*[arg].flatten(1), &block) if klasses.first.respond_to?(:new)
       end
       nil
     end

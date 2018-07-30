@@ -104,6 +104,26 @@ module BBLib
     zettabyte: { mult: 1024**7, exp: %w(zb zetta z zbyte zettabyte), styles: { short: 'ZB', long: ' zettabyte' } },
     yottabyte: { mult: 1024**8, exp: %w(yb yotta y ybyte yottabyte), styles: { short: 'YB', long: ' yottabyte' } }
   }.freeze
+
+  # Basic detection for whether or not a file is binary or not
+  def self.binary?(file, bytes: 1024, ctrl_threshold: 0.1, binary_threshold: 0.05)
+    ascii  = 0
+    ctrl   = 0
+    binary = 0
+
+    File.open(file, 'rb') { |io| io.read(bytes) }.each_byte do |byte|
+      case byte
+      when 0..31
+        ctrl += 1
+      when 32..127
+        ascii += 1
+      else
+        binary += 1
+      end
+    end
+
+    ctrl.to_f / ascii > ctrl_threshold || binary.to_f / ascii > binary_threshold
+  end
 end
 
 # Monkey patches for the Numeric class
