@@ -64,7 +64,13 @@ module BBLib
         text_match = if flags.empty? && position
           true
         elsif argument_delimiter == ' '
-          flags.include?(str)
+          if str =~ /^\-[^\-]/
+            flags.any? do |flag|
+              flag =~ /^\-[\w\d]/ && str.include?(flag[1])
+            end
+          else
+            flags.include?(str)
+          end
         else
           flags.any? do |flag|
             flag.start_with?("#{str}#{argument_delimiter}")

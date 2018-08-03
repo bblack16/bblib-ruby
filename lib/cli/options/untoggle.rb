@@ -1,9 +1,9 @@
 module BBLib
   class OptsParser
-    class Untoggle < Option
+    class Untoggle < Toggle
 
       def extract(index, args)
-        args.delete_at(index)
+        super
         false
       end
 
