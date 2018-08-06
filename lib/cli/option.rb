@@ -21,7 +21,7 @@ module BBLib
 
 
       def to_s
-        (flags.sort_by(&:size).join(', ') + " #{placeholder}").ljust(40, ' ') + "\t#{description}"
+        (flags.sort_by(&:size).join(', ') + " #{placeholder}").strip.ljust(40, ' ') + "\t#{description}"
       end
 
       def self.types
@@ -39,7 +39,7 @@ module BBLib
             end
             values = split(extract(index, args))
             values.each do |value|
-              valid?(value)
+              valid!(value)
               if singular?
                 result = value
                 index = args.size
@@ -85,6 +85,11 @@ module BBLib
         validators.all? do |validator|
           validator.call(value)
         end
+      end
+
+      def valid!(value)
+        puts valid?(value)
+        raise InvalidArgumentException, "Invalid argument for #{name}" unless valid?(value)
       end
 
       def split(value)
