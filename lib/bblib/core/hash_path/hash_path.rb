@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 require_relative 'part'
-require_relative 'proc'
-require_relative 'path_hash'
 
 # This classes parses dot delimited hash path strings and wraps the corresponding parts. Then hashes or arrays can be
 # passed to the find method to find all matching elements for the path.

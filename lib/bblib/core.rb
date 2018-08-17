@@ -1,28 +1,36 @@
 require_relative 'version'
-require_relative '../opal/bbopal'
-require_relative '../object/bbobject'
-require_relative '../hash/bbhash'
-require_relative '../mixins/bbmixins'
-require_relative '../class/effortless'
-require_relative '../hash_path/hash_path'
-require_relative '../string/bbstring'
-require_relative '../file/bbfile'
-require_relative '../time/bbtime'
-require_relative '../number/bbnumber'
-require_relative '../array/bbarray'
-require_relative '../system/bbsystem'
-require_relative '../logging/bblogging'
-require_relative '../error/abstract'
-require_relative '../html/bbhtml'
 
-non_opal = ['../os/bbos']
+require_relative 'core/exceptions/exception'
 
-non_opal.each { |i| require_relative i } unless BBLib.in_opal?
+require_relative 'core/util/opal'
+require_relative 'core/util/object'
+require_relative 'core/util/hash'
+
+require_relative 'core/mixins/simple_init'
+require_relative 'core/mixins/attrs'
+require_relative 'core/mixins/family_tree'
+require_relative 'core/mixins/hooks'
+require_relative 'core/mixins/serializer'
+require_relative 'core/mixins/logger'
+require_relative 'core/mixins/bridge'
+require_relative 'core/mixins/effortless'
+require_relative 'core/mixins/prototype'
+require_relative 'core/mixins/type_init'
+require_relative 'core/mixins/delegator'
+
+require_relative 'core/hash_path/hash_path'
+
+require_relative 'core/util/string'
+require_relative 'core/util/file'
+require_relative 'core/util/time'
+require_relative 'core/util/number'
+require_relative 'core/util/array'
+require_relative 'core/util/logging'
+
+require_relative 'core/classes/hash_struct'
+require_relative 'core/classes/task_timer'
+require_relative 'core/classes/tree_hash'
+require_relative 'core/classes/splitter'
 
 require 'fileutils'
 require 'time'
-# require 'logger'
-
-module BBLib
-  CONFIGS_PATH = 'config/'.freeze
-end

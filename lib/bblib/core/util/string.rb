@@ -1,12 +1,8 @@
-
-# frozen_string_literal: true
 require_relative 'matching'
 require_relative 'roman'
-require_relative 'fuzzy_matcher'
 require_relative 'cases'
 require_relative 'regexp'
 require_relative 'pluralization'
-require_relative 'splitter'
 
 module BBLib
   # Quickly remove any symbols from a string leaving only alpha-numeric characters and white space.

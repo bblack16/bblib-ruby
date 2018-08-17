@@ -1,7 +1,4 @@
 
-require_relative 'tree_hash'
-require_relative 'hash_struct'
-
 class Hash
   # Merges with another hash but also merges all nested hashes and arrays/values.
   def deep_merge(with, merge_arrays: true, overwrite: true, uniq: false)

@@ -1,7 +1,3 @@
-# frozen_string_literal: true
-require_relative 'task_timer'
-require_relative 'cron'
-
 module BBLib
   # Parses known time based patterns out of a string to construct a numeric duration.
   def self.parse_duration(str, output: :sec, min_interval: :sec)
@@ -173,7 +169,7 @@ end
 
 class Numeric
   include BBLib::Durations
-  
+
   def to_duration(input: :sec, stop: :milli, style: :medium)
     BBLib.to_duration self, input: input, stop: stop, style: style
   end

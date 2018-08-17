@@ -1,5 +1,5 @@
 require_relative 'option'
-require_relative '../error/opts_parser'
+require_relative 'exceptions/opts_parser'
 require_relative 'options/basic_option'
 
 BBLib.scan_files(File.expand_path('../options', __FILE__), '*.rb') do |file|
