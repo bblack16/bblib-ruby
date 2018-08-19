@@ -22,9 +22,12 @@ module BBLib
          .map { |m| convert ? m.to_f : m }
   end
 
+  EXTRACT_NUMBER_REGEXP = /(?<=[^\.]|^)\d+\.\d+(?=[^\.]|$)|(?<=[^\.\d]|^)\d+(?=[^\.\d]|$)/
+  EXTRACT_NUMBER_REGEXP_NO_INNER = /(?<=[^\.]|^)\d+\.\d+(?=[^\.]|$)|(?<=[^\.\d\w]|^)\d+(?=[^\.\d\w]|$)/
+
   # Extracts any correctly formed integers or floats from a string
-  def self.extract_numbers(str, convert: true)
-    str.scan(/(?<=[^\.]|^)\d+\.\d+(?=[^\.]|$)|(?<=[^\.\d\w]|^)\d+(?=[^\.\d\w]|$)/)
+  def self.extract_numbers(str, convert: true, include_inner: true)
+    str.scan(include_inner ? EXTRACT_NUMBER_REGEXP : EXTRACT_NUMBER_REGEXP_NO_INNER)
        .map { |f| convert ? (f.include?('.') ? f.to_f : f.to_i) : f }
   end
 
