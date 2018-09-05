@@ -88,7 +88,6 @@ module BBLib
       end
 
       def valid!(value)
-        puts valid?(value)
         raise InvalidArgumentException, "Invalid argument for #{name}" unless valid?(value)
       end
 
