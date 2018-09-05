@@ -24,6 +24,7 @@ module BBLib
             result = instance_eval(&block)
             simple_init_block_result(result) if respond_to?(:simple_init_block_result, true)
           end
+          send(:simple_postinit, *args, &block) if respond_to?(:simple_postinit, true)
           self
         end
       end
