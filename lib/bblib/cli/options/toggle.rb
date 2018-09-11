@@ -6,12 +6,12 @@ module BBLib
         value = args[index]
         if value =~ /^\-[\w\d]$/ || flags.include?(value)
           args.delete_at(index)
-        else
+        elsif value =~ /^\-[\w\d]+$/
           flag = flags.find do |flag|
             next unless flag =~ /^\-[\w\d]$/
             value.include?(flag[1])
           end
-          value.sub!(flag[1], '')
+          args[index] = value.sub(flag[1], '')
         end
         true
       end
