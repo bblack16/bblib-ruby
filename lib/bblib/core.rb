@@ -26,6 +26,7 @@ require_relative 'core/util/time'
 require_relative 'core/util/number'
 require_relative 'core/util/array'
 require_relative 'core/util/logging'
+require_relative 'core/util/os'
 
 require_relative 'core/classes/hash_struct'
 require_relative 'core/classes/task_timer'

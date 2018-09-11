@@ -16,9 +16,9 @@ describe BBLib do
 
   it 'extracts numbers from string' do
     t = '1 2 3.4 5.67 .8 9.0 1231.12123'
-    expect(t.extract_numbers).to eq [1, 2, 3.4, 5.67, 8, 9.0, 1231.12123]
+    expect(t.extract_numbers).to eq [1, 2, 3.4, 5.67, 9.0, 1231.12123]
     expect(t.extract_floats).to eq [3.4, 5.67, 9.0, 1231.12123]
-    expect(t.extract_integers).to eq [1, 2, 8]
+    expect(t.extract_integers).to eq [1, 2]
   end
 
   it 'move articles in string' do

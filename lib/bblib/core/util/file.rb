@@ -106,12 +106,16 @@ module BBLib
   }.freeze
 
   # Basic detection for whether or not a file is binary or not
-  def self.binary?(file, bytes: 1024, ctrl_threshold: 0.1, binary_threshold: 0.05)
+  def self.binary?(file, bytes: 1024, ctrl_threshold: 0.5, binary_threshold: 0.05)
     ascii  = 0
     ctrl   = 0
     binary = 0
 
-    File.open(file, 'rb') { |io| io.read(bytes) }.each_byte do |byte|
+    read_bytes = File.open(file, 'rb') { |io| io.read(bytes) }
+
+    return false if read_bytes.nil? || read_bytes.empty?
+
+    read_bytes.each_byte do |byte|
       case byte
       when 0..31
         ctrl += 1
