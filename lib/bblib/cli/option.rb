@@ -8,7 +8,7 @@ module BBLib
       attr_str :description, aliases: :desc
       attr_of Object, :default, allow_nil: true, default: nil
       attr_str :placeholder, default_proc: proc { |x| x.name.upcase }
-      attr_ary_of String, :flags, arg_at: 1
+      attr_ary_of String, :flags
       attr_of [String, Regexp], :delimiter, default: nil, allow_nil: true
       attr_str :argument_delimiter, default: ' '
       attr_bool :raise_errors, default: true
@@ -25,7 +25,7 @@ module BBLib
       end
 
       def self.types
-        descendants.map(&:type)
+        descendants.flat_map(&:type)
       end
 
       def retrieve(args, parsed)
@@ -33,7 +33,7 @@ module BBLib
         index = 0
         until index >= args.size
           begin
-            unless flag_match?(args[index], index)
+            unless flag_match?(args[index].to_s, index)
               index += 1
               next
             end
