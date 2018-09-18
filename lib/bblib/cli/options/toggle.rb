@@ -3,7 +3,7 @@ module BBLib
     class Toggle < Option
 
       def extract(index, args)
-        value = args[index]
+        value = args[index].to_s
         if value =~ /^\-[\w\d]$/ || flags.include?(value)
           args.delete_at(index)
         elsif value =~ /^\-[\w\d]+$/

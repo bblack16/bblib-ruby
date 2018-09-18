@@ -5,7 +5,7 @@ module BBLib
       def extract(index, args)
         args.delete_at(index)
         raise MissingArgumentException, "No argument was provided for #{name}" if args[index].nil?
-        format_value(args.delete_at(index))
+        format_value(args.delete_at(index).to_s)
       end
 
       protected

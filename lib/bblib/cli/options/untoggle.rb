@@ -1,3 +1,5 @@
+require_relative 'toggle'
+
 module BBLib
   class OptsParser
     class Untoggle < Toggle
