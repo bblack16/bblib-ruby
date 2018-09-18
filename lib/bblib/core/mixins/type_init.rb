@@ -8,7 +8,18 @@ module BBLib
       base.extend(ClassMethods)
       base.send(:bridge_method, :type)
       base.send(:serialize_method, :type, always: true)
-      base.send(:setup_init_foundation, :type) { |a, b| a && b && a.to_s.to_sym == b.to_s.to_sym }
+      base.send(:setup_init_foundation, :type) do |a, b|
+        if a && b
+          case
+          when a.is_a?(Array)
+            a.include?(b)
+          else
+            a.to_s.to_sym == b.to_s.to_sym
+          end
+        else
+          false
+        end
+      end
     end
 
     module ClassMethods
