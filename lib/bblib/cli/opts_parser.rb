@@ -1,10 +1,18 @@
 require_relative 'option'
 require_relative 'exceptions/opts_parser'
 require_relative 'options/basic_option'
-
-BBLib.scan_files(File.expand_path('../options', __FILE__), '*.rb') do |file|
-  require_relative file
-end
+require_relative 'options/string'
+require_relative 'options/command'
+require_relative 'options/bool'
+require_relative 'options/date'
+require_relative 'options/time'
+require_relative 'options/float'
+require_relative 'options/integer'
+require_relative 'options/json'
+require_relative 'options/regexp'
+require_relative 'options/symbol'
+require_relative 'options/toggle'
+require_relative 'options/untoggle'
 
 module BBLib
   class OptsParser
@@ -18,6 +26,10 @@ module BBLib
       @usage
     end
 
+    def at(position, **opts, &block)
+      add_options(opts.merge(type: :at, position: position, processor: block))
+    end
+
     def on(*flags, **opts, &block)
       opts[:type] = :string unless opts[:type]
       add_options(opts.merge(flags: flags, processor: block))
@@ -28,8 +40,9 @@ module BBLib
     end
 
     def parse!(args = ARGV)
+      args = [args] unless args.is_a?(Array)
       HashStruct.new.tap do |hash|
-        options.each do |option|
+        options.sort_by { |opt| opt.position || 10**100 }.each do |option|
           option.retrieve(args, hash)
         end
       end.merge(arguments: args)
