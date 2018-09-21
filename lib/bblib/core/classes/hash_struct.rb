@@ -27,5 +27,15 @@ module BBLib
         super
       end
     end
+
+    def respond_to_missing?(method, include_private = false)
+      include?(method) || method.to_s =~ /\?|\=/ && include?(method.to_s[0..-2].to_sym) || super
+    end
+  end
+end
+
+class Hash
+  def to_hash_struct
+    BBLib::HashStruct.new.merge(self)
   end
 end
