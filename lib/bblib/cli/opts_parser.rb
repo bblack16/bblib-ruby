@@ -21,6 +21,10 @@ module BBLib
     attr_ary_of Option, :options, add_rem: true
     attr_str :usage, default: nil, allow_nil: true
 
+    def self.build(&block)
+      new(&block)
+    end
+
     def usage(text = nil)
       @usage = text unless text.nil?
       @usage
