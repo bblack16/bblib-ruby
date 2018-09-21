@@ -69,6 +69,7 @@ module BBLib
 
       def _ancestor_delegate_fast
         ancestors.reverse.find do |anc|
+          next if anc == self
           next unless anc.respond_to?(:delegate_fast)
           return anc.delegate_fast
         end
