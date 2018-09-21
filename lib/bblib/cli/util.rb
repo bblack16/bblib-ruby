@@ -24,7 +24,7 @@ module BBLib
         # TODO Support carriage return to overwrite line
         # print "\b" if response
         print "#{message} [#{default ? 'Y/n' : 'y/N'}]: "
-        response = gets.chomp.downcase
+        response = STDIN.gets.chomp.downcase
         response = default ? yes : no if enter_is_default && response.empty?
       end
       response == yes
