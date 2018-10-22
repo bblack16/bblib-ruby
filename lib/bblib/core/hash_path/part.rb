@@ -47,6 +47,14 @@ class HashPath
           matches << v if key_match?(k, object) && evaluates?(v)
           matches += matches(v) if recursive? && v.children?
         end
+      else
+        casted = case
+        when object.value.respond_to?(:to_hash)# && object.method(:to_hash).arity <= 0
+          object.value.to_hash.to_tree_hash
+        when object.value.is_a?(BBLib::Effortless)
+          object.value.serialize.to_tree_hash
+        end
+        matches += matches(casted) if casted
       end
       matches
     end
