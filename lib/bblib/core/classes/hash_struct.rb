@@ -35,7 +35,8 @@ module BBLib
 end
 
 class Hash
-  def to_hash_struct
-    BBLib::HashStruct.new.merge(self)
+  def to_hash_struct(recursive = true)
+    hash = recursive ? self.hmap { |k, v| [k, v.respond_to?(:to_hash_struct) ? v.to_hash_struct(recursive) : v] } : self
+    BBLib::HashStruct.new.merge(hash)
   end
 end
