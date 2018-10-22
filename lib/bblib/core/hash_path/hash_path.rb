@@ -44,7 +44,7 @@ end
 
 module BBLib
   def self.hash_path(hash, *paths, multi_path: false, multi_join: false, multi_join_hash: false)
-    tree = TreeHash.new(hash.to_h)
+    tree = TreeHash.new(hash)
     if multi_path
       tree.find_multi(*paths).map  { |r| r.map { |sr| sr.value } }
     elsif multi_join
