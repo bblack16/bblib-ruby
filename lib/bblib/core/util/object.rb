@@ -112,7 +112,7 @@ module BBLib
   end
 
   def self.class_create(name, *args, **opts, &block)
-    const_create(name, Class.new(*args), *args, **opts, &block)
+    const_create(name, Class.new(*args), **opts, &block)
   end
 
   def self.module_create(name, *args, **opts, &block)
