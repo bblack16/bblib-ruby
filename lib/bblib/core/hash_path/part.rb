@@ -49,8 +49,8 @@ class HashPath
         end
       else
         casted = case
-        when object.value.respond_to?(:to_hash)# && object.method(:to_hash).arity <= 0
-          object.value.to_hash.to_tree_hash
+        when !object.value.is_a?(Hash) && object.value.respond_to?(:to_tree_hash) && object.method(:to_tree_hash).arity <= 0
+          object.value.to_tree_hash
         when object.value.is_a?(BBLib::Effortless)
           object.value.serialize.to_tree_hash
         end
