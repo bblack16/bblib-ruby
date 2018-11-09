@@ -57,6 +57,7 @@ module BBLib
     ]
   }
 
+  # TODO: Support floats eventually?
   def self.number_spelled_out(number, range = 0, include_and: true)
     number = number.to_i
     negative = number.negative?
@@ -73,7 +74,7 @@ module BBLib
     when 100..999
       str << NUMBER_WORDS[:special][three_digit.to_s[0].to_i]
       str << 'hundred'
-      str << 'and' if include_and
+      str << 'and' if include_and && !three_digit.to_s.end_with?('00')
       if three_digit.to_s[-2].to_i == 1
         str << NUMBER_WORDS[:special][three_digit.to_s[-2..-1].to_i]
       else
@@ -85,26 +86,5 @@ module BBLib
     (negative ? 'negative ' : '') +
     ((number.to_s.size > 3 ? "#{number_spelled_out(number.to_s[0..-4].to_i, range + 1)} " : '') +
     str.compact.join(' ')).gsub(/\s+/, ' ')
-  end
-end
-
-class Integer
-  # Convert this integer into a string with every three digits separated by a delimiter
-  def to_delimited_s(delim = ',')
-    self.to_s.reverse.gsub(/(\d{3})/, "\\1#{delim}").reverse.uncapsulate(',')
-  end
-
-  def spell_out
-    BBLib.number_spelled_out(self)
-  end
-end
-
-class Float
-  # Convert this integer into a string with every three digits separated by a delimiter
-  # on the left side of the decimal
-  def to_delimited_s(delim = ',')
-    split = self.to_s.split('.')
-    split[0] = split.first.reverse.gsub(/(\d{3})/, "\\1#{delim}").reverse
-    split.join('.').uncapsulate(',')
   end
 end
