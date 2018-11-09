@@ -28,6 +28,8 @@ require_relative 'core/util/array'
 require_relative 'core/util/logging'
 require_relative 'core/util/os'
 
+require_relative 'core/mixins/numeric_enhancements'
+
 require_relative 'core/classes/hash_struct'
 require_relative 'core/classes/task_timer'
 require_relative 'core/classes/tree_hash'
