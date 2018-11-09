@@ -13,6 +13,7 @@ require_relative 'options/regexp'
 require_relative 'options/symbol'
 require_relative 'options/toggle'
 require_relative 'options/untoggle'
+require_relative 'options/element_of'
 
 module BBLib
   class OptsParser

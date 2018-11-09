@@ -19,7 +19,6 @@ module BBLib
       attr_of [Integer, Range], :position, default: nil, allow_nil: true
       attr_hash :sub_commands, keys: String, values: OptsParser, aliases: [:sub_cmds, :subcommands], default: nil, allow_nil: true, pre_proc: proc { |hash| hash.is_a?(Hash) ? hash.keys_to_s : hash }
 
-
       def to_s
         (flags.sort_by(&:size).join(', ') + " #{placeholder}").strip.ljust(40, ' ') + "\t#{description}"
       end
