@@ -71,7 +71,7 @@ module BBLib
     atto: {
       mult: 0.000000000000001,
       styles: { long: ' attosecond', medium: ' atto', short: 'as' },
-      exp: %w(attoseconds atto attoseconds attos as)
+      exp: %w(attosecond atto attoseconds attos as)
     },
     femto: {
       mult: 0.000000000001,
