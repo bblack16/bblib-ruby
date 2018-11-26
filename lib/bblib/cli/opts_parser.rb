@@ -50,7 +50,7 @@ module BBLib
         options.sort_by { |opt| opt.position || 10**100 }.each do |option|
           option.retrieve(args, hash)
         end
-      end.merge(arguments: args)
+      end.merge(arguments: args.compact)
     end
 
     def help
