@@ -4,8 +4,8 @@ module BBLib
 
       def extract(index, args)
         value = args[index].to_s
-        if value =~ /^\-[\w\d]$/ || flags.include?(value)
-          args.delete_at(index)
+        if value =~ /^\-[\w\d]$|^\-{2}/ || flags.include?(value)
+          args[index] = nil
         elsif value =~ /^\-[\w\d]+$/
           flag = flags.find do |flag|
             next unless flag =~ /^\-[\w\d]$/

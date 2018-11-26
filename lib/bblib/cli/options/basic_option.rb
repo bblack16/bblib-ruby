@@ -3,9 +3,9 @@ module BBLib
     class BasicOption < Option
 
       def extract(index, args)
-        args.delete_at(index)
-        raise MissingArgumentException, "No argument was provided for #{name}" if args[index].nil?
-        format_value(args.delete_at(index).to_s)
+        args[index] = nil
+        raise MissingArgumentException, "No argument was provided for #{name}" if args[index + 1].nil?
+        format_value(args[index + 1].tap { args[index + 1] = nil })
       end
 
       protected

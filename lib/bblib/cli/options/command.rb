@@ -8,7 +8,7 @@ module BBLib
       end
 
       def extract(index, args)
-        args.delete_at(index).to_s
+        args[index].tap { args[index] = nil }
       end
 
     end
