@@ -28,35 +28,36 @@ module BBLib
       end
 
       def retrieve(args, parsed)
-        result = singular? ? nil : []
+        result = multi_value? ? [] : nil
         index = 0
         until index >= args.size
           begin
-            unless flag_match?(args[index].to_s, index)
+            if args[index].nil? || !flag_match?(args[index].to_s, index)
               index += 1
               next
             end
             values = split(extract(index, args))
             values.each do |value|
               valid!(value)
-              if singular?
-                result = value
-                index = args.size
-              else
+              if multi_value?
                 result << value
+              else
+                result = value
               end
+              index = args.size if singular?
             end
           rescue OptsParserException => e
             raise e if raise_errors?
           end
+          index += 1
         end
         raise MissingArgumentException, "A required argument is missing: #{name}" if required? && result.nil?
         result = processor.call(result) if !result.nil? && processor
         process_result(result.nil? ? default : result, args, parsed)
       end
 
-      def singular?
-        singular && !delimiter
+      def multi_value?
+        !singular || delimiter
       end
 
       def flag_match?(str, index = 0)
