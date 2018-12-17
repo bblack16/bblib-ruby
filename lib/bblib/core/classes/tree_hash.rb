@@ -44,7 +44,7 @@ class TreeHash
   end
 
   def children?
-    (node_class == Hash || node_class == Array) && !children.empty?
+    (node_class <= Hash || node_class <= Array) && !children.empty?
   end
 
   def descendants
@@ -342,10 +342,10 @@ class TreeHash
 
   def build_from(object)
     @children = {}
-    case object
-    when Hash
+    case
+    when object.class <= Hash
       object.each { |k, v| @children[k] = TreeHash.new(v, self) }
-    when Array
+    when object.class <= Array
       object.each_with_index { |a, i| @children[i] = TreeHash.new(a, self) }
     else
       @children = object
