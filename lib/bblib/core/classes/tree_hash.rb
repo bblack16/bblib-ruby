@@ -127,11 +127,7 @@ class TreeHash
           next_part.nil? ? node[part] = value : node = node.child(part)
         else
           if next_part.nil?
-            if part.is_a?(Integer)
-              node[part] = value
-            else
-              node.replace_with({part => value})
-            end
+            node[part] = value
           else
             node[part] = next_part.is_a?(Integer) ? Array.new(next_part) : {}
           end
@@ -356,7 +352,13 @@ class TreeHash
   end
 
   def add_child(key, child)
-    @children[key] = TreeHash.new(child, self)
+    if Array >= node_class && !key.is_a?(Integer)
+      # If the class was an Array but a hash key was passed we need to replace this
+      # node entirely
+      replace_with(key => child)
+    else
+      @children[key] = TreeHash.new(child, self)
+    end
   end
 
   def process_bridge_part(part)
