@@ -36,7 +36,7 @@ class TreeHash
     case
     when Hash >= node_class
       children.include?(key) || (!symbol_sensitive && children.include?(key.to_s.to_sym))
-    when Array >= node_class
+    when Array >= node_class && key.respond_to?(:to_i)
       [0...children.size] === key.to_i
     else
       false
@@ -50,7 +50,7 @@ class TreeHash
   def descendants
     return [] unless children?
     desc = []
-    children.each do |key, child|
+    children.each do |_key, child|
       desc << child
       desc += child.descendants if child.children?
     end
@@ -127,7 +127,11 @@ class TreeHash
           next_part.nil? ? node[part] = value : node = node.child(part)
         else
           if next_part.nil?
-            node[part] = value
+            if part.is_a?(Integer)
+              node[part] = value
+            else
+              node.replace_with({part => value})
+            end
           else
             node[part] = next_part.is_a?(Integer) ? Array.new(next_part) : {}
           end
@@ -198,7 +202,7 @@ class TreeHash
   end
 
   def process(processor, &block)
-    # TODO Add ability to process values or keys in tree hashes
+    # TODO: Add ability to process values or keys in tree hashes
   end
 
   def size
@@ -206,8 +210,7 @@ class TreeHash
   end
 
   def paths
-    case
-    when Array >= node_class, Hash >= node_class
+    if Array >= node_class || Hash >= node_class
       value.squish.keys
     else
       []
