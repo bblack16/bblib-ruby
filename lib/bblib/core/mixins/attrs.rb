@@ -250,9 +250,13 @@ module BBLib
       opts[:default] = [] unless opts.include?(:default) || opts.include?(:default_proc)
       methods.each do |method|
         attr_custom(method, opts) do |arg|
-          args = arg.is_a?(Array) ? arg : [arg]
-          args = args.uniq if opts[:uniq]
-          args
+          if opts[:allow_nil] && arg.nil?
+            arg
+          else
+            args = arg.is_a?(Array) ? arg : [arg]
+            args = args.uniq if opts[:uniq]
+            args
+          end
         end
         attr_array_adder(method, opts[:adder_name], singleton: opts[:singleton]) if opts[:add_rem] || opts[:adder]
         attr_array_remover(method, opts[:remover_name], singleton: opts[:singleton]) if opts[:add_rem] || opts[:remover]
