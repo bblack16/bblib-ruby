@@ -5,12 +5,11 @@ module BBLib
   module Hooks
 
     [:before, :after].each do |hook_type|
-      define_method(hook_type) do |*methods, **opts|
-        raise ArgumentError, 'You must pass in at least one method followed by the name of the hook method.' if methods.size < 2
-        hooks = _hooks[hook_type][methods.pop] ||= { methods: [], opts: {} }
-        hooks[:methods] += methods
+      define_method(hook_type) do |*methods, **opts, &block|
+        raise ArgumentError, 'You must pass in at least one method followed by the name of the hook method or a block.' if methods.size < 2 && block.nil?
+        hooks = _hooks[hook_type][methods.last] ||= { methods: methods[0..-2], opts: { block: block } }
         hooks[:opts] = hooks[:opts].deep_merge(opts)
-        methods.each { |method| _hook_method(method) if method_defined?(method) }
+        methods[0..(block ? -1 : -2)].each { |method| _hook_method(method) if method_defined?(method) }
         true
       end
     end
@@ -34,8 +33,9 @@ module BBLib
     def _hook_method(method, force: false)
       return false if _defining_hook?
       [:before, :after].each do |hook_type|
-        _hooks[hook_type].find_all { |hook, data| data[:methods].include?(method) }.to_h.each do |hook, data|
-          next if !force && _hooked_methods[hook_type] && _hooked_methods[hook_type][hook] && _hooked_methods[hook_type][hook].include?(method)
+        _hooks[hook_type].find_all { |hook, data| data[:methods].include?(method) || data[:opts][:block] && hook == method }.to_h.each do |hook, data|
+          hook = data[:opts][:block] if data[:opts][:block]
+          next if !force && _hooked_methods[hook_type] && _hooked_methods[hook_type][hook.is_a?(Proc) ? hook.object_id : hook] && _hooked_methods[hook_type][hook.is_a?(Proc) ? hook.object_id : hook].include?(method)
           send("_hook_#{hook_type}_method", method, hook, data[:opts])
         end
       end
@@ -69,6 +69,7 @@ module BBLib
     end
 
     def _add_hooked_method(type, hook, method)
+      hook = hook.object_id if hook.is_a?(Proc)
       history = _hooked_methods[type]
       history[hook] = {} unless history[hook]
       history[hook][method] = instance_method(method)
@@ -96,11 +97,11 @@ module BBLib
           margs = args
           margs = [method] + args if opts[:send_method]
           margs = args + [opts[:add_args]].flatten(1) if opts[:add_args]
-          result = method(hook).call(*margs)
+          result = (hook.is_a?(Proc) ? hook : method(hook)).call(*margs)
           return result if result && opts[:try_first]
           args = result if opts[:modify_args]
         else
-          method(hook).call
+          hook.is_a?(Proc) ? hook.call : method(hook).call
         end
         original.bind(self).call(*args, &block)
       end
@@ -125,17 +126,17 @@ module BBLib
       define_method(method) do |*args, &block|
         rtr = original.bind(self).call(*args, &block)
         if opts[:send_args]
-          method(hook).call(*args)
+          (hook.is_a?(Proc) ? hook : method(hook)).call(*args)
         elsif opts[:send_return] || opts[:send_value]
-          result = method(hook).call(rtr)
+          result = (hook.is_a?(Proc) ? hook : method(hook)).call(rtr)
           rtr = result if opts[:modify_value] || opts[:modify_return]
         elsif opts[:send_return_ary] || opts[:send_value_ary]
-          result = method(hook).call(*rtr)
+          result = (hook.is_a?(Proc) ? hook : method(hook)).call(*rtr)
           rtr = result if opts[:modify_value] || opts[:modify_return]
         elsif opts[:send_all]
-          result = method(hook).call(args: args, value: rtr, method: method)
+          result = (hook.is_a?(Proc) ? hook : method(hook)).call(args: args, value: rtr, method: method)
         else
-          method(hook).call
+          (hook.is_a?(Proc) ? hook : method(hook)).call
         end
         rtr
       end
