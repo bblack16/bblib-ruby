@@ -135,6 +135,16 @@ class Numeric
   def to_file_size(*args)
     BBLib.to_file_size(self, *args)
   end
+
+  BBLib::FILE_SIZES.each do |name, data|
+    define_method(name) do
+      self * data[:mult]
+    end
+
+    define_method(name.pluralize) do
+      self * data[:mult]
+    end
+  end
 end
 
 # Monkey patches for the String class
