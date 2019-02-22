@@ -1,3 +1,3 @@
 module BBLib
-  VERSION = '1.0.0'.freeze
+  VERSION = '2.0.5'.freeze
 end
