@@ -2,7 +2,7 @@ module BBLib
   def self.title_case(str, first_only: true)
     str = str.to_s unless str.is_a?(String)
     ignoreables = %w(a an the on upon and but or in with to)
-    regx = /\s+|\-|\_|(?<=\W|^)\"(?=\w|$)|(?<=\W|^)\'(?=\w|$)|\(|\)|\[|\]|\{|\}|\#/
+    regx = /\s+|\-|\_|(?<=[\w\d])\.(?=[\w\d])|(?<=\W|^)\"(?=\w|$)|(?<=\W|^)\'(?=\w|$)|\(|\)|\[|\]|\{|\}|\#/
     spacing = str.scan(regx).to_a
     words = str.split(regx).map do |word|
       if ignoreables.include?(word.downcase)
@@ -15,7 +15,9 @@ module BBLib
     end
     # Always cap the first word
     words[0] = words.first.to_s.slice(0,1).to_s.upcase + words.first.to_s[1..-1].to_s
-    words.interleave(spacing).join
+    combined = words.interleave(spacing).join
+    combined.scan(/(?<=\.)\w(?=\.)/).each { |part| combined.sub!(".#{part}.", ".#{part}.".upcase) }
+    combined
   end
 
   def self.start_case(str, first_only: false)
