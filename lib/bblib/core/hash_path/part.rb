@@ -17,7 +17,7 @@ class HashPath
     def key_match?(key, object)
       case selector
       when String
-        key.to_s == selector
+        selector == '*' || key.to_s == selector
       when Integer
         key.to_i == selector
       when Range
