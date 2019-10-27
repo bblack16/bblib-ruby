@@ -16,6 +16,10 @@ module BBLib
         true
       end
 
+      def to_s
+        flags.sort_by(&:size).join(', ').strip.ljust(40, ' ') + "\t#{description}"
+      end
+
       protected
 
       def simple_setup
