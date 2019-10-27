@@ -52,11 +52,16 @@ module BBLib
     #
     # @param [Symbol] task The name of the task to start.
     # @return [Integer] Returns 0
-    def start(task = :default)
+    def start(task = :default, &block)
       tasks[task] = { history: [], current: nil } unless tasks.keys.include?(task)
       stop task if tasks[task][:current]
       tasks[task][:current] = Time.now.to_f
-      0
+      if block
+        block.call
+        stop(task)
+      else
+        0
+      end
     end
 
     # Stop the referenced timer.
