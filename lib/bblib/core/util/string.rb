@@ -6,8 +6,8 @@ require_relative 'pluralization'
 
 module BBLib
   # Quickly remove any symbols from a string leaving only alpha-numeric characters and white space.
-  def self.drop_symbols(str)
-    str.gsub(/[^\w\s\d]|_/, '')
+  def self.drop_symbols(str, replace = '')
+    str.gsub(/[^\w\s\d]|_/, replace)
   end
 
   # Extract all integers from a string. Use extract_floats if numbers may contain decimal places.
@@ -159,12 +159,12 @@ class String
     replace BBLib.move_articles(self, position, capitalize: capitalize)
   end
 
-  def drop_symbols
-    BBLib.drop_symbols self
+  def drop_symbols(replace = '')
+    BBLib.drop_symbols self, replace
   end
 
-  def drop_symbols!
-    replace BBLib.drop_symbols(self)
+  def drop_symbols!(replace = '')
+    replace BBLib.drop_symbols(self, replace)
   end
 
   def extract_integers(convert: true)
