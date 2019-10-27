@@ -21,16 +21,16 @@ module BBLib
     Dir.foreach(path).flat_map do |item|
       next if item =~ /^\.{1,2}$/ || (!exclude.empty? && exclude.any? { |exp| item =~ exp })
       item = "#{path}/#{item}".gsub('\\', '/')
-      if File.file?(item)
-        if files && (filters.empty? || filters.any? { |filter| item =~ filter || filter_base && item.file_name =~ filter })
-          block_given? ? yield(item) : item
-        end
-      elsif File.directory?(item)
+      if File.directory?(item)
         recur = recursive ? scan_dir(item, *filters, recursive: recursive, exclude: exclude, files: files, dirs: dirs, &block) : []
         if dirs && (filters.empty? || filters.any? { |filter| item =~ filter || filter_base && item.file_name =~ filter })
           (block_given? ? yield(item) : [item] + recur)
         elsif recursive
           recur
+        end
+      else
+        if files && (filters.empty? || filters.any? { |filter| item =~ filter || filter_base && item.file_name =~ filter })
+          block_given? ? yield(item) : item
         end
       end
     end.compact
@@ -159,6 +159,12 @@ class String
 
   def dirname
     File.dirname(self)
+  end
+
+  def parent_dirname
+    dir = dirname
+    return nil unless dir.include?('/')
+    dir.split('/').last
   end
 
   def parse_file_size(*args)
