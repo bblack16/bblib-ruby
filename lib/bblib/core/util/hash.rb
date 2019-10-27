@@ -159,4 +159,11 @@ class Hash
     return map unless block_given?
     map { |k, v| yield(k, v) }.compact.to_h
   end
+
+  # Sort a map by its keys or by using a block, which could then sort by value
+  # or some other combination.
+  def hsort
+    return sort_by { |k, v| k }.to_h unless block_given?
+    sort_by { |k, v| yield(k, v) }.to_h
+  end
 end
